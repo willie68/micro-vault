@@ -1,12 +1,12 @@
 # micro-vault
 
-micro-vault microservice framework template
+micro-vault microservice dead simple key management service without any golden rings, just simple and secure
 
-This is a small template for creating a new microservice in go. 
+Wofür gibt es diesen Server?
 
-Its not intended to be a fully featured microservice framework, just a small starting point with the things i normally need to build up a small, fast go microservice.
+Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Servicen über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für 3. und auch anderer nicht beteiligte Komponenten nicht einsehbar sein. Es besteht aber zwischen den komunizierenden Servicen keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
-The project structure depends on this: https://github.com/golang-standards/project-layout
+Der Ansatz war ähnlich wie bei TLS. Es gibt einen dritten Vertrau
 
 Features:
 
@@ -20,10 +20,6 @@ Features:
 - chi as the router framework
 - go 1.18
 - automatic config substitution 
-
-## Why using this and not a framework?
-
-Because you gain more flexibility. See this little repo as a starting point for writing your own microservice framework for you or your company.  
 
 ## Configuration
 
