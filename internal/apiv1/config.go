@@ -22,18 +22,14 @@ var (
 	})
 )
 
-/*
-ConfigDescription describres all metadata of a config
-*/
+// ConfigDescription describres all metadata of a config
 type ConfigDescription struct {
 	StoreID  string `json:"storeid"`
 	TenantID string `json:"tenantID"`
 	Size     int    `json:"size"`
 }
 
-/*
-ConfigRoutes getting all routes for the config endpoint
-*/
+// ConfigRoutes getting all routes for the config endpoint
 func ConfigRoutes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/", PostConfig)
@@ -137,9 +133,7 @@ func GetConfigSize(response http.ResponseWriter, request *http.Request) {
 	render.JSON(response, request, tenant)
 }
 
-/*
-getTenant getting the tenant from the request
-*/
+// getTenant getting the tenant from the request
 func getTenant(req *http.Request) string {
 	return req.Header.Get(api.TenantHeaderKey)
 }
