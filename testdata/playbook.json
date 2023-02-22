@@ -1,0 +1,22 @@
+{
+  "groups": [
+    {
+      "name": "group1",
+      "label": {
+        "en": "Group 1",
+        "de": "Gruppe 1"
+      }
+    }
+  ],
+  "clients": [
+    {
+      "name": "tester1",
+      "accesskey": "12345678",
+      "secret": "yxcvb",
+      "groups": [
+        "group1",
+        "group2"
+      ]
+    }
+  ]
+}

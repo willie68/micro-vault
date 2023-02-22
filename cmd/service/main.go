@@ -21,6 +21,8 @@ import (
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/health"
 	"github.com/willie68/micro-vault/internal/serror"
+	"github.com/willie68/micro-vault/internal/services/playbook"
+	"github.com/willie68/micro-vault/internal/services/storage"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
 	"github.com/willie68/micro-vault/pkg/web"
 
@@ -51,6 +53,7 @@ var serviceConfig config.Config
 var tracer opentracing.Tracer
 var sslsrv *http.Server
 var srv *http.Server
+var pbf string
 
 func init() {
 	// variables for parameter override
@@ -60,6 +63,7 @@ func init() {
 	flag.IntVarP(&sslport, "sslport", "t", 0, "port of the https server.")
 	flag.StringVarP(&configFile, "config", "c", config.File, "this is the path and filename to the config file")
 	flag.StringVarP(&serviceURL, "serviceURL", "u", "", "service url from outside")
+	flag.StringVarP(&pbf, "playbook", "b", "", "playbook file for automated init")
 }
 
 func apiRoutes() (*chi.Mux, error) {
@@ -251,6 +255,11 @@ func main() {
 	initConfig()
 	initLogging()
 
+	if err := initServices(serviceConfig.Service); err != nil {
+		log.Logger.Alertf("error creating memory storage: %v", err)
+		panic("error creating memory storage")
+	}
+
 	log.Logger.Info("service is starting")
 
 	var closer io.Closer
@@ -409,6 +418,10 @@ func initConfig() {
 	if serviceURL != "" {
 		serviceConfig.ServiceURL = serviceURL
 	}
+
+	if pbf != "" {
+		serviceConfig.Service.Playbook = pbf
+	}
 }
 
 // initJaeger initialize the jaeger (opentracing) component
@@ -440,4 +453,18 @@ func getApikey() string {
 	value := fmt.Sprintf("%s_%s", config.Servicename, "default")
 	apikey := fmt.Sprintf("%x", md5.Sum([]byte(value)))
 	return strings.ToLower(apikey)
+}
+
+func initServices(c config.Service) error {
+	stg, err := storage.NewMemory()
+	if err != nil {
+		return err
+	}
+
+	if c.Playbook != "" {
+		pb := playbook.NewPlaybook(c.Playbook, stg)
+		err := pb.Play()
+		return err
+	}
+	return nil
 }

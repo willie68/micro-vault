@@ -2,7 +2,8 @@ package model
 
 // Client the model for a client
 type Client struct {
-	AccessKey string
-	Secret    string
-	Groups    []string
+	Name      string   `json:"name"`
+	AccessKey string   `json:"accesskey"`
+	Secret    string   `json:"secret"`
+	Groups    []string `json:"groups"`
 }

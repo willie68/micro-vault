@@ -26,6 +26,8 @@ type Config struct {
 
 	SecretFile string `yaml:"secretfile"`
 
+	Service Service `yaml:"service"`
+
 	Apikey bool `yaml:"apikey"`
 
 	Logging LoggingConfig `yaml:"logging"`
@@ -37,6 +39,11 @@ type Config struct {
 	OpenTracing OpenTracing `yaml:"opentracing"`
 
 	Metrics Metrics `yaml:"metrics"`
+}
+
+// Service the configuration of services inside this ms
+type Service struct {
+	Playbook string `yaml:"playbook"`
 }
 
 // Authentication configuration
