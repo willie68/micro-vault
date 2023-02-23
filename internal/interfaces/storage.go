@@ -19,4 +19,7 @@ type Storage interface {
 	ListClients(c func(g model.Client) bool) error
 	GetClient(a string) (*model.Client, bool)
 	HasClient(n string) bool
+
+	StoreEncryptKey(e model.EncryptKey) error
+	GetEncryptKey(id string) (*model.EncryptKey, bool)
 }

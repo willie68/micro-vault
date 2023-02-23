@@ -15,6 +15,7 @@ import (
 type Memory struct {
 	groups  map[string]model.Group
 	clients sync.Map
+	keys    sync.Map
 }
 
 var _ interfaces.Storage = &Memory{}
@@ -162,4 +163,20 @@ func (m *Memory) GetClient(a string) (*model.Client, bool) {
 	}
 	c := v.(model.Client)
 	return &c, ok
+}
+
+// StoreEncryptKey stores the encrypt keys
+func (m *Memory) StoreEncryptKey(e model.EncryptKey) error {
+	m.keys.Store(e.ID, e)
+	return nil
+}
+
+// GetEncryptKey stores the encrypt keys
+func (m *Memory) GetEncryptKey(id string) (*model.EncryptKey, bool) {
+	k, ok := m.keys.Load(id)
+	if !ok {
+		return nil, false
+	}
+	e := k.(model.EncryptKey)
+	return &e, true
 }

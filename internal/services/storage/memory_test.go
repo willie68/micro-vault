@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/model"
@@ -135,4 +136,33 @@ func TestAddClient(t *testing.T) {
 	n, err = mem.AddClient(cl)
 	ast.NotNil(err)
 	ast.Empty(n)
+}
+
+func TestStoreEncryptKey(t *testing.T) {
+	ast := assert.New(t)
+
+	mem := &Memory{}
+	err := mem.Init()
+	ast.Nil(err)
+
+	e := model.EncryptKey{
+		ID:      "12345678",
+		Alg:     "AES-256",
+		Key:     "murks",
+		Created: time.Now(),
+		Group:   "group",
+	}
+
+	err = mem.StoreEncryptKey(e)
+	ast.Nil(err)
+
+	e1, ok := mem.GetEncryptKey(e.ID)
+	ast.True(ok)
+
+	ast.Equal(e.ID, e1.ID)
+	ast.Equal(e.Alg, e1.Alg)
+	ast.Equal(e.Key, e1.Key)
+	ast.Equal(e.Created, e1.Created)
+	ast.Equal(e.Group, e1.Group)
+
 }
