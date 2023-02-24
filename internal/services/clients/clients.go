@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/lestrrat-go/jwx/jwa"
@@ -21,9 +22,10 @@ import (
 
 // Clients business logic for client management
 type Clients struct {
-	stg    interfaces.Storage
-	srvkey jwk.Key
-	kid    string
+	stg     interfaces.Storage
+	srvkey  jwk.Key
+	kid     string
+	pubkeys sync.Map
 }
 
 // NewClients creates a new clients service
@@ -147,6 +149,54 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	}
 
 	return e, nil
+}
+
+// SetCertificate set the public certificate for this client
+func (c *Clients) SetCertificate(tk string, pc string) error {
+	jt, err := auth.DecodeJWT(tk)
+	if err != nil {
+		return err
+	}
+	if !jt.IsValid {
+		return errors.New("token not valid")
+	}
+	name, ok := jt.Payload["name"]
+	if !ok {
+		return services.ErrNotExists
+	}
+	c.pubkeys.Store(name, pc)
+	return nil
+}
+
+// GetCertificate get the public certificate for another client (by name)
+func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
+	jt, err := auth.DecodeJWT(tk)
+	if err != nil {
+		return "", err
+	}
+	if !jt.IsValid {
+		return "", errors.New("token not valid")
+	}
+	var dc *model.Client
+	c.stg.ListClients(func(g model.Client) bool {
+		if g.Name == cl {
+			dc = &g
+			return false
+		}
+		return true
+	})
+	if dc == nil {
+		return "", services.ErrUnknowError
+	}
+	b, ok := c.pubkeys.Load(dc.Name)
+	if !ok {
+		return "", services.ErrUnknowError
+	}
+	bs, ok := b.(string)
+	if !ok {
+		return "", services.ErrUnknowError
+	}
+	return bs, nil
 }
 
 func search(ss any, s string) bool {

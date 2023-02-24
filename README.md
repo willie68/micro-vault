@@ -4,14 +4,14 @@ micro-vault microservice dead simple key management service without any golden r
 
 ## Wofür gibt es diesen Server?
 
-Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Servicen über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für 3. und auch anderer nicht beteiligte Komponenten nicht einsehbar sein. Es besteht aber zwischen den komunizierenden Servicen keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
+Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
 Der Ansatz war ähnlich wie bei TLS. Es gibt einen dritten Vertrauten, dieser Service, der als Vermittler dient.
 
 Ein Client wird zunächst auf den MicroVault Service eingerichtet. Dabei wird eine AccoutID und ein Secret generiert. Das Secret kann automatisch erneuert werden. Es kann aber auch statisch bleiben. 
 Jeder Client wird dann zu Gruppen hinzu gefügt. Er kann nur die Zertifikate dieser Gruppen sehen. 
 
-Beim Login generiert der Client automatisch ein RSA Zertifikat. Dieses wird dann für diesen Client im MV gespeichert. (Sitzungszertifikat) Dieses Zertifikat kann dann zur Verschlüsselten Kommunikation mit diesem Service verwendet werden. Jeder weitere Client einer der von diesem CLient angehörigen Gruppen, kann das Public Zertifikat dieses Services abrufen. 
+Beim Login generiert der Client automatisch ein RSA Zertifikat. Dieses wird dann für diesen Client im MV gespeichert. (Sitzungszertifikat) Dieses Zertifikat kann dann zur direkten verschlüsselten Kommunikation mit diesem Service verwendet werden. Jeder weitere Client einer der von diesem CLient angehörigen Gruppen, kann das Public Zertifikat dieses Services abrufen. 
 
 Weiterhin kann jeder Client ein neues AES Verschlüsselungszertifikat im MS für einen Gruppe erstellen lassen. Dieses Erhält eine ID. Mit diesem Zertifikat kann dann jeder Client einer Gruppe Daten für diese Gruppe verschlüsseln und das Paket dann samt ID übertragen. Die Gegenstelle kann sich dann über die ID den AES Schlüssel zum Entschlüsseln besorgen, solange Sie ebenfalls zur gleichen Gruppe gehört. 
 

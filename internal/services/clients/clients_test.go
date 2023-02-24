@@ -1,7 +1,11 @@
 package clients
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,4 +89,38 @@ func TestGenAESWrGroup(t *testing.T) {
 	e1, err := cls.GetEncryptKey(tk2, e.ID)
 	ast.NotNil(err)
 	ast.Nil(e1)
+}
+
+func TestClientCertificate(t *testing.T) {
+	inittest(t)
+
+	tk, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+
+	// generate private key
+	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
+	ast.Nil(err)
+
+	publickey := &privatekey.PublicKey
+	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
+	ast.Nil(err)
+
+	pemblock := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubbuf,
+	}
+
+	b := pem.EncodeToMemory(pemblock)
+	bs := string(b)
+	t.Logf("pem: %s", bs)
+
+	err = cls.SetCertificate(tk, bs)
+	ast.Nil(err)
+
+	tk2, err := cls.Login("345678", "yxcvb")
+	ast.Nil(err)
+
+	pub, err := cls.GetCertificate(tk2, "tester1")
+	ast.Nil(err)
+	ast.Equal(bs, pub)
 }
