@@ -135,30 +135,18 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	if !ok {
 		return nil, errors.New("token not valid, no groups")
 	}
-	f := search(gr, group)
-	if !f {
-		return nil, errors.New("group not valid, can't create a key for this group")
-	}
-	id := xid.New().String()
-	buf := make([]byte, 32)
-	_, err = rand.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-	_, err = aes.NewCipher(buf)
-	if err != nil {
-		return nil, err
+
+	e, ok := c.stg.GetEncryptKey(id)
+	if !ok {
+		return nil, services.ErrNotExists
 	}
 
-	e := model.EncryptKey{
-		ID:      id,
-		Alg:     "AES-256",
-		Key:     hex.EncodeToString(buf),
-		Created: time.Now(),
-		Group:   group,
+	f := search(gr, e.Group)
+	if !f {
+		return nil, errors.New("access to key permitted")
 	}
-	err = c.stg.StoreEncryptKey(e)
-	return &e, nil
+
+	return e, nil
 }
 
 func search(ss any, s string) bool {

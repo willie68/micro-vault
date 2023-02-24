@@ -55,8 +55,8 @@ func TestGenerateAES(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(e)
 
-	e1, ok := cls.stg.GetEncryptKey(e.ID)
-	ast.True(ok)
+	e1, err := cls.GetEncryptKey(tk, e.ID)
+	ast.Nil(err)
 
 	ast.Equal(e.ID, e1.ID)
 	ast.Equal(e.Alg, e1.Alg)
@@ -74,4 +74,15 @@ func TestGenAESWrGroup(t *testing.T) {
 	e, err := cls.CreateEncryptKey(tk, "group3")
 	ast.NotNil(err)
 	ast.Nil(e)
+
+	e, err = cls.CreateEncryptKey(tk, "group1")
+	ast.Nil(err)
+	ast.NotNil(e)
+
+	tk2, err := cls.Login("345678", "yxcvb")
+	ast.Nil(err)
+
+	e1, err := cls.GetEncryptKey(tk2, e.ID)
+	ast.NotNil(err)
+	ast.Nil(e1)
 }
