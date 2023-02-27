@@ -2,10 +2,12 @@ package client
 
 import (
 	"bytes"
+	"crypto/aes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -158,11 +160,11 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 	}
 	res, err := c.PostJSON("vault/keys", jd)
 	if err != nil {
-		logging.Logger.Errorf("convert request failed: %v", err)
+		logging.Logger.Errorf("key request failed: %v", err)
 		return "", "", err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("convert bad response: %d", res.StatusCode)
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
 		return "", "", ReadErr(res)
 	}
 	jr := struct {
@@ -171,6 +173,17 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 		Key string `json:"key"`
 	}{}
 	err = ReadJSON(res, &jr)
+	b, err := hex.DecodeString(jr.Key)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return "", "", err
+	}
+	cp, err := aes.NewCipher(b)
+	if err != nil {
+		logging.Logger.Errorf("reconstruct cipher failed: %v", err)
+		return "", "", err
+	}
+	cp.Encrypt(dst []byte, src []byte)
 	return jr.Key, jr.ID, err
 }
 
