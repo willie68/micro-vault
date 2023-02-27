@@ -18,4 +18,6 @@ func TestClientLogin(t *testing.T) {
 	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
+
+	cli.Logout()
 }

@@ -21,6 +21,9 @@ import (
 	"github.com/willie68/micro-vault/internal/services"
 )
 
+// DoClients constant for dependency injection
+const DoClients = "clients"
+
 // Clients business logic for client management
 type Clients struct {
 	stg     interfaces.Storage
@@ -32,9 +35,13 @@ type Clients struct {
 // NewClients creates a new clients service
 func NewClients() (Clients, error) {
 	c := Clients{
-		stg: do.MustInvokeNamed[interfaces.Storage](nil, "storage"),
+		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
 	}
 	err := c.Init()
+	if err != nil {
+		return Clients{}, err
+	}
+	do.ProvideNamedValue[Clients](nil, DoClients, c)
 	return c, err
 }
 
@@ -74,6 +81,7 @@ func (c *Clients) Login(a, s string) (string, error) {
 	t := jwt.New()
 	t.Set(jwt.AudienceKey, "microvault-clients")
 	t.Set(jwt.IssuedAtKey, time.Now())
+	t.Set(jwt.ExpirationKey, time.Now().Add(5*time.Minute))
 	t.Set("name", cl.Name)
 	t.Set("groups", cl.Groups)
 

@@ -15,13 +15,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/health"
-	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/serror"
+	"github.com/willie68/micro-vault/internal/services/clients"
+	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -81,7 +81,7 @@ func apiRoutes() (*chi.Mux, error) {
 
 	// building the routes
 	router.Route("/", func(r chi.Router) {
-		r.Mount(apiv1.VaultRoutes())
+		r.Mount(apiv1.NewVaultHandler().Routes())
 		r.Mount("/", health.Routes())
 		if serviceConfig.Metrics.Enable {
 			r.Mount("/metrics", promhttp.Handler())
@@ -415,16 +415,25 @@ func initJaeger(servicename string, cnfg config.OpenTracing) (opentracing.Tracer
 }
 
 func initServices(c config.Service) error {
-	stg, err := storage.NewMemory()
+	_, err := storage.NewMemory()
 	if err != nil {
 		return err
 	}
-	do.ProvideNamedValue[interfaces.Storage](nil, "storage", stg)
-	if c.Playbook != "" {
-		pb := playbook.NewPlaybook(c.Playbook, stg)
-		err := pb.Play()
+
+	_, err = clients.NewClients()
+	if err != nil {
 		return err
 	}
 
+	_, err = groups.NewGroups()
+	if err != nil {
+		return err
+	}
+
+	if c.Playbook != "" {
+		pb := playbook.NewPlaybook(c.Playbook)
+		err := pb.Play()
+		return err
+	}
 	return nil
 }

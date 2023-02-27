@@ -164,5 +164,4 @@ func TestStoreEncryptKey(t *testing.T) {
 	ast.Equal(e.Key, e1.Key)
 	ast.Equal(e.Created, e1.Created)
 	ast.Equal(e.Group, e1.Group)
-
 }

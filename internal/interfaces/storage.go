@@ -2,6 +2,9 @@ package interfaces
 
 import "github.com/willie68/micro-vault/internal/model"
 
+// DoStorage dependency injection key name for storage
+const DoStorage = "storage"
+
 //go:generate mockery --name=Storage --outpkg=mocks --with-expecter
 // Storage the storage interface definition
 type Storage interface {

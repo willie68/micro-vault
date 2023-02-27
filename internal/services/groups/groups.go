@@ -1,14 +1,27 @@
 package groups
 
 import (
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
 )
 
+// DoGroups dependency injection key name for groups
+const DoGroups = "groups"
+
 // Groups group management
 type Groups struct {
 	stg interfaces.Storage
+}
+
+// NewGroups creating a new groups business object
+func NewGroups() (Groups, error) {
+	gs := Groups{
+		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+	}
+	do.ProvideNamedValue[Groups](nil, DoGroups, gs)
+	return gs, nil
 }
 
 // Init initialize the group management
@@ -36,7 +49,6 @@ func (g *Groups) DeleteGroup(name string) bool {
 		return false
 	}
 	err = g.stg.ListClients(func(g model.Client) bool {
-
 		return true
 	})
 	return ok

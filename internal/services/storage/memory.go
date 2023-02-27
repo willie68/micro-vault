@@ -28,7 +28,7 @@ func NewMemory() (interfaces.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	do.ProvideNamedValue[interfaces.Storage](nil, "storage", &stg)
+	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, &stg)
 	return &stg, nil
 }
 

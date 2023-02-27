@@ -1,6 +1,10 @@
 package apiv1
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+	"strings"
+)
 
 // APIVersion the actual implemented api version
 const APIVersion = "1"
@@ -11,3 +15,9 @@ var BaseURL = fmt.Sprintf("/api/v%s", APIVersion)
 // defining all sub pathes for api v1
 const configSubpath = "/config"
 const vaultSubpath = "/vault"
+
+func token(r *http.Request) (string, error) {
+	tk := r.Header.Get("Authorization")
+	tk = strings.TrimPrefix(tk, "Bearer ")
+	return tk, nil
+}

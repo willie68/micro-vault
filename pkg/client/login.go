@@ -24,5 +24,9 @@ func LoginService(accesskey, secret, url string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = cl.SendCertificate()
+	if err != nil {
+		return nil, err
+	}
 	return &cl, nil
 }

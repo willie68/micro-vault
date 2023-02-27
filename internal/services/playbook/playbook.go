@@ -24,7 +24,7 @@ type Playbook struct {
 // NewPlaybook creating a new playbook
 func NewPlaybook(pf string) Playbook {
 	return Playbook{
-		stg:  do.MustInvokeNamed[interfaces.Storage](nil, "storage"),
+		stg:  do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
 		file: pf,
 	}
 }
@@ -40,18 +40,16 @@ func (p *Playbook) Play() error {
 		if err != nil {
 			log.Logger.Errorf("error adding group %s: %v", g.Name, err)
 			return err
-		} else {
-			log.Logger.Infof("adding group %s", g.Name)
 		}
+		log.Logger.Infof("adding group %s", g.Name)
 	}
 	for _, c := range pb.Clients {
 		_, err := p.stg.AddClient(c)
 		if err != nil {
 			log.Logger.Errorf("error adding client %s: %v", c.Name, err)
 			return err
-		} else {
-			log.Logger.Infof("adding client %s", c.Name)
 		}
+		log.Logger.Infof("adding client %s", c.Name)
 	}
 	return nil
 }
