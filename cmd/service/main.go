@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,10 +15,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/health"
+	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
@@ -46,7 +47,6 @@ import (
 var port int
 var sslport int
 var serviceURL string
-var apikey string
 var ssl bool
 var configFile string
 var serviceConfig config.Config
@@ -71,10 +71,6 @@ func apiRoutes() (*chi.Mux, error) {
 	router := chi.NewRouter()
 	setDefaultHandler(router)
 
-	if serviceConfig.Apikey {
-		setApikeyHandler(router)
-	}
-
 	// jwt is activated, register the Authenticator and Validator
 	if strings.EqualFold(serviceConfig.Auth.Type, "jwt") {
 		err := setJWTHandler(router)
@@ -85,7 +81,7 @@ func apiRoutes() (*chi.Mux, error) {
 
 	// building the routes
 	router.Route("/", func(r chi.Router) {
-		r.Mount(apiv1.ConfigRoutes())
+		r.Mount(apiv1.VaultRoutes())
 		r.Mount("/", health.Routes())
 		if serviceConfig.Metrics.Enable {
 			r.Mount("/metrics", promhttp.Handler())
@@ -110,30 +106,6 @@ func setJWTHandler(router *chi.Mux) error {
 		auth.Authenticator,
 	)
 	return nil
-}
-
-func setApikeyHandler(router *chi.Mux) {
-	router.Use(
-		api.SysAPIHandler(api.SysAPIConfig{
-			Apikey: apikey,
-			SkipFunc: func(r *http.Request) bool {
-				path := strings.TrimSuffix(r.URL.Path, "/")
-				if strings.HasSuffix(path, "/livez") {
-					return true
-				}
-				if strings.HasSuffix(path, "/readyz") {
-					return true
-				}
-				if strings.HasSuffix(path, api.MetricsEndpoint) {
-					return true
-				}
-				if strings.HasPrefix(path, "/client") {
-					return true
-				}
-				return false
-			},
-		}),
-	)
 }
 
 func setDefaultHandler(router *chi.Mux) {
@@ -220,9 +192,7 @@ func healthRoutes() *chi.Mux {
 // @version 1.0
 // @description The GoMicro service is a template for microservices written in go.
 // @BasePath /api/v1
-// @securityDefinitions.apikey api_key
 // @in header
-// @name apikey
 func main() {
 	configFolder, err := config.GetDefaultConfigFolder()
 	if err != nil {
@@ -276,10 +246,6 @@ func main() {
 		log.Logger.Info("ssl active")
 	}
 
-	apikey = getApikey()
-	if config.Get().Apikey {
-		log.Logger.Infof("apikey: %s", apikey)
-	}
 	log.Logger.Infof("ssl: %t", ssl)
 	log.Logger.Infof("serviceURL: %s", serviceConfig.ServiceURL)
 	log.Logger.Infof("%s api routes", config.Servicename)
@@ -448,23 +414,17 @@ func initJaeger(servicename string, cnfg config.OpenTracing) (opentracing.Tracer
 	return tracer, closer
 }
 
-// getApikey generate an apikey based on the service name
-func getApikey() string {
-	value := fmt.Sprintf("%s_%s", config.Servicename, "default")
-	apikey := fmt.Sprintf("%x", md5.Sum([]byte(value)))
-	return strings.ToLower(apikey)
-}
-
 func initServices(c config.Service) error {
 	stg, err := storage.NewMemory()
 	if err != nil {
 		return err
 	}
-
+	do.ProvideNamedValue[interfaces.Storage](nil, "storage", stg)
 	if c.Playbook != "" {
 		pb := playbook.NewPlaybook(c.Playbook, stg)
 		err := pb.Play()
 		return err
 	}
+
 	return nil
 }

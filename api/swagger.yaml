@@ -144,9 +144,4 @@ paths:
       summary: Get size of a store for a tenant
       tags:
       - configs
-securityDefinitions:
-  api_key:
-    in: header
-    name: apikey
-    type: apiKey
 swagger: "2.0"

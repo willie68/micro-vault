@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/samber/do"
 	log "github.com/willie68/micro-vault/internal/logging"
 
 	"github.com/willie68/micro-vault/internal/interfaces"
@@ -21,9 +22,9 @@ type Playbook struct {
 }
 
 // NewPlaybook creating a new playbook
-func NewPlaybook(pf string, stg interfaces.Storage) Playbook {
+func NewPlaybook(pf string) Playbook {
 	return Playbook{
-		stg:  stg,
+		stg:  do.MustInvokeNamed[interfaces.Storage](nil, "storage"),
 		file: pf,
 	}
 }

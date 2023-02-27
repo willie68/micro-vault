@@ -16,28 +16,29 @@ import (
 )
 
 var (
-	ast *assert.Assertions
 	stg interfaces.Storage
 	cls Clients
 )
 
-func inittest(t *testing.T) {
-	ast = assert.New(t)
+func init() {
 	var err error
 	stg, err = storage.NewMemory()
-	ast.Nil(err)
-	ast.NotNil(stg)
-	pb := playbook.NewPlaybook("../../../testdata/playbook.json", stg)
+	if err != nil {
+		panic(1)
+	}
+	pb := playbook.NewPlaybook("../../../testdata/playbook.json")
 	err = pb.Play()
-	ast.Nil(err)
-
-	cls, err = NewClients(stg)
-	ast.Nil(err)
+	if err != nil {
+		panic(1)
+	}
+	cls, err = NewClients()
+	if err != nil {
+		panic(1)
+	}
 }
 
 func TestClientLogin(t *testing.T) {
-	inittest(t)
-
+	ast := assert.New(t)
 	tk, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 	t.Logf("kid: %s, token: %s", cls.KID(), tk)
@@ -50,8 +51,7 @@ func TestClientLogin(t *testing.T) {
 }
 
 func TestGenerateAES(t *testing.T) {
-	inittest(t)
-
+	ast := assert.New(t)
 	tk, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
@@ -70,8 +70,7 @@ func TestGenerateAES(t *testing.T) {
 }
 
 func TestGenAESWrGroup(t *testing.T) {
-	inittest(t)
-
+	ast := assert.New(t)
 	tk, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
@@ -92,8 +91,7 @@ func TestGenAESWrGroup(t *testing.T) {
 }
 
 func TestClientCertificate(t *testing.T) {
-	inittest(t)
-
+	ast := assert.New(t)
 	tk, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 

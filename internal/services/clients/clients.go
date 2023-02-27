@@ -14,6 +14,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/rs/xid"
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
@@ -29,9 +30,9 @@ type Clients struct {
 }
 
 // NewClients creates a new clients service
-func NewClients(stg interfaces.Storage) (Clients, error) {
+func NewClients() (Clients, error) {
 	c := Clients{
-		stg: stg,
+		stg: do.MustInvokeNamed[interfaces.Storage](nil, "storage"),
 	}
 	err := c.Init()
 	return c, err

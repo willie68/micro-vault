@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
 )
@@ -27,6 +28,7 @@ func NewMemory() (interfaces.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
+	do.ProvideNamedValue[interfaces.Storage](nil, "storage", &stg)
 	return &stg, nil
 }
 

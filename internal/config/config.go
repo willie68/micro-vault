@@ -28,8 +28,6 @@ type Config struct {
 
 	Service Service `yaml:"service"`
 
-	Apikey bool `yaml:"apikey"`
-
 	Logging LoggingConfig `yaml:"logging"`
 
 	HealthCheck HealthCheck `yaml:"healthcheck"`
@@ -83,7 +81,6 @@ var DefaultConfig = Config{
 	Sslport:    8443,
 	ServiceURL: "https://127.0.0.1:8443",
 	SecretFile: "",
-	Apikey:     true,
 	HealthCheck: HealthCheck{
 		Period: 30,
 	},

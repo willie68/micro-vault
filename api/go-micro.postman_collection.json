@@ -9,13 +9,7 @@
 			"name": "ssl metrics",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "https://127.0.0.1:9543/metrics",
 					"protocol": "https",
@@ -37,14 +31,7 @@
 			"name": "ssl health",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text",
-						"disabled": true
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "https://127.0.0.1:9543/livez",
 					"protocol": "https",
@@ -66,14 +53,7 @@
 			"name": "ssl readiness",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text",
-						"disabled": true
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "https://127.0.0.1:9543/readyz",
 					"protocol": "https",
@@ -95,14 +75,7 @@
 			"name": "plain metrics",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text",
-						"disabled": true
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "http://127.0.0.1:9580/metrics",
 					"protocol": "http",
@@ -124,14 +97,7 @@
 			"name": "plain health",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text",
-						"disabled": true
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "http://127.0.0.1:9580/livez",
 					"protocol": "http",
@@ -153,14 +119,7 @@
 			"name": "plain readiness",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "apikey",
-						"value": "8723a34c54a53c70071cf86dfb1d8744",
-						"type": "text",
-						"disabled": true
-					}
-				],
+				"header": [],
 				"url": {
 					"raw": "http://127.0.0.1:9580/readyz",
 					"protocol": "http",
