@@ -15,6 +15,8 @@ Beim Login generiert der Client automatisch ein RSA Zertifikat. Dieses wird dann
 
 Weiterhin kann jeder Client ein neues AES Verschlüsselungszertifikat im MS für einen Gruppe erstellen lassen. Dieses Erhält eine ID. Mit diesem Zertifikat kann dann jeder Client einer Gruppe Daten für diese Gruppe verschlüsseln und das Paket dann samt ID übertragen. Die Gegenstelle kann sich dann über die ID den AES Schlüssel zum Entschlüsseln besorgen, solange Sie ebenfalls zur gleichen Gruppe gehört. 
 
+Als 3. Feature kann man über einen Datenbereich eine Signatur bilden und diese auch wieder prüfen.
+
 Sämtliche Kommunikation vom und zum MV ist per TLS verschlüsselt. 
 Es gibt 2 Interface Bereiche, einmal der Admin Bereich für das Management und der Client Bereich für den Austausch. Später kann es noch einen Kommunikationsbereich geben, wo sich Client über Daten austauschen.   
 
@@ -40,7 +42,7 @@ Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes
 
 ## Kommunikationsablauf
 
-### Usecase A: Client A möchte an alle Clients der Gruppe B eine verschlüsselte Nachricht schicken.
+### Usecase 1: Client A möchte an alle Clients der Gruppe B eine verschlüsselte Nachricht schicken.
 
 - Client A meldet sich mit AccessKey und Secret an -> MV gibt ein JWToken zurück
 - Client fordert ein Gruppen-Verschlüssellungszertifikat an -> MV generiert für die Gruppe B einen AES Schlüssel und eine ID. Beides wird als Antwort zu Client A gesendet.
@@ -50,11 +52,19 @@ Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes
 - Client C fordert den Schlüssel mit der ID an, -> MV sucht in allen Gruppen von Client C nach dem Schlüssel zu ID, liefert diesen dann zurück
 - Client C entschlüsselt die Nachricht. 
 
-### Usecase B: Client A möchte an Client B eine verschlüsselte Nachricht schicken
+### Usecase 2: Client A möchte an Client B eine verschlüsselte Nachricht schicken
 
 - Client A meldet sich mit AccessKey und Secret an -> MV gibt ein JWToken zurück
 - Client fordert den Public Key von Client B an -> MV prüft ob A und B gemeinsame Gruppen haben. Public Key B wird als Antwort zu Client A gesendet.
 - Client verschlüsselt die Nachricht und versendet das ganze.
+- Client B ruft die Nachricht ab.
+- Client B entschlüsselt die Nachricht mit persönlichem Schlüssel. 
+
+### Usecase 3: Client A möchte Daten einer Nachricht mit einer Signatur versehen
+
+- Client A meldet sich mit AccessKey und Secret an -> MV gibt ein JWToken zurück
+- Client A bildet mit seinem privaten Schlüssel über die Daten eine Signatur
+- Client A versendet die Nachricht, die Signatur und seinen Namen mit .
 - Client B ruft die Nachricht ab.
 - Client B entschlüsselt die Nachricht mit persönlichem Schlüssel. 
 

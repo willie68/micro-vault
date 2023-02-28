@@ -67,25 +67,12 @@ func Decrypt(key []byte, cryptoText string) (string, error) {
 
 // EncryptPEM string to base64 crypto using PEM File with public key
 func EncryptPEM(key string, text string) (string, error) {
-	block, _ := pem.Decode([]byte(key))
-	if block == nil || block.Type != "PUBLIC KEY" {
-		return "", errors.New("error getting public key")
-	}
-
-	p, err := x509.ParsePKIXPublicKey(block.Bytes)
+	pub, err := pem2pub(key)
 	if err != nil {
 		return "", err
 	}
-	pub, ok := p.(*rsa.PublicKey)
-	if !ok {
-		return "", errors.New("key is not a rsa public key")
-	}
-	ciphertext, err := rsa.EncryptOAEP(
-		sha256.New(),
-		rand.Reader,
-		pub,
-		[]byte(text),
-		nil)
+
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, []byte(text), nil)
 
 	if err != nil {
 		return "", err
@@ -94,6 +81,7 @@ func EncryptPEM(key string, text string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
+// DecryptKey decrypting a message with a private key
 func DecryptKey(pk rsa.PrivateKey, dt string) (string, error) {
 
 	b, err := base64.StdEncoding.DecodeString(dt)
@@ -105,4 +93,78 @@ func DecryptKey(pk rsa.PrivateKey, dt string) (string, error) {
 		return "", err
 	}
 	return string(db), nil
+}
+
+// Sign singing a data part with a private key
+func Sign(pk rsa.PrivateKey, dt string) (string, error) {
+	// Before signing, we need to hash our message
+	// The hash is what we actually sign
+	msgHashSum, err := hashme(dt)
+	if err != nil {
+		return "", err
+	}
+
+	// In order to generate the signature, we provide a random number generator,
+	// our private key, the hashing algorithm that we used, and the hash sum
+	// of our message
+	signature, err := rsa.SignPSS(rand.Reader, &pk, crypto.SHA256, msgHashSum, nil)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(signature), nil
+}
+
+// SignCheckPEM check a signature of a data string
+func SignCheckPEM(key string, signature, dt string) (bool, error) {
+	// Before signing, we need to hash our message
+	// The hash is what we actually sign
+	msgHashSum, err := hashme(dt)
+	if err != nil {
+		return false, err
+	}
+
+	pub, err := pem2pub(key)
+	if err != nil {
+		return false, err
+	}
+
+	sig, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return false, err
+	}
+
+	err = rsa.VerifyPSS(pub, crypto.SHA256, msgHashSum, sig, nil)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func pem2pub(key string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(key))
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, errors.New("error getting public key")
+	}
+
+	p, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	pub, ok := p.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("key is not a rsa public key")
+	}
+	return pub, nil
+}
+
+func hashme(dt string) ([]byte, error) {
+	msg := []byte(dt)
+	// Before signing, we need to hash our message
+	// The hash is what we actually sign
+	msgHash := sha256.New()
+	_, err := msgHash.Write(msg)
+	if err != nil {
+		return []byte{}, err
+	}
+	return msgHash.Sum(nil), nil
 }

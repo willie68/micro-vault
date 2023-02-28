@@ -227,26 +227,12 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 
 // Encrypt4Client encrypting data string for a special client
 func (c *Client) Encrypt4Client(n, dt string) (string, error) {
-	err := c.checkToken()
+	pub, err := c.GetPublicKey(n)
 	if err != nil {
 		return "", err
 	}
 
-	res, err := c.Get(fmt.Sprintf("vault/certificate/%s", n))
-	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
-		return "", err
-	}
-	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
-		return "", ReadErr(res)
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
-		return "", err
-	}
-	cs, err := cry.EncryptPEM(string(b), dt)
+	cs, err := cry.EncryptPEM(pub, dt)
 	if err != nil {
 		logging.Logger.Errorf("encryption failed: %v", err)
 		return "", err
@@ -266,6 +252,44 @@ func (c *Client) Decrypt4Client(dt string) (string, error) {
 		return "", err
 	}
 	return cs, err
+}
+
+// Sign data with the private key
+func (c *Client) Sign(dt string) (string, error) {
+	return cry.Sign(*c.privatekey, dt)
+}
+
+// SignCheck data with the public key
+func (c *Client) SignCheck(n, sig, dt string) (bool, error) {
+	pub, err := c.GetPublicKey(n)
+	if err != nil {
+		return false, err
+	}
+	return cry.SignCheckPEM(pub, sig, dt)
+}
+
+// GetPublicKey getting the public key of another client by name
+func (c *Client) GetPublicKey(n string) (string, error) {
+	err := c.checkToken()
+	if err != nil {
+		return "", err
+	}
+
+	res, err := c.Get(fmt.Sprintf("vault/certificate/%s", n))
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return "", ReadErr(res)
+	}
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return "", err
+	}
+	return string(b), nil
 }
 
 // Get getting something from the endpoint

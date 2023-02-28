@@ -115,3 +115,42 @@ func TestEncryptClient(t *testing.T) {
 	ast.Equal(orgtxt, text)
 	t.Logf("text: %s", text)
 }
+
+func TestSigning(t *testing.T) {
+	ast := assert.New(t)
+	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+	defer cli.Logout()
+
+	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli2)
+	defer cli2.Logout()
+
+	dt := struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{
+		Username: "Willie",
+		Password: "sehrGeheim",
+	}
+
+	js, err := json.Marshal(dt)
+	ast.Nil(err)
+	ast.NotNil(js)
+	orgtxt := string(js)
+
+	sig, err := cli.Sign(orgtxt)
+	ast.Nil(err)
+	ast.NotEmpty(sig)
+	t.Logf("signature: %s", sig)
+
+	ok, err := cli2.SignCheck("tester1", sig, orgtxt)
+	ast.Nil(err)
+	ast.True(ok)
+
+	ok, err = cli2.SignCheck("tester2", sig, orgtxt)
+	ast.NotNil(err)
+	ast.False(ok)
+}
