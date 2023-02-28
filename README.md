@@ -64,9 +64,10 @@ Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes
 
 - Client A meldet sich mit AccessKey und Secret an -> MV gibt ein JWToken zurück
 - Client A bildet mit seinem privaten Schlüssel über die Daten eine Signatur
-- Client A versendet die Nachricht, die Signatur und seinen Namen mit .
-- Client B ruft die Nachricht ab.
-- Client B entschlüsselt die Nachricht mit persönlichem Schlüssel. 
+- Client A versendet die Nachricht, die Signatur und seinen Namen.
+- Client B ruft die Nachricht, Signatur und den Namen ab.
+- Client B fordert den öffentlichen Schlüssel von Client A an -> MV prüft die gemeinsamen Gruppen 
+- Client B prüft die Signatur. 
 
 ## Playbook
 
