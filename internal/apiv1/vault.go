@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/auth"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -32,6 +34,7 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/login", v.PostLogin)
 	router.Post("/certificate", v.PostCert)
+	router.Get("/certificate/{name}", v.GetCert)
 	router.Post("/keys", v.PostKeys)
 	router.Get("/keys/{id}", v.GetKey)
 	return BaseURL + vaultSubpath, router
@@ -117,6 +120,43 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 		return
 	}
 	render.Status(request, http.StatusOK)
+}
+
+// GetCert getting the public key of a client certificate for the named client
+// @Summary getting the public key of a client certificate for the named client
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/certificate/{name} [post]
+func (v *VaultHandler) GetCert(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	name := chi.URLParam(request, "name")
+	if name == "" {
+		httputils.Err(response, request, serror.Wrapc(errors.New("name should not be empty"), http.StatusBadRequest))
+		return
+	}
+	ct, err := v.cl.GetCertificate(tk, name)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	render.Status(request, http.StatusOK)
+	response.Header().Add("Content-Type", "application/x-pem-file")
+	_, err = response.Write([]byte(ct))
+	if err != nil {
+		logging.Logger.Errorf("error writing PEM: %v", err)
+	}
 }
 
 // PostKeys posting data to generate a new key for group

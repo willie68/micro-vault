@@ -13,6 +13,13 @@
         "en": "Group 3",
         "de": "Gruppe 3"
       }
+    },
+    {
+      "name": "group4",
+      "label": {
+        "en": "Group 4",
+        "de": "Gruppe 4"
+      }
     }
   ],
   "clients": [
@@ -22,7 +29,8 @@
       "secret": "yxcvb",
       "groups": [
         "group1",
-        "group2"
+        "group2",
+        "group4"
       ]
     },
     {
@@ -30,7 +38,8 @@
       "accesskey": "87654321",
       "secret": "yxcvb",
       "groups": [
-        "group2"
+        "group2",
+        "group4"
       ]
     },
     {

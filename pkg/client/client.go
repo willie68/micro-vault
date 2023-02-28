@@ -173,6 +173,10 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 		Key string `json:"key"`
 	}{}
 	err = ReadJSON(res, &jr)
+	if err != nil {
+		logging.Logger.Errorf("json convert failed: %v", err)
+		return "", "", err
+	}
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
 		logging.Logger.Errorf("hex convert failed: %v", err)
@@ -216,6 +220,49 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 	cs, err := cry.Decrypt(b, dt)
 	if err != nil {
 		logging.Logger.Errorf("reconstruct cipher failed: %v", err)
+		return "", err
+	}
+	return cs, err
+}
+
+// Encrypt4Client encrypting data string for a special client
+func (c *Client) Encrypt4Client(n, dt string) (string, error) {
+	err := c.checkToken()
+	if err != nil {
+		return "", err
+	}
+
+	res, err := c.Get(fmt.Sprintf("vault/certificate/%s", n))
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return "", ReadErr(res)
+	}
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return "", err
+	}
+	cs, err := cry.EncryptPEM(string(b), dt)
+	if err != nil {
+		logging.Logger.Errorf("encryption failed: %v", err)
+		return "", err
+	}
+	return cs, err
+}
+
+// Decrypt4Client encrypting data string for me
+func (c *Client) Decrypt4Client(dt string) (string, error) {
+	err := c.checkToken()
+	if err != nil {
+		return "", err
+	}
+
+	cs, err := cry.DecryptKey(*c.privatekey, dt)
+	if err != nil {
 		return "", err
 	}
 	return cs, err
