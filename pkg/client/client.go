@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"crypto/aes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
+	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"golang.org/x/net/context"
 )
 
@@ -178,13 +178,47 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 		logging.Logger.Errorf("hex convert failed: %v", err)
 		return "", "", err
 	}
-	cp, err := aes.NewCipher(b)
+	cs, err := cry.Encrypt(b, dt)
 	if err != nil {
 		logging.Logger.Errorf("reconstruct cipher failed: %v", err)
 		return "", "", err
 	}
-	cp.Encrypt(dst []byte, src []byte)
-	return jr.Key, jr.ID, err
+	return cs, jr.ID, err
+}
+
+// Decrypt4Group encrypting data string for a group
+func (c *Client) Decrypt4Group(id, dt string) (string, error) {
+	err := c.checkToken()
+	if err != nil {
+		return "", err
+	}
+
+	res, err := c.Get(fmt.Sprintf("vault/keys/%s", id))
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return "", ReadErr(res)
+	}
+	jr := struct {
+		ID  string `json:"id"`
+		Alg string `json:"alg"`
+		Key string `json:"key"`
+	}{}
+	err = ReadJSON(res, &jr)
+	b, err := hex.DecodeString(jr.Key)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return "", err
+	}
+	cs, err := cry.Decrypt(b, dt)
+	if err != nil {
+		logging.Logger.Errorf("reconstruct cipher failed: %v", err)
+		return "", err
+	}
+	return cs, err
 }
 
 // Get getting something from the endpoint

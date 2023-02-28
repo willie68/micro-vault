@@ -25,11 +25,18 @@ func TestCreateEncryption(t *testing.T) {
 
 	js, err := json.Marshal(dt)
 	ast.Nil(err)
+	orgtxt := string(js)
 
-	b, id, err := cli.Encrypt4Group("group1", string(js))
+	b, id, err := cli.Encrypt4Group("group1", orgtxt)
 	ast.Nil(err)
 	ast.NotNil(js)
 	ast.NotEmpty(id)
 	ast.True(len(b) > 0)
-	t.Logf("id: %s \r\nkey: %s", id, b)
+	t.Logf("id: %s \r\ndata: %s", id, b)
+
+	text, err := cli.Decrypt4Group(id, b)
+	ast.Nil(err)
+	ast.NotEmpty(text)
+	ast.Equal(orgtxt, text)
+	t.Logf("text: %s", text)
 }

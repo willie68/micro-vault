@@ -33,6 +33,7 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router.Post("/login", v.PostLogin)
 	router.Post("/certificate", v.PostCert)
 	router.Post("/keys", v.PostKeys)
+	router.Get("/keys/{id}", v.GetKey)
 	return BaseURL + vaultSubpath, router
 }
 
@@ -145,6 +146,41 @@ func (v *VaultHandler) PostKeys(response http.ResponseWriter, request *http.Requ
 	}
 
 	ek, err := v.cl.CreateEncryptKey(tk, jd.Group)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	jk := struct {
+		ID  string `json:"id"`
+		Alg string `json:"alg"`
+		Key string `json:"key"`
+	}{
+		ID:  ek.ID,
+		Alg: ek.Alg,
+		Key: ek.Key,
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, jk)
+}
+
+// GetKey getting a single key
+// @Summary getting a single key
+// @Tags configs
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param id id of key
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/keys/{id} [post]
+func (v *VaultHandler) GetKey(response http.ResponseWriter, request *http.Request) {
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	id := chi.URLParam(request, "id")
+	ek, err := v.cl.GetEncryptKey(tk, id)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
