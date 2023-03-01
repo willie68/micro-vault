@@ -26,7 +26,11 @@ func init() {
 	if err != nil {
 		panic(1)
 	}
-	pb := playbook.NewPlaybook("../../../testdata/playbook.json")
+	pb := playbook.NewPlaybookFile("../../../testdata/playbook.json")
+	err = pb.Load()
+	if err != nil {
+		panic(1)
+	}
 	err = pb.Play()
 	if err != nil {
 		panic(1)

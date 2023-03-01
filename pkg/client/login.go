@@ -2,10 +2,22 @@ package client
 
 import "github.com/willie68/micro-vault/internal/logging"
 
-// LoginAdmin login an admin via username password
-func LoginAdmin(u string, p []byte) (*AdminCL, error) {
+// LoginAdminUP login an admin via username password
+func LoginAdminUP(u string, p []byte, url string) (*AdminCl, error) {
 	logging.Logger.Infof("login as admin with user with password: %s %v", u, len(p) > 0)
-	return &AdminCL{}, nil
+	acl := &AdminCl{
+		username: u,
+		password: p,
+	}
+	err := acl.init(url)
+	if err != nil {
+		return nil, err
+	}
+	err = acl.Login()
+	if err != nil {
+		return nil, err
+	}
+	return acl, nil
 }
 
 // LoginService logging in as a client service

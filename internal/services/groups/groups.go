@@ -48,8 +48,6 @@ func (g *Groups) DeleteGroup(name string) bool {
 	if err != nil {
 		return false
 	}
-	err = g.stg.ListClients(func(g model.Client) bool {
-		return true
-	})
+	// TODO check clients with that group?
 	return ok
 }

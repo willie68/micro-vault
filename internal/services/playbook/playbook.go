@@ -18,24 +18,42 @@ import (
 // Playbook is a class which can play a playbook file for automated creation of groups and clients
 type Playbook struct {
 	stg  interfaces.Storage
+	pm   *model.Playbook
 	file string
 }
 
-// NewPlaybook creating a new playbook
-func NewPlaybook(pf string) Playbook {
+// NewPlaybookFile creating a new playbook
+func NewPlaybookFile(pf string) Playbook {
 	return Playbook{
 		stg:  do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
 		file: pf,
 	}
 }
 
-// Play initialize with a playbook file
-func (p *Playbook) Play() error {
-	pb, err := loadFromFile(p.file)
+// NewPlaybook creating a new playbook
+func NewPlaybook(pm model.Playbook) Playbook {
+	return Playbook{
+		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+		pm:  &pm,
+	}
+}
+
+// Load initialize with a playbook file
+func (p *Playbook) Load() error {
+	pm, err := loadFromFile(p.file)
 	if err != nil {
 		return err
 	}
-	for _, g := range pb.Groups {
+	p.pm = pm
+	return nil
+}
+
+// Play initialize with a playbook file
+func (p *Playbook) Play() error {
+	if p.pm == nil {
+		return nil
+	}
+	for _, g := range p.pm.Groups {
 		_, err := p.stg.AddGroup(g)
 		if err != nil {
 			log.Logger.Errorf("error adding group %s: %v", g.Name, err)
@@ -43,7 +61,7 @@ func (p *Playbook) Play() error {
 		}
 		log.Logger.Infof("adding group %s", g.Name)
 	}
-	for _, c := range pb.Clients {
+	for _, c := range p.pm.Clients {
 		_, err := p.stg.AddClient(c)
 		if err != nil {
 			log.Logger.Errorf("error adding client %s: %v", c.Name, err)

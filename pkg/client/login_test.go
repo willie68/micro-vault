@@ -8,7 +8,7 @@ import (
 
 func TestSimpleAdminLogin(t *testing.T) {
 	ast := assert.New(t)
-	adm, err := LoginAdmin("willie", []byte("password"))
+	adm, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(adm)
 }

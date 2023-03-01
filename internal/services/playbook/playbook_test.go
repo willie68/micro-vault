@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services/storage"
 
 	"github.com/stretchr/testify/assert"
@@ -22,10 +23,13 @@ func init() {
 func TestPlaybook(t *testing.T) {
 	ast := assert.New(t)
 
-	pb := NewPlaybook("../../../testdata/playbook.json")
+	pb := NewPlaybookFile("../../../testdata/playbook.json")
 	ast.NotNil(pb)
 
-	err := pb.Play()
+	err := pb.Load()
+	ast.Nil(err)
+
+	err = pb.Play()
 	ast.Nil(err)
 
 	ok := stg.HasGroup("group1")
@@ -37,13 +41,56 @@ func TestPlaybook(t *testing.T) {
 func TestPlaybookMissingFile(t *testing.T) {
 	ast := assert.New(t)
 
-	pb := NewPlaybook("../../../testdata/playbook1.json")
+	pb := NewPlaybookFile("../../../testdata/playbook1.json")
 	ast.NotNil(pb)
-	err := pb.Play()
+	err := pb.Load()
 	ast.NotNil(err)
-
-	pb = NewPlaybook("../../../testdata/playbook.yaml")
-	ast.NotNil(pb)
 	err = pb.Play()
+	ast.Nil(err)
+
+	pb = NewPlaybookFile("../../../testdata/playbook.yaml")
+	ast.NotNil(pb)
+	err = pb.Load()
 	ast.NotNil(err)
+}
+
+func TestPlaybookModel(t *testing.T) {
+	ast := assert.New(t)
+	stg.Init()
+
+	pm := model.Playbook{
+		Groups: []model.Group{
+			model.Group{
+				Name: "group1",
+			},
+			model.Group{
+				Name: "group2",
+			},
+		},
+		Clients: []model.Client{
+			model.Client{
+				Name:      "tester1",
+				AccessKey: "123",
+			},
+			model.Client{
+				Name:      "tester2",
+				AccessKey: "456",
+			},
+		},
+	}
+	pb := NewPlaybook(pm)
+
+	ast.False(stg.HasGroup("group1"))
+	ast.False(stg.HasClient("tester1"))
+
+	err := pb.Play()
+	ast.Nil(err)
+
+	ast.True(stg.HasGroup("group1"))
+
+	ast.True(stg.HasClient("tester1"))
+
+	ast.True(stg.HasClient("tester2"))
+
+	ast.False(stg.HasClient("tester3"))
 }

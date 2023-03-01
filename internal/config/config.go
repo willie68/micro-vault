@@ -15,6 +15,9 @@ import (
 // Servicename the name of this service
 const Servicename = "micro-vault"
 
+// DoServiceConfig the name of the injected config
+const DoServiceConfig = "service_config"
+
 // Config our service configuration
 type Config struct {
 	// port of the http server
@@ -42,6 +45,8 @@ type Config struct {
 // Service the configuration of services inside this ms
 type Service struct {
 	Playbook string `yaml:"playbook"`
+	Rootuser string `yaml:"rootuser"`
+	Rootpwd  string `yaml:"rootpwd"`
 }
 
 // Authentication configuration

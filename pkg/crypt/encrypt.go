@@ -83,7 +83,6 @@ func EncryptPEM(key string, text string) (string, error) {
 
 // DecryptKey decrypting a message with a private key
 func DecryptKey(pk rsa.PrivateKey, dt string) (string, error) {
-
 	b, err := base64.StdEncoding.DecodeString(dt)
 	if err != nil {
 		return "", err

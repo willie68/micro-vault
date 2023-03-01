@@ -15,6 +15,7 @@ var BaseURL = fmt.Sprintf("/api/v%s", APIVersion)
 // defining all sub pathes for api v1
 const configSubpath = "/config"
 const vaultSubpath = "/vault"
+const adminSubpath = "/admin"
 
 func token(r *http.Request) (string, error) {
 	tk := r.Header.Get("Authorization")

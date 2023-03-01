@@ -84,11 +84,11 @@ func (c *Client) Login() error {
 	}
 	res, err := c.PostJSON("vault/login", up)
 	if err != nil {
-		logging.Logger.Errorf("convert request failed: %v", err)
+		logging.Logger.Errorf("login request failed: %v", err)
 		return err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("convert bad response: %d", res.StatusCode)
+		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	ds := struct {
@@ -98,7 +98,7 @@ func (c *Client) Login() error {
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
-		logging.Logger.Errorf("convert request failed: %v", err)
+		logging.Logger.Errorf("parsing response failed: %v", err)
 		return err
 	}
 	if ds.Token == "" {
@@ -123,7 +123,7 @@ func (c *Client) SendCertificate() error {
 	publickey := &c.privatekey.PublicKey
 	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
 	if err != nil {
-		logging.Logger.Errorf("convert request failed: %v", err)
+		logging.Logger.Errorf("create public key failed: %v", err)
 		return err
 	}
 
@@ -136,11 +136,11 @@ func (c *Client) SendCertificate() error {
 
 	res, err := c.Post("vault/certificate", "application/x-pem-file", strings.NewReader(string(b)))
 	if err != nil {
-		logging.Logger.Errorf("convert request failed: %v", err)
+		logging.Logger.Errorf("post certificate request failed: %v", err)
 		return err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("convert bad response: %d", res.StatusCode)
+		logging.Logger.Errorf("certificate bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil

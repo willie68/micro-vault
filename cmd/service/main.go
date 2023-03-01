@@ -15,11 +15,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/health"
 	"github.com/willie68/micro-vault/internal/serror"
+	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/playbook"
@@ -82,6 +84,7 @@ func apiRoutes() (*chi.Mux, error) {
 	// building the routes
 	router.Route("/", func(r chi.Router) {
 		r.Mount(apiv1.NewVaultHandler().Routes())
+		r.Mount(apiv1.NewAdminHandler().Routes())
 		r.Mount("/", health.Routes())
 		if serviceConfig.Metrics.Enable {
 			r.Mount("/metrics", promhttp.Handler())
@@ -388,6 +391,7 @@ func initConfig() {
 	if pbf != "" {
 		serviceConfig.Service.Playbook = pbf
 	}
+	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, serviceConfig)
 }
 
 // initJaeger initialize the jaeger (opentracing) component
@@ -430,8 +434,17 @@ func initServices(c config.Service) error {
 		return err
 	}
 
+	_, err = admin.NewAdmin()
+	if err != nil {
+		return err
+	}
+
 	if c.Playbook != "" {
-		pb := playbook.NewPlaybook(c.Playbook)
+		pb := playbook.NewPlaybookFile(c.Playbook)
+		err := pb.Load()
+		if err != nil {
+			return err
+		}
 		err := pb.Play()
 		return err
 	}

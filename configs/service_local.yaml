@@ -7,6 +7,10 @@ serviceURL: https://127.0.0.1:9543
 #sercret file for storing usernames and passwords
 secretfile: configs/secret.yaml
 
+service:
+  rootuser: root
+  rootpwd: yxcvb
+
 logging:
     gelf-url: 127.0.0.1
     gelf-port: 12201

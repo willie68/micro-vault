@@ -26,10 +26,11 @@ const DoClients = "clients"
 
 // Clients business logic for client management
 type Clients struct {
-	stg     interfaces.Storage
-	srvkey  jwk.Key
-	kid     string
-	pubkeys sync.Map
+	stg       interfaces.Storage
+	publickey rsa.PublicKey
+	srvkey    jwk.Key
+	kid       string
+	pubkeys   sync.Map
 }
 
 // NewClients creates a new clients service
@@ -50,6 +51,16 @@ func (c *Clients) KID() string {
 	return c.kid
 }
 
+// Key getting the server key
+func (c *Clients) Key() jwk.Key {
+	return c.srvkey
+}
+
+// PublicKey return the public key for checking the signature of a token
+func (c *Clients) PublicKey() rsa.PublicKey {
+	return c.publickey
+}
+
 // Init initialize the clients service
 func (c *Clients) Init() error {
 	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -58,6 +69,7 @@ func (c *Clients) Init() error {
 		return err
 	}
 	key, err := jwk.New(rsk)
+	c.publickey = rsk.PublicKey
 	err = jwk.AssignKeyID(key)
 	if err != nil {
 		log.Printf("failed to generate private key: %s", err)
