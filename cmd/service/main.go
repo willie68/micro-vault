@@ -445,7 +445,7 @@ func initServices(c config.Service) error {
 		if err != nil {
 			return err
 		}
-		err := pb.Play()
+		err = pb.Play()
 		return err
 	}
 	return nil

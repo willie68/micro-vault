@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/willie68/micro-vault/internal/logging"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 	"golang.org/x/net/context"
 )
 
@@ -111,6 +112,90 @@ func (a *AdminCl) SendPlaybook(pb string) error {
 	return nil
 }
 
+// Groups getting a list of groups
+func (a *AdminCl) Groups() ([]pmodel.Group, error) {
+	err := a.checkToken()
+	if err != nil {
+		return []pmodel.Group{}, err
+	}
+
+	res, err := a.Get("admin/groups")
+	if err != nil {
+		logging.Logger.Errorf("playbook request failed: %v", err)
+		return []pmodel.Group{}, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("playbook bad response: %d", res.StatusCode)
+		return []pmodel.Group{}, ReadErr(res)
+	}
+	gs := make([]pmodel.Group, 0)
+	err = ReadJSON(res, &gs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return []pmodel.Group{}, err
+	}
+
+	return gs, nil
+}
+
+// Clients getting a list of groups
+func (a *AdminCl) Clients() ([]pmodel.Client, error) {
+	err := a.checkToken()
+	if err != nil {
+		return []pmodel.Client{}, err
+	}
+
+	res, err := a.Get("admin/clients")
+	if err != nil {
+		logging.Logger.Errorf("clients request failed: %v", err)
+		return []pmodel.Client{}, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("clients bad response: %d", res.StatusCode)
+		return []pmodel.Client{}, ReadErr(res)
+	}
+	cs := make([]pmodel.Client, 0)
+	err = ReadJSON(res, &cs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return []pmodel.Client{}, err
+	}
+
+	return cs, nil
+}
+
+// NewClient getting a list of groups
+func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
+	err := a.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	du := struct {
+		Name   string   `json:"name"`
+		Groups []string `json:"groups"`
+	}{
+		Name:   n,
+		Groups: g,
+	}
+	res, err := a.PostJSON("admin/clients", du)
+	if err != nil {
+		logging.Logger.Errorf("add client request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusCreated {
+		logging.Logger.Errorf("add client bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var cs pmodel.Client
+	err = ReadJSON(res, &cs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return nil, err
+	}
+
+	return &cs, nil
+}
+
 // PostJSON posting a json string to the endpoint
 func (a *AdminCl) PostJSON(endpoint string, body any) (*http.Response, error) {
 	byt, err := json.Marshal(body)
@@ -127,6 +212,15 @@ func (a *AdminCl) Post(endpoint, contentType string, body io.Reader) (*http.Resp
 		return nil, err
 	}
 	req.Header.Set("Content-Type", contentType)
+	return a.do(req)
+}
+
+// Get getting something from the endpoint
+func (a *AdminCl) Get(endpoint string) (*http.Response, error) {
+	req, err := a.newRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
 	return a.do(req)
 }
 

@@ -10,10 +10,12 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/auth"
+	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 // AdminHandler handler for handling REST calls for admin endpoints
@@ -35,6 +37,9 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/login", a.PostLogin)
 	router.Post("/playbook", a.PostPlaybook)
+	router.Get("/groups", a.GetGroups)
+	router.Get("/clients", a.GetClients)
+	router.Post("/clients", a.PostClient)
 	return BaseURL + adminSubpath, router
 }
 
@@ -51,15 +56,15 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 // @Router /vault/login [post]
 func (a *AdminHandler) PostLogin(response http.ResponseWriter, request *http.Request) {
 	up := struct {
-		AccessKey string `json:"accesskey"`
-		Secret    string `json:"secret"`
+		Username string `json:"user"`
+		Password []byte `json:"pwd"`
 	}{}
 	err := json.NewDecoder(request.Body).Decode(&up)
 	if err != nil {
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return
 	}
-	t, err := a.cl.Login(up.AccessKey, up.Secret)
+	t, err := a.adm.LoginUP(up.Username, []byte(up.Password))
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -110,12 +115,129 @@ func (a *AdminHandler) PostPlaybook(response http.ResponseWriter, request *http.
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	pem := string(b)
-
-	err = a.cl.SetCertificate(tk, pem)
+	var pm model.Playbook
+	err = json.Unmarshal(b, &pm)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	err = a.adm.Playbook(tk, pm)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
 	render.Status(request, http.StatusOK)
+}
+
+// GetGroups getting a list of groups
+// @Summary getting a list of groups
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/certificate [post]
+func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	gs, err := a.adm.Groups(tk)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, gs)
+}
+
+// GetClients getting a list of clients
+// @Summary getting a list of clients
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/clients [post]
+func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	cs, err := a.adm.Clients(tk)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cls := make([]pmodel.Client, 0)
+	for _, c := range cs {
+		cls = append(cls, pmodel.Client{
+			Name:      c.Name,
+			AccessKey: c.AccessKey,
+			Groups:    c.Groups,
+		})
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, cls)
+}
+
+// PostClient creating a new client
+// @Summary creating a new client
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/clients [post]
+func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	du := struct {
+		Name   string   `json:"name"`
+		Groups []string `json:"groups"`
+	}{}
+
+	err = json.Unmarshal(b, &du)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cl, err := a.adm.NewClient(tk, du.Name, du.Groups)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	ccl := pmodel.Client{
+		Name:      cl.Name,
+		AccessKey: cl.AccessKey,
+		Secret:    cl.Secret,
+		Groups:    cl.Groups,
+	}
+	render.Status(request, http.StatusCreated)
+	render.JSON(response, request, ccl)
 }

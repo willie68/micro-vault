@@ -78,12 +78,9 @@ func (a *Admin) LoginUP(u string, p []byte) (string, error) {
 
 // Playbook plays the playbook
 func (a *Admin) Playbook(tk string, pm model.Playbook) error {
-	ok, err := a.checkTk(tk)
+	err := a.checkTk(tk)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return errors.New("token error")
 	}
 	pb := playbook.NewPlaybook(pm)
 	return pb.Play()
@@ -91,24 +88,27 @@ func (a *Admin) Playbook(tk string, pm model.Playbook) error {
 
 // Groups getting all defined groups
 func (a *Admin) Groups(tk string) ([]model.Group, error) {
-	ok, err := a.checkTk(tk)
+	err := a.checkTk(tk)
 	if err != nil {
 		return []model.Group{}, err
-	}
-	if !ok {
-		return []model.Group{}, errors.New("token error")
 	}
 	return a.stg.GetGroups()
 }
 
+// AddGroup adding a new group to the service
+func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return "", err
+	}
+	return a.grs.AddGroup(g)
+}
+
 // Clients get all defined clients
 func (a *Admin) Clients(tk string) ([]model.Client, error) {
-	ok, err := a.checkTk(tk)
+	err := a.checkTk(tk)
 	if err != nil {
 		return []model.Client{}, err
-	}
-	if !ok {
-		return []model.Client{}, errors.New("token error")
 	}
 	cl := make([]model.Client, 0)
 	err = a.stg.ListClients(func(c model.Client) bool {
@@ -118,16 +118,32 @@ func (a *Admin) Clients(tk string) ([]model.Client, error) {
 	return cl, err
 }
 
-func (a *Admin) checkTk(tk string) (bool, error) {
+// NewClient creating a new client for the system
+func (a *Admin) NewClient(tk, n string, gs []string) (*model.Client, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	if a.stg.HasClient(n) {
+		return nil, services.ErrAlreadyExists
+	}
+	cl, err := a.stg.CreateClient(n, gs)
+	if err != nil {
+		return nil, err
+	}
+	return cl, nil
+}
+
+func (a *Admin) checkTk(tk string) error {
 	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.cls.PublicKey()))
 	if err != nil {
-		return false, err
+		return err
 	}
 	roles := token.PrivateClaims()["roles"]
 	if !search(roles, "mv-admin") {
-		return false, errors.New("token not valid")
+		return errors.New("token not valid")
 	}
-	return true, nil
+	return nil
 }
 
 func search(ss any, s string) bool {
