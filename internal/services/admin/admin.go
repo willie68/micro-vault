@@ -95,6 +95,28 @@ func (a *Admin) Groups(tk string) ([]model.Group, error) {
 	return a.stg.GetGroups()
 }
 
+// HasGroup checking existence of group
+func (a *Admin) HasGroup(tk string, n string) bool {
+	err := a.checkTk(tk)
+	if err != nil {
+		return false
+	}
+	return a.stg.HasGroup(n)
+}
+
+// Group getting a group
+func (a *Admin) Group(tk string, n string) (model.Group, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return model.Group{}, err
+	}
+	g, ok := a.stg.GetGroup(n)
+	if !ok {
+		return model.Group{}, services.ErrNotExists
+	}
+	return *g, nil
+}
+
 // AddGroup adding a new group to the service
 func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
 	err := a.checkTk(tk)
@@ -102,6 +124,15 @@ func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
 		return "", err
 	}
 	return a.grs.AddGroup(g)
+}
+
+// DeleteGroup adding a new group to the service
+func (a *Admin) DeleteGroup(tk string, n string) (bool, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return false, err
+	}
+	return a.grs.DeleteGroup(n), nil
 }
 
 // Clients get all defined clients

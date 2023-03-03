@@ -38,6 +38,9 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Post("/login", a.PostLogin)
 	router.Post("/playbook", a.PostPlaybook)
 	router.Get("/groups", a.GetGroups)
+	router.Post("/groups", a.PostGroup)
+	router.Get("/groups/{name}", a.GetGroup)
+	router.Delete("/groups/{name}", a.DeleteGroup)
 	router.Get("/clients", a.GetClients)
 	router.Post("/clients", a.PostClient)
 	return BaseURL + adminSubpath, router
@@ -155,6 +158,128 @@ func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Req
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, gs)
+}
+
+// GetGroup delete a group
+// @Summary gets a group
+// @Tags configs
+// @Accept  name string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	n := chi.URLParam(request, "name")
+	ok := a.adm.HasGroup(tk, n)
+	if !ok {
+		httputils.Err(response, request, serror.NotFound("group", n))
+		return
+	}
+	g, err := a.adm.Group(tk, n)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	if !ok {
+		httputils.Err(response, request, serror.InternalServerError())
+		return
+	}
+	gs := pmodel.Group{
+		Name:  g.Name,
+		Label: g.Label,
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, gs)
+}
+
+// PostGroup creating a new group
+// @Summary creating a new group
+// @Tags configs
+// @Accept  pmodel.Group
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	var pg pmodel.Group
+
+	err = json.Unmarshal(b, &pg)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	g := model.Group{
+		Name:  pg.Name,
+		Label: pg.Label,
+	}
+	_, err = a.adm.AddGroup(tk, g)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	render.Status(request, http.StatusCreated)
+}
+
+// DeleteGroup delete a group
+// @Summary delete a  group
+// @Tags configs
+// @Accept  name string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) DeleteGroup(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	n := chi.URLParam(request, "name")
+	ok := a.adm.HasGroup(tk, n)
+	if !ok {
+		httputils.Err(response, request, serror.NotFound("group", n))
+		return
+	}
+	_, err = a.adm.DeleteGroup(tk, n)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	if !ok {
+		httputils.Err(response, request, serror.InternalServerError())
+		return
+	}
+	render.Status(request, http.StatusOK)
 }
 
 // GetClients getting a list of clients

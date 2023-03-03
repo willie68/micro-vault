@@ -85,12 +85,18 @@ func TestWrongToken(t *testing.T) {
 	_, err = adm.Groups(tk)
 	ast.NotNil(err)
 
-	_, err = adm.Clients(tk)
-	ast.NotNil(err)
-
 	_, err = adm.AddGroup(tk, model.Group{
 		Name: "hello",
 	})
+	ast.NotNil(err)
+
+	_, err = adm.DeleteGroup(tk, "group3")
+	ast.NotNil(err)
+
+	_, err = adm.Clients(tk)
+	ast.NotNil(err)
+
+	_, err = adm.NewClient(tk, "hello", []string{"group1"})
 	ast.NotNil(err)
 }
 
@@ -160,4 +166,14 @@ func TestGroup(t *testing.T) {
 	gs2, err := adm.Groups(tk)
 	ast.Nil(err)
 	ast.Equal(len(gs)+1, len(gs2))
+
+	ok, err := adm.DeleteGroup(tk, "group5")
+	ast.Nil(err)
+	ast.True(ok)
+
+	ast.False(adm.stg.HasGroup(id))
+
+	gs2, err = adm.Groups(tk)
+	ast.Nil(err)
+	ast.Equal(len(gs), len(gs2))
 }

@@ -71,6 +71,7 @@ func (a *AdminCl) Login() error {
 		logging.Logger.Errorf("login request failed: %v", err)
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
 		return ReadErr(res)
@@ -105,6 +106,7 @@ func (a *AdminCl) SendPlaybook(pb string) error {
 		logging.Logger.Errorf("playbook request failed: %v", err)
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		logging.Logger.Errorf("playbook bad response: %d", res.StatusCode)
 		return ReadErr(res)
@@ -121,13 +123,14 @@ func (a *AdminCl) Groups() ([]pmodel.Group, error) {
 
 	res, err := a.Get("admin/groups")
 	if err != nil {
-		logging.Logger.Errorf("playbook request failed: %v", err)
+		logging.Logger.Errorf("groups request failed: %v", err)
 		return []pmodel.Group{}, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("playbook bad response: %d", res.StatusCode)
+		logging.Logger.Errorf("groups bad response: %d", res.StatusCode)
 		return []pmodel.Group{}, ReadErr(res)
 	}
+	defer res.Body.Close()
 	gs := make([]pmodel.Group, 0)
 	err = ReadJSON(res, &gs)
 	if err != nil {
@@ -136,6 +139,73 @@ func (a *AdminCl) Groups() ([]pmodel.Group, error) {
 	}
 
 	return gs, nil
+}
+
+// Group getting a group
+func (a *AdminCl) Group(n string) (*pmodel.Group, error) {
+	err := a.checkToken()
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := a.Get(fmt.Sprintf("admin/groups/%s", n))
+	if err != nil {
+		logging.Logger.Errorf("group request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("group bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	defer res.Body.Close()
+	var gs pmodel.Group
+	err = ReadJSON(res, &gs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return nil, err
+	}
+
+	return &gs, nil
+}
+
+// AddGroup getting a list of groups
+func (a *AdminCl) AddGroup(g pmodel.Group) error {
+	err := a.checkToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := a.PostJSON("admin/groups", g)
+	if err != nil {
+		logging.Logger.Errorf("add group request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		logging.Logger.Errorf("add group bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	return nil
+}
+
+// DeleteGroup getting a list of groups
+func (a *AdminCl) DeleteGroup(n string) error {
+	err := a.checkToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := a.Delete(fmt.Sprintf("admin/groups/%s", n))
+	if err != nil {
+		logging.Logger.Errorf("delete group request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("delete group bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	return nil
 }
 
 // Clients getting a list of groups
@@ -150,6 +220,7 @@ func (a *AdminCl) Clients() ([]pmodel.Client, error) {
 		logging.Logger.Errorf("clients request failed: %v", err)
 		return []pmodel.Client{}, err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		logging.Logger.Errorf("clients bad response: %d", res.StatusCode)
 		return []pmodel.Client{}, ReadErr(res)
@@ -182,6 +253,7 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 		logging.Logger.Errorf("add client request failed: %v", err)
 		return nil, err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
 		logging.Logger.Errorf("add client bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
@@ -218,6 +290,15 @@ func (a *AdminCl) Post(endpoint, contentType string, body io.Reader) (*http.Resp
 // Get getting something from the endpoint
 func (a *AdminCl) Get(endpoint string) (*http.Response, error) {
 	req, err := a.newRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	return a.do(req)
+}
+
+// Delete delete a resource
+func (a *AdminCl) Delete(endpoint string) (*http.Response, error) {
+	req, err := a.newRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}

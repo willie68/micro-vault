@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 var (
@@ -86,4 +87,37 @@ func TestAdmNewClient(t *testing.T) {
 	ast.NotNil(err)
 	ast.Nil(cl)
 
+}
+
+func TestAdmCRUDGroup(t *testing.T) {
+	ast := assert.New(t)
+	ast.NotNil(adm)
+
+	gs, err := adm.Groups()
+	ast.Nil(err)
+	ast.True(len(gs) > 0)
+
+	err = adm.AddGroup(pmodel.Group{
+		Name: "group5",
+		Label: map[string]string{
+			"de": "Gruppe 5",
+			"en": "Group 5",
+		},
+	})
+
+	g, err := adm.Group("group5")
+	ast.Nil(err)
+	ast.Equal("group5", g.Name)
+	ast.Equal("Gruppe 5", g.Label["de"])
+
+	gs2, err := adm.Groups()
+	ast.Nil(err)
+	ast.Equal(len(gs)+1, len(gs2))
+
+	err = adm.DeleteGroup("group5")
+	ast.Nil(err)
+
+	gs2, err = adm.Groups()
+	ast.Nil(err)
+	ast.Equal(len(gs), len(gs2))
 }
