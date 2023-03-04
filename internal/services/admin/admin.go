@@ -165,6 +165,52 @@ func (a *Admin) NewClient(tk, n string, gs []string) (*model.Client, error) {
 	return cl, nil
 }
 
+// Client getting a single client based on the name
+func (a *Admin) Client(tk, n string) (*model.Client, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	if !a.stg.HasClient(n) {
+		return nil, services.ErrAlreadyExists
+	}
+	ak, ok := a.stg.AccessKey(n)
+	if !ok {
+		return nil, services.ErrNotExists
+	}
+	cl, ok := a.stg.GetClient(ak)
+	if !ok {
+		return nil, services.ErrNotExists
+	}
+	c := model.Client{
+		Name:      cl.Name,
+		AccessKey: cl.AccessKey,
+		Secret:    "",
+		Groups:    cl.Groups,
+	}
+	return &c, nil
+}
+
+// DeleteClient deleting a client
+func (a *Admin) DeleteClient(tk, n string) (bool, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return false, err
+	}
+	if !a.stg.HasClient(n) {
+		return false, services.ErrNotExists
+	}
+	ak, ok := a.stg.AccessKey(n)
+	if !ok {
+		return false, services.ErrNotExists
+	}
+	ok, err = a.stg.DeleteClient(ak)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+
 func (a *Admin) checkTk(tk string) error {
 	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.cls.PublicKey()))
 	if err != nil {

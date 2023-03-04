@@ -20,6 +20,7 @@ import (
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/health"
+	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
@@ -56,6 +57,7 @@ var tracer opentracing.Tracer
 var sslsrv *http.Server
 var srv *http.Server
 var pbf string
+var pbexport string
 
 func init() {
 	// variables for parameter override
@@ -66,6 +68,7 @@ func init() {
 	flag.StringVarP(&configFile, "config", "c", config.File, "this is the path and filename to the config file")
 	flag.StringVarP(&serviceURL, "serviceURL", "u", "", "service url from outside")
 	flag.StringVarP(&pbf, "playbook", "b", "", "playbook file for automated init")
+	flag.StringVarP(&pbexport, "export", "e", "", "export playbook file for backup")
 }
 
 func apiRoutes() (*chi.Mux, error) {
@@ -233,6 +236,15 @@ func main() {
 		panic("error creating memory storage")
 	}
 
+	if pbexport != "" {
+		log.Logger.Infof("export playbook to file: %s", pbexport)
+		pb := playbook.NewPlaybook(model.Playbook{})
+		err := pb.Export(pbexport)
+		if err != nil {
+			log.Logger.Errorf("error exporting playbook: %v", err)
+		}
+		os.Exit(1)
+	}
 	log.Logger.Info("service is starting")
 
 	var closer io.Closer

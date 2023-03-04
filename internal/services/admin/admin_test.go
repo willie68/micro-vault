@@ -72,6 +72,12 @@ func TestLoginAdmin(t *testing.T) {
 	err = adm.checkTk(tk)
 	ast.Nil(err)
 }
+func TestWrongLogin(t *testing.T) {
+	ast := assert.New(t)
+	tk, err := adm.LoginUP("root1", []byte("yxcvb"))
+	ast.NotNil(err)
+	ast.Empty(tk)
+}
 
 func TestWrongToken(t *testing.T) {
 	ast := assert.New(t)
@@ -94,6 +100,9 @@ func TestWrongToken(t *testing.T) {
 	ast.NotNil(err)
 
 	_, err = adm.Clients(tk)
+	ast.NotNil(err)
+
+	_, err = adm.DeleteClient(tk, "hello")
 	ast.NotNil(err)
 
 	_, err = adm.NewClient(tk, "hello", []string{"group1"})
@@ -151,16 +160,24 @@ func TestGroup(t *testing.T) {
 	gs, err := adm.Groups(tk)
 	ast.Nil(err)
 
-	id, err := adm.AddGroup(tk, model.Group{
+	gp := model.Group{
 		Name: "group5",
 		Label: map[string]string{
 			"de": "Gruppe 5",
 			"en": "Group 5",
 		},
-	})
+	}
+
+	id, err := adm.AddGroup(tk, gp)
 
 	ast.Nil(err)
 	ast.NotEmpty(id)
+	ast.True(adm.HasGroup(tk, id))
+
+	g, err := adm.Group(tk, id)
+	ast.Nil(err)
+	ast.NotNil(g)
+	ast.Equal(gp.Name, g.Name)
 
 	ast.True(adm.stg.HasGroup(id))
 	gs2, err := adm.Groups(tk)
@@ -176,4 +193,37 @@ func TestGroup(t *testing.T) {
 	gs2, err = adm.Groups(tk)
 	ast.Nil(err)
 	ast.Equal(len(gs), len(gs2))
+}
+
+func TestClientCRUD(t *testing.T) {
+	ast := assert.New(t)
+	tk, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cl, err := adm.NewClient(tk, "client1", []string{"group1"})
+	ast.Nil(err)
+	ast.NotNil(cl)
+
+	cle, err := adm.NewClient(tk, "client1", []string{"group1"})
+	ast.NotNil(err)
+	ast.Nil(cle)
+
+	cls, err := adm.Clients(tk)
+	ast.Nil(err)
+	ast.True(len(cls) > 0)
+
+	cl2, err := adm.Client(tk, "client1")
+	ast.Nil(err)
+	ast.Equal(cl.Name, cl2.Name)
+	ast.Equal(cl.AccessKey, cl2.AccessKey)
+	ast.Empty(cl2.Secret)
+
+	ok, err := adm.DeleteClient(tk, "client1")
+	ast.Nil(err)
+	ast.True(ok)
+
+	ok, err = adm.DeleteClient(tk, "client1")
+	ast.NotNil(err)
+	ast.False(ok)
 }

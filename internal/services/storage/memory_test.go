@@ -136,6 +136,10 @@ func TestAddClient(t *testing.T) {
 	n, err = mem.AddClient(cl)
 	ast.NotNil(err)
 	ast.Empty(n)
+
+	a, ok := mem.AccessKey(cl.Name)
+	ast.True(ok)
+	ast.Equal(cl.AccessKey, a)
 }
 
 func TestStoreEncryptKey(t *testing.T) {

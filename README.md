@@ -75,38 +75,70 @@ Das Playbook kann per Config (Einstellung playbook file) oder per Commandline (-
 
 **Reihenfolge:** Config -> Commandline -> REST
 
-playbook.yaml
+playbook.json
 
-```yaml
-groups:
-  - message_a:
-      name: message_a
-      label: 
-        de: Meldung_A
-        en: message_a
-  - message_b:
-      name: message_b
-      label: 
-        de: Meldung_B
-        en: message_b
-clients:
-  - source_a:
-      accessKey: dasfgwkebtuiwebucewzn
-      secret: sdbzdsuewizbtv9z
-      secretRetention: -1
-      groups:
-        - message_a
-        - message_b
-  - source_b:
-      accessKey: dshflvkewawtovwalszn
-      secret: ashrbsekwabr
-      secretRetention: -1
-      groups:
-        - message_a
+```json
+{
+    "groups": [
+        {
+            "name": "group1",
+            "label":
+            {
+                "en": "Group 1",
+                "de": "Gruppe 1"
+            }
+        },
+        {
+            "name": "group3",
+            "label":
+            {
+                "en": "Group 3",
+                "de": "Gruppe 3"
+            }
+        },
+        {
+            "name": "group4",
+            "label":
+            {
+                "en": "Group 4",
+                "de": "Gruppe 4"
+            }
+        }
+    ],
+    "clients": [
+        {
+            "name": "tester1",
+            "accesskey": "12345678",
+            "secret": "yxcvb",
+            "groups": [
+                "group1",
+                "group2",
+                "group4"
+            ]
+        },
+        {
+            "name": "tester2",
+            "accesskey": "87654321",
+            "secret": "yxcvb",
+            "groups": [
+                "group2",
+                "group4"
+            ]
+        },
+        {
+            "name": "tester3",
+            "accesskey": "345678",
+            "secret": "yxcvb",
+            "groups": [
+                "group3"
+            ]
+        }
+    ]
+}
    
 ```
 
-
+Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server zu exportieren.  Allerdings gibt es einen Commandozeilen Parameter mit dem das Binary eine playbook.json aus einer Installation erzeugt. Dazu muss das Binary mit den gleichen Einstellungen wie der Service gestartet werden.  
 
 # Admin Endpunkte
 

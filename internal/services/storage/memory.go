@@ -157,6 +157,20 @@ func (m *Memory) ListClients(c func(c model.Client) bool) error {
 	return nil
 }
 
+// AccessKey returning the access key of client with name
+func (m *Memory) AccessKey(n string) (string, bool) {
+	var ak string
+	m.clients.Range(func(key, value any) bool {
+		cl := value.(model.Client)
+		if cl.Name == n {
+			ak = cl.AccessKey
+			return false
+		}
+		return true
+	})
+	return ak, ak != ""
+}
+
 // GetClient returning a client with an access key
 func (m *Memory) GetClient(a string) (*model.Client, bool) {
 	v, ok := m.clients.Load(a)

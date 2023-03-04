@@ -72,6 +72,32 @@ func (p *Playbook) Play() error {
 	return nil
 }
 
+// Export exporting the actual groups and clients to a playbook file
+func (p *Playbook) Export(pf string) error {
+
+	pb := model.Playbook{
+		Groups:  make([]model.Group, 0),
+		Clients: make([]model.Client, 0),
+	}
+	gs, err := p.stg.GetGroups()
+	if err != nil {
+		return err
+	}
+	pb.Groups = gs
+	p.stg.ListClients(func(g model.Client) bool {
+		pb.Clients = append(pb.Clients, g)
+		return true
+	})
+	file, err := os.OpenFile(pf, os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(pb)
+	return err
+}
+
 func loadFromFile(f string) (*model.Playbook, error) {
 	if _, err := os.Stat(f); err != nil {
 		return nil, err

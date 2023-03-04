@@ -1,54 +1,57 @@
 {
-  "groups": [
-    {
-      "name": "group1",
-      "label": {
-        "en": "Group 1",
-        "de": "Gruppe 1"
-      }
-    },
-    {
-      "name": "group3",
-      "label": {
-        "en": "Group 3",
-        "de": "Gruppe 3"
-      }
-    },
-    {
-      "name": "group4",
-      "label": {
-        "en": "Group 4",
-        "de": "Gruppe 4"
-      }
-    }
-  ],
-  "clients": [
-    {
-      "name": "tester1",
-      "accesskey": "12345678",
-      "secret": "yxcvb",
-      "groups": [
-        "group1",
-        "group2",
-        "group4"
-      ]
-    },
-    {
-      "name": "tester2",
-      "accesskey": "87654321",
-      "secret": "yxcvb",
-      "groups": [
-        "group2",
-        "group4"
-      ]
-    },
-    {
-      "name": "tester3",
-      "accesskey": "345678",
-      "secret": "yxcvb",
-      "groups": [
-        "group3"
-      ]
-    }
-  ]
+    "groups": [
+        {
+            "name": "group1",
+            "label":
+            {
+                "en": "Group 1",
+                "de": "Gruppe 1"
+            }
+        },
+        {
+            "name": "group3",
+            "label":
+            {
+                "en": "Group 3",
+                "de": "Gruppe 3"
+            }
+        },
+        {
+            "name": "group4",
+            "label":
+            {
+                "en": "Group 4",
+                "de": "Gruppe 4"
+            }
+        }
+    ],
+    "clients": [
+        {
+            "name": "tester1",
+            "accesskey": "12345678",
+            "secret": "yxcvb",
+            "groups": [
+                "group1",
+                "group2",
+                "group4"
+            ]
+        },
+        {
+            "name": "tester2",
+            "accesskey": "87654321",
+            "secret": "yxcvb",
+            "groups": [
+                "group2",
+                "group4"
+            ]
+        },
+        {
+            "name": "tester3",
+            "accesskey": "345678",
+            "secret": "yxcvb",
+            "groups": [
+                "group3"
+            ]
+        }
+    ]
 }
