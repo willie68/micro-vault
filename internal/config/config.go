@@ -44,9 +44,10 @@ type Config struct {
 
 // Service the configuration of services inside this ms
 type Service struct {
-	Playbook string `yaml:"playbook"`
-	Rootuser string `yaml:"rootuser"`
-	Rootpwd  string `yaml:"rootpwd"`
+	Playbook   string `yaml:"playbook"`
+	Rootuser   string `yaml:"rootuser"`
+	Rootpwd    string `yaml:"rootpwd"`
+	PrivateKey string `yaml:"privatekey"`
 }
 
 // Authentication configuration

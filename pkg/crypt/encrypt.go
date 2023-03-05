@@ -156,6 +156,24 @@ func pem2pub(key string) (*rsa.PublicKey, error) {
 	return pub, nil
 }
 
+// Pem2Prv converts a pem string into a rsa private key
+func Pem2Prv(key string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(key))
+	if block == nil || block.Type != "PRIVATE KEY" {
+		return nil, errors.New("error getting public key")
+	}
+
+	p, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	prv, ok := p.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("key is not a rsa private key")
+	}
+	return prv, nil
+}
+
 func hashme(dt string) ([]byte, error) {
 	msg := []byte(dt)
 	// Before signing, we need to hash our message

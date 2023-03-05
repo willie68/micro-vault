@@ -10,6 +10,7 @@ secretfile: configs/secret.yaml
 service:
   rootuser: root
   rootpwd: yxcvb
+  privatekey: ./configs/private.pem
 
 logging:
     gelf-url: 127.0.0.1

@@ -8,8 +8,10 @@ import (
 	"encoding/pem"
 	"testing"
 
+	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/auth"
+	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
@@ -35,6 +37,15 @@ func init() {
 	if err != nil {
 		panic(1)
 	}
+	c := config.Config{
+		Service: config.Service{
+			Rootuser:   "root",
+			Rootpwd:    "yxcvb",
+			PrivateKey: "../../../testdata/private.pem",
+		},
+	}
+	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, c)
+
 	cls, err = NewClients()
 	if err != nil {
 		panic(1)
