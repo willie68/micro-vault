@@ -14,7 +14,7 @@ var stg interfaces.Storage
 
 func init() {
 	var err error
-	stg, err = storage.NewMemory()
+	stg, err = storage.NewFileStorage()
 	if err != nil {
 		panic(err)
 	}

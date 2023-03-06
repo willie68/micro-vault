@@ -9,6 +9,8 @@ const DoStorage = "storage"
 // Storage the storage interface definition
 type Storage interface {
 	Init() error
+	Close() error
+
 	HasGroup(n string) bool
 	AddGroup(g model.Group) (id string, err error)
 	DeleteGroup(n string) (ok bool, err error)

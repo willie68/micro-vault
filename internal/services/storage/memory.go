@@ -39,13 +39,21 @@ func (m *Memory) Init() error {
 	return nil
 }
 
+// Close closes the memory, freeing all resources
+func (m *Memory) Close() error {
+	m.groups = make(map[string]model.Group)
+	m.clients = sync.Map{}
+	do.ShutdownNamed(nil, interfaces.DoStorage)
+	return nil
+}
+
 // AddGroup adding a group to internal store
 func (m *Memory) AddGroup(g model.Group) (string, error) {
 	m.groups[g.Name] = g
 	return g.Name, nil
 }
 
-// HasGroup deletes a group if present
+// HasGroup checks if a group is present
 func (m *Memory) HasGroup(n string) bool {
 	_, ok := m.groups[n]
 	return ok
@@ -157,6 +165,16 @@ func (m *Memory) ListClients(c func(c model.Client) bool) error {
 	return nil
 }
 
+// GetClient returning a client with an access key
+func (m *Memory) GetClient(a string) (*model.Client, bool) {
+	v, ok := m.clients.Load(a)
+	if !ok {
+		return nil, false
+	}
+	c := v.(model.Client)
+	return &c, ok
+}
+
 // AccessKey returning the access key of client with name
 func (m *Memory) AccessKey(n string) (string, bool) {
 	var ak string
@@ -169,16 +187,6 @@ func (m *Memory) AccessKey(n string) (string, bool) {
 		return true
 	})
 	return ak, ak != ""
-}
-
-// GetClient returning a client with an access key
-func (m *Memory) GetClient(a string) (*model.Client, bool) {
-	v, ok := m.clients.Load(a)
-	if !ok {
-		return nil, false
-	}
-	c := v.(model.Client)
-	return &c, ok
 }
 
 // StoreEncryptKey stores the encrypt keys

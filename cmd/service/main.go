@@ -431,7 +431,7 @@ func initJaeger(servicename string, cnfg config.OpenTracing) (opentracing.Tracer
 }
 
 func initServices(c config.Service) error {
-	_, err := storage.NewMemory()
+	_, err := storage.NewStorage(c.Storage)
 	if err != nil {
 		return err
 	}

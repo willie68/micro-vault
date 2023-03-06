@@ -11,7 +11,10 @@ service:
   rootuser: root
   rootpwd: yxcvb
   privatekey: ./configs/private.pem
-
+  storage:
+    type: memory
+    properties:
+    
 logging:
     gelf-url: 127.0.0.1
     gelf-port: 12201

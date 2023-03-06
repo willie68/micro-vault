@@ -1,0 +1,32 @@
+package storage
+
+import (
+	"errors"
+
+	"github.com/willie68/micro-vault/internal/config"
+	"github.com/willie68/micro-vault/internal/interfaces"
+)
+
+// NewStorage creates a new storage based on the configuration
+func NewStorage(s config.Storage) (interfaces.Storage, error) {
+	var stg interfaces.Storage
+	var err error
+	switch s.Type {
+	case "memory":
+		stg, err = NewMemory()
+	case "filestorage":
+		p, ok := s.Properties["path"]
+		if !ok {
+			return nil, errors.New("missing path for file storage")
+		}
+		path, ok := p.(string)
+		if !ok {
+			return nil, errors.New("wrong type of path for file storage")
+		}
+		stg, err = NewFileStorage(path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return stg, nil
+}

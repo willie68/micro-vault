@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	s, err := storage.NewMemory()
+	s, err := storage.NewFileStorage()
 	if err != nil {
 		panic(err)
 	}

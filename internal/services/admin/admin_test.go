@@ -21,15 +21,11 @@ var (
 
 func init() {
 	var err error
-	stg, err = storage.NewMemory()
+	stg, err = storage.NewFileStorage()
 	if err != nil {
 		panic(1)
 	}
 	_, err = groups.NewGroups()
-	if err != nil {
-		panic(1)
-	}
-	_, err = clients.NewClients()
 	if err != nil {
 		panic(1)
 	}
@@ -40,6 +36,10 @@ func init() {
 		},
 	}
 	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, c)
+	_, err = clients.NewClients()
+	if err != nil {
+		panic(1)
+	}
 	am, err := NewAdmin()
 	if err != nil {
 		panic(1)

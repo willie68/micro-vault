@@ -44,10 +44,17 @@ type Config struct {
 
 // Service the configuration of services inside this ms
 type Service struct {
-	Playbook   string `yaml:"playbook"`
-	Rootuser   string `yaml:"rootuser"`
-	Rootpwd    string `yaml:"rootpwd"`
-	PrivateKey string `yaml:"privatekey"`
+	Playbook   string  `yaml:"playbook"`
+	Rootuser   string  `yaml:"rootuser"`
+	Rootpwd    string  `yaml:"rootpwd"`
+	PrivateKey string  `yaml:"privatekey"`
+	Storage    Storage `yaml:"storage"`
+}
+
+// Storage the type and properties of the storage
+type Storage struct {
+	Type       string         `yaml:"type"`
+	Properties map[string]any `yaml:"properties"`
 }
 
 // Authentication configuration
