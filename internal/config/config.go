@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/drone/envsubst"
 	"github.com/imdario/mergo"
+	"github.com/samber/do"
 	"gopkg.in/yaml.v3"
 )
 
@@ -138,6 +138,11 @@ func init() {
 	config = DefaultConfig
 }
 
+// Provide provide the config to the dependency injection
+func (c *Config) Provide() {
+	do.ProvideNamedValue[Config](nil, DoServiceConfig, *c)
+}
+
 // Get returns loaded config
 func Get() Config {
 	return config
@@ -154,7 +159,7 @@ func Load() error {
 	if err != nil {
 		return err
 	}
-	data, err := ioutil.ReadFile(File)
+	data, err := os.ReadFile(File)
 	if err != nil {
 		return fmt.Errorf("can't load config file: %s", err.Error())
 	}
@@ -173,7 +178,7 @@ func Load() error {
 func readSecret() error {
 	secretFile := config.SecretFile
 	if secretFile != "" {
-		data, err := ioutil.ReadFile(secretFile)
+		data, err := os.ReadFile(secretFile)
 		if err != nil {
 			return fmt.Errorf("can't load secret file: %s", err.Error())
 		}

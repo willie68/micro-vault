@@ -20,6 +20,7 @@ import (
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 	"golang.org/x/net/context"
 )
 
@@ -290,6 +291,30 @@ func (c *Client) GetPublicKey(n string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// CryptSS doing en/decryption with the message, getting back the en/decryted message
+func (c *Client) CryptSS(m pmodel.Message) (*pmodel.Message, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.PostJSON("vault/crypt", m)
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	err = ReadJSON(res, &m)
+	if err != nil {
+		logging.Logger.Errorf("json convert failed: %v", err)
+		return nil, err
+	}
+	return &m, nil
 }
 
 // Get getting something from the endpoint

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -74,7 +73,6 @@ func (p *Playbook) Play() error {
 
 // Export exporting the actual groups and clients to a playbook file
 func (p *Playbook) Export(pf string) error {
-
 	pb := model.Playbook{
 		Groups:  make([]model.Group, 0),
 		Clients: make([]model.Client, 0),
@@ -105,7 +103,7 @@ func loadFromFile(f string) (*model.Playbook, error) {
 	if !strings.HasSuffix(f, ".json") {
 		return nil, errors.New("file must be a valid json file")
 	}
-	data, err := ioutil.ReadFile(f)
+	data, err := os.ReadFile(f)
 	if err != nil {
 		return nil, fmt.Errorf("can't load playbook file: %v", err)
 	}

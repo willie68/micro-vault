@@ -20,3 +20,5 @@ configs/private.pem
 testdata/filestorage/
 
 testdata/private.pem
+
+*.pem

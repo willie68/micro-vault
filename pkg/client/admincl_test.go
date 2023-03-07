@@ -86,7 +86,6 @@ func TestAdmNewClient(t *testing.T) {
 
 	ast.NotNil(err)
 	ast.Nil(cl)
-
 }
 
 func TestAdmCRUDGroup(t *testing.T) {

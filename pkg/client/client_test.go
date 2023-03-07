@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 func TestEncryptSameUser(t *testing.T) {
@@ -153,4 +154,57 @@ func TestSigning(t *testing.T) {
 	ok, err = cli2.SignCheck("tester2", sig, orgtxt)
 	ast.NotNil(err)
 	ast.False(ok)
+}
+
+func TestServerSideCryptGroup(t *testing.T) {
+	ast := assert.New(t)
+	adr := struct {
+		Lastname  string `json:"lastname"`
+		Firstname string `json:"firstname"`
+	}{
+		Lastname:  "Klaas",
+		Firstname: "Wilfried",
+	}
+
+	b, err := json.Marshal(adr)
+	ast.Nil(err)
+	ast.NotNil(b)
+
+	msg := pmodel.Message{
+		Type:      "group",
+		Recipient: "group1",
+		Decrypt:   false,
+		Message:   b,
+	}
+
+	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+	defer cli.Logout()
+
+	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli2)
+	defer cli2.Logout()
+
+	m, err := cli.CryptSS(msg)
+	ast.Nil(err)
+	ast.NotNil(m)
+	ast.NotEmpty(m.ID)
+	ast.True(len(m.Message) > 0)
+
+	m2, err := cli2.CryptSS(*m)
+	ast.Nil(err)
+	ast.NotEmpty(m2)
+	ast.NotEmpty(m.ID)
+	ast.True(len(m.Message) > 0)
+	adr2 := struct {
+		Lastname  string `json:"lastname"`
+		Firstname string `json:"firstname"`
+	}{}
+	err = json.Unmarshal(m2.Message, &adr2)
+	ast.Nil(err)
+
+	ast.Equal(adr.Firstname, adr2.Firstname)
+	ast.Equal(adr.Lastname, adr2.Lastname)
 }

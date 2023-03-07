@@ -3,15 +3,9 @@ package clients
 import (
 	"crypto/aes"
 	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/hex"
-	"encoding/pem"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -23,10 +17,9 @@ import (
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
-	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
-	"github.com/willie68/micro-vault/pkg/crypt"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 )
 
 // DoClients constant for dependency injection
@@ -34,12 +27,12 @@ const DoClients = "clients"
 
 // Clients business logic for client management
 type Clients struct {
-	stg       interfaces.Storage
-	publickey rsa.PublicKey
-	srvkey    jwk.Key
-	kid       string
-	pubkeys   sync.Map
-	cfg       config.Config
+	stg     interfaces.Storage
+	srvkey  jwk.Key
+	kid     string
+	pubkeys sync.Map
+	cfg     config.Config
+	kmn     keyman.Keyman
 }
 
 // NewClients creates a new clients service
@@ -47,6 +40,7 @@ func NewClients() (Clients, error) {
 	c := Clients{
 		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
 		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
+		kmn: do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
 	}
 	err := c.Init()
 	if err != nil {
@@ -66,42 +60,12 @@ func (c *Clients) Key() jwk.Key {
 	return c.srvkey
 }
 
-// PublicKey return the public key for checking the signature of a token
-func (c *Clients) PublicKey() rsa.PublicKey {
-	return c.publickey
-}
-
 // Init initialize the clients service
 func (c *Clients) Init() error {
-	newKey := false
 	var err error
-	var rsk *rsa.PrivateKey
-	if c.cfg.Service.PrivateKey != "" {
-		if _, err := os.Stat(c.cfg.Service.PrivateKey); err == nil {
-			fmt.Printf("File exists\n")
-			b, err := ioutil.ReadFile(c.cfg.Service.PrivateKey)
-			if err != nil {
-				log.Printf("failed to read pem file: %s", err)
-				return err
-			}
-			rsk, err = crypt.Pem2Prv(string(b))
-			if err != nil {
-				log.Printf("failed to create key from pem: %s", err)
-				return err
-			}
-		}
-	}
-	if rsk == nil {
-		rsk, err = rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			log.Printf("failed to generate private key: %s", err)
-			return err
-		}
-		newKey = true
-	}
 
-	key, err := jwk.New(rsk)
-	c.publickey = rsk.PublicKey
+	key, err := jwk.New(c.kmn.PrivateKey())
+
 	err = jwk.AssignKeyID(key)
 	if err != nil {
 		log.Printf("failed to generate private key: %s", err)
@@ -109,26 +73,6 @@ func (c *Clients) Init() error {
 	}
 	c.srvkey = key
 	c.kid = key.KeyID()
-	if c.cfg.Service.PrivateKey != "" && newKey {
-		pubbuf, err := x509.MarshalPKCS8PrivateKey(rsk)
-		if err != nil {
-			logging.Logger.Errorf("marshall private key failed: %v", err)
-			return err
-		}
-
-		pemblock := &pem.Block{
-			Type:  "PRIVATE KEY",
-			Bytes: pubbuf,
-		}
-
-		b := pem.EncodeToMemory(pemblock)
-
-		err = ioutil.WriteFile(c.cfg.Service.PrivateKey, b, 0)
-		if err != nil {
-			logging.Logger.Errorf("writing private key failed: %v", err)
-			return err
-		}
-	}
 	return nil
 }
 

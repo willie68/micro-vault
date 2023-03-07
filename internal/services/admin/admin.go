@@ -17,6 +17,7 @@ import (
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 )
 
@@ -28,6 +29,7 @@ type Admin struct {
 	rootusr string
 	pwdhash string
 	stg     interfaces.Storage
+	kmn     keyman.Keyman
 	cls     clients.Clients
 	grs     groups.Groups
 }
@@ -39,6 +41,7 @@ func NewAdmin() (Admin, error) {
 		rootusr: cfg.Service.Rootuser,
 		pwdhash: hash([]byte(cfg.Service.Rootpwd)),
 		stg:     do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+		kmn:     do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
 		cls:     do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
 		grs:     do.MustInvokeNamed[groups.Groups](nil, groups.DoGroups),
 	}
@@ -212,7 +215,7 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 }
 
 func (a *Admin) checkTk(tk string) error {
-	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.cls.PublicKey()))
+	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.kmn.PublicKey()))
 	if err != nil {
 		return err
 	}

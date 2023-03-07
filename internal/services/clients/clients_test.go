@@ -8,11 +8,11 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
 )
@@ -24,7 +24,7 @@ var (
 
 func init() {
 	var err error
-	stg, err = storage.NewFileStorage()
+	stg, err = storage.NewMemory()
 	if err != nil {
 		panic(1)
 	}
@@ -44,7 +44,11 @@ func init() {
 			PrivateKey: "../../../testdata/private.pem",
 		},
 	}
-	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, c)
+	c.Provide()
+	_, err = keyman.NewKeyman()
+	if err != nil {
+		panic(1)
+	}
 
 	cls, err = NewClients()
 	if err != nil {

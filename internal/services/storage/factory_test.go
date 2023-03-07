@@ -22,6 +22,7 @@ func TestFactoryMemory(t *testing.T) {
 	_, ok := stg.(*Memory)
 	ast.True(ok)
 	do.MustShutdownNamed(nil, interfaces.DoStorage)
+	defer stg.Close()
 }
 
 func TestFactoryFS(t *testing.T) {
@@ -40,6 +41,7 @@ func TestFactoryFS(t *testing.T) {
 	_, ok := stg.(*FileStorage)
 	ast.True(ok)
 	do.MustShutdownNamed(nil, interfaces.DoStorage)
+	defer stg.Close()
 }
 
 func TestFactoryFSError(t *testing.T) {

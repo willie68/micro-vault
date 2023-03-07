@@ -174,6 +174,21 @@ func Pem2Prv(key string) (*rsa.PrivateKey, error) {
 	return prv, nil
 }
 
+// Prv2PEM converts a private key to a PEM
+func Prv2PEM(rsk *rsa.PrivateKey) ([]byte, error) {
+	pubbuf, err := x509.MarshalPKCS8PrivateKey(rsk)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	pemblock := &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: pubbuf,
+	}
+
+	return pem.EncodeToMemory(pemblock), nil
+}
+
 func hashme(dt string) ([]byte, error) {
 	msg := []byte(dt)
 	// Before signing, we need to hash our message

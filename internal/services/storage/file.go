@@ -14,7 +14,6 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
 )
 
 // FileStorage storage engine on file system
@@ -24,9 +23,10 @@ type FileStorage struct {
 }
 
 const (
-	groupKey  = "group"
-	clientKey = "client"
-	nameKey   = "name"
+	groupKey      = "group"
+	clientKey     = "client"
+	nameKey       = "name"
+	encryptionKey = "encryption"
 )
 
 var _ interfaces.Storage = &FileStorage{}
@@ -191,7 +191,7 @@ func (f *FileStorage) AddClient(c model.Client) (string, error) {
 
 // UpdateClient adding the client to the internal storage
 func (f *FileStorage) UpdateClient(c model.Client) error {
-	err = f.update(clientKey, c.AccessKey, c)
+	err := f.update(clientKey, c.AccessKey, c)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (f *FileStorage) UpdateClient(c model.Client) error {
 
 // DeleteClient delete a client
 func (f *FileStorage) DeleteClient(a string) (bool, error) {
-	err := f.delete(accessKey, a)
+	err := f.delete(clientKey, a)
 	if err != nil {
 		return false, err
 	}
@@ -266,12 +266,21 @@ func (f *FileStorage) AccessKey(n string) (string, bool) {
 
 // StoreEncryptKey stores the encrypt keys
 func (f *FileStorage) StoreEncryptKey(e model.EncryptKey) error {
-	return services.ErrNotImplementedYet
+	err := f.update(encryptionKey, e.ID, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetEncryptKey stores the encrypt keys
 func (f *FileStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
-	return nil, false
+	var e model.EncryptKey
+	ok := f.get(encryptionKey, id, &e)
+	if !ok {
+		return nil, false
+	}
+	return &e, true
 }
 
 func (f *FileStorage) update(t, k string, p any) error {

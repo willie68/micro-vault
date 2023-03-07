@@ -3,13 +3,13 @@ package admin
 import (
 	"testing"
 
-	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
 )
@@ -21,11 +21,7 @@ var (
 
 func init() {
 	var err error
-	stg, err = storage.NewFileStorage()
-	if err != nil {
-		panic(1)
-	}
-	_, err = groups.NewGroups()
+	stg, err = storage.NewMemory()
 	if err != nil {
 		panic(1)
 	}
@@ -35,7 +31,15 @@ func init() {
 			Rootpwd:  "yxcvb",
 		},
 	}
-	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, c)
+	c.Provide()
+	_, err = keyman.NewKeyman()
+	if err != nil {
+		panic(1)
+	}
+	_, err = groups.NewGroups()
+	if err != nil {
+		panic(1)
+	}
 	_, err = clients.NewClients()
 	if err != nil {
 		panic(1)

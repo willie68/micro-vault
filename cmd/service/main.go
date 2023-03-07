@@ -15,7 +15,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/auth"
@@ -25,6 +24,7 @@ import (
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -47,17 +47,19 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-var port int
-var sslport int
-var serviceURL string
-var ssl bool
-var configFile string
-var serviceConfig config.Config
-var tracer opentracing.Tracer
-var sslsrv *http.Server
-var srv *http.Server
-var pbf string
-var pbexport string
+var (
+	port          int
+	sslport       int
+	serviceURL    string
+	ssl           bool
+	configFile    string
+	serviceConfig config.Config
+	tracer        opentracing.Tracer
+	sslsrv        *http.Server
+	srv           *http.Server
+	pbf           string
+	pbexport      string
+)
 
 func init() {
 	// variables for parameter override
@@ -403,7 +405,7 @@ func initConfig() {
 	if pbf != "" {
 		serviceConfig.Service.Playbook = pbf
 	}
-	do.ProvideNamedValue[config.Config](nil, config.DoServiceConfig, serviceConfig)
+	serviceConfig.Provide()
 }
 
 // initJaeger initialize the jaeger (opentracing) component
@@ -432,6 +434,11 @@ func initJaeger(servicename string, cnfg config.OpenTracing) (opentracing.Tracer
 
 func initServices(c config.Service) error {
 	_, err := storage.NewStorage(c.Storage)
+	if err != nil {
+		return err
+	}
+
+	_, err = keyman.NewKeyman()
 	if err != nil {
 		return err
 	}
