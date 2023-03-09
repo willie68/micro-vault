@@ -172,9 +172,9 @@ func TestServerSideCryptGroup(t *testing.T) {
 
 	msg := pmodel.Message{
 		Type:      "group",
-		Recipient: "group1",
+		Recipient: "group2",
 		Decrypt:   false,
-		Message:   b,
+		Message:   string(b),
 	}
 
 	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
@@ -202,7 +202,7 @@ func TestServerSideCryptGroup(t *testing.T) {
 		Lastname  string `json:"lastname"`
 		Firstname string `json:"firstname"`
 	}{}
-	err = json.Unmarshal(m2.Message, &adr2)
+	err = json.Unmarshal([]byte(m2.Message), &adr2)
 	ast.Nil(err)
 
 	ast.Equal(adr.Firstname, adr2.Firstname)

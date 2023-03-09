@@ -20,5 +20,5 @@ type Message struct {
 	Recipient string `json:"recipient"` // who should receive this message, group name or client name
 	ID        string `json:"id"`        // only set when the AES key is already created
 	Decrypt   bool   `json:"decrypt"`   // True for message decryption and false for message encryption
-	Message   []byte `json:"message"`   // the message to en/decrypt
+	Message   string `json:"message"`   // the message to en/decrypt
 }

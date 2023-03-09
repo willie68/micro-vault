@@ -200,5 +200,5 @@ POST: /api/v1/vault/login
 
 Body: {}
 
-Beim Clientlogin mit Accesskey und secret wird ein JWToken geniert, welches zur weiteren Identifizierung verwendet werden kann. 
+Beim Clientlogin mit Accesskey und secret wird ein JWToken geniert, welches zur weiteren Identifizierung verwendet werden muss. 
 

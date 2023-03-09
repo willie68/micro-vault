@@ -12,9 +12,12 @@ import (
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
+	cry "github.com/willie68/micro-vault/pkg/crypt"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 var (
@@ -140,4 +143,156 @@ func TestClientCertificate(t *testing.T) {
 	pub, err := cls.GetCertificate(tk2, "tester1")
 	ast.Nil(err)
 	ast.Equal(bs, pub)
+}
+
+func TestSSGroup(t *testing.T) {
+	ast := assert.New(t)
+
+	tk1, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+
+	tk2, err := cls.Login("87654321", "yxcvb")
+	ast.Nil(err)
+
+	msg, err := buildGroupMessage("group2")
+	ast.Nil(err)
+
+	m, err := cls.CryptSS(tk1, msg)
+	ast.Nil(err)
+
+	ast.True(m.Decrypt)
+	ast.NotEmpty(m.ID)
+	ast.Equal(msg.Recipient, m.Recipient)
+	ast.Equal(msg.Type, m.Type)
+
+	m2, err := cls.CryptSS(tk2, *m)
+	ast.Nil(err)
+
+	ast.False(m2.Decrypt)
+	ast.NotEmpty(m2.ID)
+	ast.Equal(m.ID, m2.ID)
+	ast.Equal(m.Recipient, m2.Recipient)
+	ast.Equal(m.Type, m2.Type)
+
+	ast.Equal(msg.Message, m2.Message)
+}
+
+func TestSSGroupWG(t *testing.T) {
+	// testing server side crypt with wrong group
+	ast := assert.New(t)
+
+	tk1, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+
+	tk2, err := cls.Login("87654321", "yxcvb")
+	ast.Nil(err)
+
+	msg, err := buildGroupMessage("group1")
+	ast.Nil(err)
+
+	m, err := cls.CryptSS(tk1, msg)
+	ast.Nil(err)
+
+	ast.True(m.Decrypt)
+	ast.NotEmpty(m.ID)
+	ast.Equal(msg.Recipient, m.Recipient)
+	ast.Equal(msg.Type, m.Type)
+
+	m2, err := cls.CryptSS(tk2, *m)
+	ast.NotNil(err)
+	ast.Nil(m2)
+}
+
+func buildGroupMessage(g string) (pmodel.Message, error) {
+	adr := struct {
+		Lastname  string `json:"lastname"`
+		Firstname string `json:"firstname"`
+	}{
+		Lastname:  "Klaas",
+		Firstname: "Wilfried",
+	}
+
+	b, err := json.Marshal(adr)
+	if err != nil {
+		return pmodel.Message{}, err
+	}
+
+	msg := pmodel.Message{
+		Type:      "group",
+		Recipient: g,
+		Decrypt:   false,
+		Message:   string(b),
+	}
+	return msg, nil
+}
+
+func TestSSClient(t *testing.T) {
+	ast := assert.New(t)
+
+	tk1, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+
+	tk2, err := cls.Login("87654321", "yxcvb")
+	ast.Nil(err)
+	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
+	ast.Nil(err)
+	pm, err := publicPem(privatekey)
+	ast.Nil(err)
+
+	err = cls.SetCertificate(tk2, pm)
+
+	msg, err := buildClientMessage("tester2")
+	ast.Nil(err)
+
+	m, err := cls.CryptSS(tk1, msg)
+	ast.Nil(err)
+
+	ast.True(m.Decrypt)
+	ast.Empty(m.ID)
+	ast.Equal(msg.Recipient, m.Recipient)
+	ast.Equal(msg.Type, m.Type)
+
+	ms, err := cry.DecryptKey(*privatekey, m.Message)
+	ast.Nil(err)
+	ast.Equal(msg.Message, ms)
+}
+
+func buildClientMessage(c string) (pmodel.Message, error) {
+	adr := struct {
+		Lastname  string `json:"lastname"`
+		Firstname string `json:"firstname"`
+	}{
+		Lastname:  "Klaas",
+		Firstname: "Wilfried",
+	}
+
+	b, err := json.Marshal(adr)
+	if err != nil {
+		return pmodel.Message{}, err
+	}
+
+	msg := pmodel.Message{
+		Type:      "private",
+		Recipient: c,
+		Decrypt:   false,
+		Message:   string(b),
+	}
+	return msg, nil
+}
+
+func publicPem(privatekey *rsa.PrivateKey) (string, error) {
+	publickey := &privatekey.PublicKey
+	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
+	if err != nil {
+		logging.Logger.Errorf("create public key failed: %v", err)
+		return "", err
+	}
+
+	pemblock := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubbuf,
+	}
+
+	b := pem.EncodeToMemory(pemblock)
+	return string(b), err
 }
