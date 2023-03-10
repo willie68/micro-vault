@@ -24,6 +24,14 @@ func init() {
 func TestAdmPlaybook(t *testing.T) {
 	ast := assert.New(t)
 	ast.NotNil(adm)
+	err := adm.DeleteGroup("group4")
+	if err != nil {
+		t.Logf("prepare: error delete group: %v", err)
+	}
+	err = adm.DeleteClient("tester4")
+	if err != nil {
+		t.Logf("prepare: error delete client: %v", err)
+	}
 
 	pm := model.Playbook{
 		Groups: []model.Group{
@@ -73,6 +81,11 @@ func TestAdmPlaybook(t *testing.T) {
 func TestAdmNewClient(t *testing.T) {
 	ast := assert.New(t)
 	ast.NotNil(adm)
+	// Prepare
+	err := adm.DeleteClient("tester5")
+	if err != nil {
+		t.Logf("prepare: error delete client: %v", err)
+	}
 
 	cl, err := adm.NewClient("tester5", []string{"group1", "group3"})
 
@@ -91,6 +104,10 @@ func TestAdmNewClient(t *testing.T) {
 func TestAdmCRUDGroup(t *testing.T) {
 	ast := assert.New(t)
 	ast.NotNil(adm)
+	err := adm.DeleteGroup("group5")
+	if err != nil {
+		t.Logf("prepare: error delete group: %v", err)
+	}
 
 	gs, err := adm.Groups()
 	ast.Nil(err)

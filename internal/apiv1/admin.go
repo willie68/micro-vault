@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
+	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -43,6 +45,7 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Delete("/groups/{name}", a.DeleteGroup)
 	router.Get("/clients", a.GetClients)
 	router.Post("/clients", a.PostClient)
+	router.Delete("/clients/{name}", a.DeleteClient)
 	return BaseURL + adminSubpath, router
 }
 
@@ -365,4 +368,36 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 	}
 	render.Status(request, http.StatusCreated)
 	render.JSON(response, request, ccl)
+}
+
+// DeleteClient delete a client by name
+// @Summary delete a client by name
+// @Tags configs
+// @Accept  name string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	n := chi.URLParam(request, "name")
+	_, err = a.adm.DeleteClient(tk, n)
+	if err != nil {
+		if errors.Is(err, services.ErrNotExists) {
+			httputils.Err(response, request, serror.NotFound("client", n))
+			return
+		} else {
+			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+			return
+		}
+	}
+	render.Status(request, http.StatusOK)
 }

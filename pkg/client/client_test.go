@@ -2,11 +2,30 @@ package client
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
+
+	"log"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
+
+func init() {
+	ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
+	if err != nil {
+		panic(err)
+	}
+	adm = ad
+	pb, err := os.ReadFile("../../testdata/playbook.json")
+	if err != nil {
+		panic(err)
+	}
+	err = adm.SendPlaybook(string(pb))
+	if err != nil {
+		log.Printf("error in playbook: %v", err)
+	}
+}
 
 func TestEncryptSameUser(t *testing.T) {
 	ast := assert.New(t)
@@ -207,4 +226,15 @@ func TestServerSideCryptGroup(t *testing.T) {
 
 	ast.Equal(adr.Firstname, adr2.Firstname)
 	ast.Equal(adr.Lastname, adr2.Lastname)
+}
+
+func TestNameToken(t *testing.T) {
+	ast := assert.New(t)
+	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+	defer cli.Logout()
+
+	ast.NotEmpty(cli.Token())
+	ast.Equal("tester1", cli.Name())
 }

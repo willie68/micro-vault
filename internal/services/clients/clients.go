@@ -209,7 +209,7 @@ func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 	return bs, nil
 }
 
-// CryptSS server side en/decryption methode
+// CryptSS server side en/decryption method
 func (c *Clients) CryptSS(tk string, msg pmodel.Message) (*pmodel.Message, error) {
 	_, err := c.checkTk(tk)
 	if err != nil {

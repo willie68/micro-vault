@@ -1,6 +1,6 @@
 ##### BUILDER #####
 
-FROM golang:1.18-alpine as builder
+FROM golang:1.19-alpine as builder
 
 ## Task: Install build deps
 
@@ -27,11 +27,11 @@ ENV GOOS="linux"
 ENV GOARCH="amd64"
 ENV CGO_ENABLED="0"
 
-RUN go build -ldflags="-s -w" -o gomicro-service cmd/service/main.go 
+RUN go build -ldflags="-s -w" -o micro-vault-service cmd/service/main.go 
 
 ## Task: set permissions
 
-RUN chmod 0755 /src/gomicro-service
+RUN chmod 0755 /src/micro-vault-service
 
 ## Task: runtime dependencies
 
@@ -66,7 +66,7 @@ FROM alpine:3.17
 ARG RELEASE
 ENV IMG_VERSION="${RELEASE}"
 
-COPY --from=builder /src/gomicro-service /usr/local/bin/
+COPY --from=builder /src/micro-vault-service /usr/local/bin/
 COPY --from=builder /src/configs/service.yaml /config/
 COPY --from=builder /src/configs/secret.yaml /config/
 COPY --from=builder /usr/share/rundeps /usr/share/rundeps
@@ -74,7 +74,7 @@ COPY --from=builder /usr/share/rundeps /usr/share/rundeps
 RUN set -eux; \
     xargs -a /usr/share/rundeps apk add --no-progress --quiet --no-cache --upgrade --virtual .run-deps
 
-ENTRYPOINT ["/usr/local/bin/gomicro-service"]
+ENTRYPOINT ["/usr/local/bin/micro-vault-service"]
 CMD ["--config","/config/service.yaml"]
 
 EXPOSE 8080 8443
@@ -82,12 +82,12 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
   CMD wget -q -T 5 --spider http://localhost:8080/livez
 
-LABEL org.opencontainers.image.title="GoMicro" \
-      org.opencontainers.image.description="MCS GoMicro Template" \
+LABEL org.opencontainers.image.title="MicroVault" \
+      org.opencontainers.image.description="MCS Micro Vault micro key management service" \
       org.opencontainers.image.version="${IMG_VERSION}" \
       org.opencontainers.image.source="https://github.com/willie68/micro-vault.git" \
       org.opencontainers.image.vendor="MCS (www.rcarduino.de)" \
       org.opencontainers.image.authors="info@wk-music.de" \
       maintainer="MCS" \
-      NAME="gomicro"
+      NAME="micro-vault-service"
 

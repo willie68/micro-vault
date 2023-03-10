@@ -31,6 +31,7 @@ type Client struct {
 	url        string
 	accessKey  string
 	secret     string
+	name       string
 	token      string
 	expired    time.Time
 	clt        http.Client
@@ -93,6 +94,7 @@ func (c *Client) Login() error {
 		return ReadErr(res)
 	}
 	ds := struct {
+		Name      string `json:"name"`
 		Token     string `json:"access_token"`
 		Type      string `json:"token_type"`
 		ExpiresIn int    `json:"expires_in"`
@@ -106,8 +108,19 @@ func (c *Client) Login() error {
 		return errors.New("getting no token")
 	}
 	c.token = ds.Token
+	c.name = ds.Name
 	c.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
+}
+
+// Token returning the token if present
+func (c *Client) Token() string {
+	return c.token
+}
+
+// Name returning the name if present
+func (c *Client) Name() string {
+	return c.name
 }
 
 // Logout logging out this client

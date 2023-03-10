@@ -73,15 +73,19 @@ func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Req
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
+	n := jt.Payload["name"]
+	name := n.(string)
 	e := jt.Payload["exp"]
 	exp := e.(float64)
 	i := jt.Payload["iat"]
 	iat := i.(float64)
 	tk := struct {
+		Name      string `json:"name"`
 		Token     string `json:"access_token"`
 		Type      string `json:"token_type"`
 		ExpiresIn int    `json:"expires_in"`
 	}{
+		Name:      name,
 		Token:     t,
 		Type:      "Bearer",
 		ExpiresIn: int(exp - iat),

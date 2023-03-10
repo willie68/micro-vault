@@ -94,6 +94,11 @@ func (a *AdminCl) Login() error {
 	return nil
 }
 
+// Token returning the token if present
+func (a *AdminCl) Token() string {
+	return a.token
+}
+
 // SendPlaybook sending a playbook to the server to initialize the service
 func (a *AdminCl) SendPlaybook(pb string) error {
 	err := a.checkToken()
@@ -266,6 +271,26 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 	}
 
 	return &cs, nil
+}
+
+// DeleteClient getting a list of groups
+func (a *AdminCl) DeleteClient(n string) error {
+	err := a.checkToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := a.Delete(fmt.Sprintf("admin/clients/%s", n))
+	if err != nil {
+		logging.Logger.Errorf("delete client request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("delete client bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	return nil
 }
 
 // PostJSON posting a json string to the endpoint

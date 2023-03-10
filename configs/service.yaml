@@ -6,6 +6,14 @@ sslport: 8443
 serviceURL: https://127.0.0.1:8443
 # secret file contains secrets like credentials, access key ... it has the same structure as this config and will be merged on start
 secretfile: ""
+service:
+  rootuser: root
+  rootpwd: yxcvb
+  privatekey: ./private.pem
+  storage:
+    type: memory
+    properties:
+
 #configure the healthcheck system
 healthcheck:
   # period in seconds to start the healtcheck
@@ -21,7 +29,7 @@ logging:
   gelf-port:
 # managing authentication and authorisation
 auth:
-  type: jwt
+  type:
   properties: 
     validate: true
     strict: true

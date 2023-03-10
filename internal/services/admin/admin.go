@@ -175,7 +175,7 @@ func (a *Admin) Client(tk, n string) (*model.Client, error) {
 		return nil, err
 	}
 	if !a.stg.HasClient(n) {
-		return nil, services.ErrAlreadyExists
+		return nil, services.ErrNotExists
 	}
 	ak, ok := a.stg.AccessKey(n)
 	if !ok {
