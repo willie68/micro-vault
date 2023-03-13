@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/willie68/micro-vault/internal/logging"
 )
 
@@ -219,4 +220,18 @@ func hashme(dt string) ([]byte, error) {
 		return []byte{}, err
 	}
 	return msgHash.Sum(nil), nil
+}
+
+// GetKID creates an KID for a private key
+func GetKID(rk *rsa.PrivateKey) (string, error) {
+	key, err := jwk.New(rk)
+	if err != nil {
+		return "", err
+	}
+
+	err = jwk.AssignKeyID(key)
+	if err != nil {
+		return "", err
+	}
+	return key.KeyID(), nil
 }

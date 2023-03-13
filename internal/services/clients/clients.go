@@ -20,6 +20,7 @@ import (
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/keyman"
@@ -100,7 +101,7 @@ func (c *Clients) Login(a, s string) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	signed, err := jwt.Sign(t, jwa.RS256, c.srvkey)
 	if err != nil {
-		log.Printf("failed to sign token: %s", err)
+		logging.Logger.Infof("failed to sign token: %s", err)
 		return "", "", err
 	}
 	return string(signed), cl.Key, nil
@@ -191,6 +192,40 @@ func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 		return "", err
 	}
 	return string(ks), nil
+}
+
+// SignSS server side en/decryption method
+func (c *Clients) SignSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessage, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	cl, err := c.client(tk)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := cry.Pem2Prv(cl.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	kid, err := cry.GetKID(pk)
+	if err != nil {
+		logging.Logger.Infof("failed to generate kid: %s", err)
+		return nil, err
+	}
+
+	sig, err := cry.Sign(*pk, msg.Message)
+	if err != nil {
+		return nil, err
+	}
+	msg.Signature = sig
+	ki := pmodel.KeyInfo{
+		Alg: "RS256",
+		KID: kid,
+	}
+	msg.KeyInfo = ki
+	return msg, nil
 }
 
 // CryptSS server side en/decryption method
@@ -315,4 +350,31 @@ func search(ss any, s string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Clients) client(tk string) (*model.Client, error) {
+	jt, err := c.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+
+	n, ok := jt.Payload["name"]
+	if !ok {
+		return nil, errors.New("token not valid, no name")
+	}
+	name, ok := n.(string)
+	if !ok {
+		return nil, errors.New("wrong format")
+	}
+
+	a, ok := c.stg.AccessKey(name)
+	if !ok {
+		return nil, errors.New("name not valid")
+	}
+
+	cl, ok := c.stg.GetClient(a)
+	if !ok {
+		return nil, errors.New("client unknown")
+	}
+	return cl, nil
 }

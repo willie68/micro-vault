@@ -37,6 +37,7 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router.Post("/keys", v.PostKeys)
 	router.Get("/keys/{id}", v.GetKey)
 	router.Post("/crypt", v.PostCrypt)
+	router.Post("/sign", v.PostSign)
 	return BaseURL + vaultSubpath, router
 }
 
@@ -237,6 +238,41 @@ func (v *VaultHandler) PostCrypt(response http.ResponseWriter, request *http.Req
 	}
 
 	j, err := v.cl.CryptSS(tk, jd)
+	if err != nil {
+		httputils.Err(response, request, serror.InternalServerError(err))
+		return
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, j)
+}
+
+// PostSign posting a message to sign, getting back the result, server side signing
+// @Summary posting a message to sign, getting back the result, server side signing
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/certificate [post]
+func (v *VaultHandler) PostSign(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	var jd pmodel.SignMessage
+	err = json.NewDecoder(request.Body).Decode(&jd)
+	if err != nil {
+		httputils.Err(response, request, serror.InternalServerError(err))
+		return
+	}
+
+	j, err := v.cl.SignSS(tk, &jd)
 	if err != nil {
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return

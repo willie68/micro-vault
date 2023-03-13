@@ -164,13 +164,13 @@ func TestSigning(t *testing.T) {
 	sig, err := cli.Sign(orgtxt)
 	ast.Nil(err)
 	ast.NotEmpty(sig)
-	t.Logf("signature: %s", sig)
+	t.Logf("signature: %v", sig)
 
-	ok, err := cli2.SignCheck("tester1", sig, orgtxt)
+	ok, err := cli2.SignCheck("tester1", sig.Signature, orgtxt)
 	ast.Nil(err)
 	ast.True(ok)
 
-	ok, err = cli2.SignCheck("tester2", sig, orgtxt)
+	ok, err = cli2.SignCheck("tester2", sig.Signature, orgtxt)
 	ast.NotNil(err)
 	ast.False(ok)
 }

@@ -22,3 +22,16 @@ type Message struct {
 	Decrypt   bool   `json:"decrypt"`   // True for message decryption and false for message encryption
 	Message   string `json:"message"`   // the message to en/decrypt
 }
+
+// SignMessage this is a message for a en/decrypting request
+type SignMessage struct {
+	KeyInfo   KeyInfo `json:"keyInfo"`
+	Message   string  `json:"message"`   // the message to en/decrypt
+	Signature string  `json:"signature"` // the signature
+}
+
+// KeyInfo some information about the used key
+type KeyInfo struct {
+	Alg string `json:"alg"`
+	KID string `json:"kid"`
+}

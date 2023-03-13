@@ -231,8 +231,31 @@ func (c *Client) Decrypt4Client(dt string) (string, error) {
 }
 
 // Sign data with the private key
-func (c *Client) Sign(dt string) (string, error) {
-	return cry.Sign(*c.privatekey, dt)
+func (c *Client) Sign(dt string) (*pmodel.SignMessage, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	sm := pmodel.SignMessage{
+		Message: dt,
+	}
+	res, err := c.PostJSON("vault/sign", sm)
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	err = ReadJSON(res, &sm)
+	if err != nil {
+		logging.Logger.Errorf("read signature failed: %v", err)
+		return nil, err
+	}
+	return &sm, nil
+
+	//	return cry.Sign(*c.privatekey, dt)
 }
 
 // SignCheck data with the public key
