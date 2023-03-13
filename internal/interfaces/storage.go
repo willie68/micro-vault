@@ -17,7 +17,6 @@ type Storage interface {
 	GetGroups() ([]model.Group, error)
 	GetGroup(n string) (*model.Group, bool)
 
-	CreateClient(n string, g []string) (*model.Client, error)
 	AddClient(c model.Client) (string, error)
 	UpdateClient(c model.Client) error
 	DeleteClient(a string) (ok bool, err error)

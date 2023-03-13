@@ -88,7 +88,7 @@ func loadFromFile(f string) (*rsa.PrivateKey, error) {
 
 func saveToFile(f string, rsk *rsa.PrivateKey) error {
 	if f != "" {
-		b, err := crypt.Prv2PEM(rsk)
+		b, err := crypt.Prv2Pem(rsk)
 		if err != nil {
 			return err
 		}

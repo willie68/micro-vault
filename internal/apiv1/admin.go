@@ -394,10 +394,9 @@ func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.
 		if errors.Is(err, services.ErrNotExists) {
 			httputils.Err(response, request, serror.NotFound("client", n))
 			return
-		} else {
-			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-			return
 		}
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
 	}
 	render.Status(request, http.StatusOK)
 }

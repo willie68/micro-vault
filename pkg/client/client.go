@@ -2,19 +2,15 @@ package client
 
 import (
 	"bytes"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/willie68/micro-vault/internal/logging"
@@ -65,13 +61,6 @@ func (c *Client) init(u string) error {
 		Timeout:   timeout,
 		Transport: tns,
 	}
-	if c.privatekey == nil {
-		privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			return err
-		}
-		c.privatekey = privatekey
-	}
 	return nil
 }
 
@@ -98,6 +87,7 @@ func (c *Client) Login() error {
 		Token     string `json:"access_token"`
 		Type      string `json:"token_type"`
 		ExpiresIn int    `json:"expires_in"`
+		Key       string `json:"key"`
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
@@ -110,6 +100,10 @@ func (c *Client) Login() error {
 	c.token = ds.Token
 	c.name = ds.Name
 	c.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
+	c.privatekey, err = cry.Pem2Prv(ds.Key)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -126,38 +120,6 @@ func (c *Client) Name() string {
 // Logout logging out this client
 func (c *Client) Logout() {
 	c.token = ""
-}
-
-// SendCertificate sending the client certificate (public part) for direct communications
-func (c *Client) SendCertificate() error {
-	err := c.checkToken()
-	if err != nil {
-		return err
-	}
-	publickey := &c.privatekey.PublicKey
-	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
-	if err != nil {
-		logging.Logger.Errorf("create public key failed: %v", err)
-		return err
-	}
-
-	pemblock := &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubbuf,
-	}
-
-	b := pem.EncodeToMemory(pemblock)
-
-	res, err := c.Post("vault/certificate", "application/x-pem-file", strings.NewReader(string(b)))
-	if err != nil {
-		logging.Logger.Errorf("post certificate request failed: %v", err)
-		return err
-	}
-	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("certificate bad response: %d", res.StatusCode)
-		return ReadErr(res)
-	}
-	return nil
 }
 
 // Encrypt4Group encrypting data string for a group

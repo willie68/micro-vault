@@ -10,7 +10,6 @@ import (
 	"errors"
 	"log"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/lestrrat-go/jwx/jwa"
@@ -33,12 +32,11 @@ const DoClients = "clients"
 
 // Clients business logic for client management
 type Clients struct {
-	stg     interfaces.Storage
-	srvkey  jwk.Key
-	kid     string
-	pubkeys sync.Map
-	cfg     config.Config
-	kmn     keyman.Keyman
+	stg    interfaces.Storage
+	srvkey jwk.Key
+	kid    string
+	cfg    config.Config
+	kmn    keyman.Keyman
 }
 
 // NewClients creates a new clients service
@@ -83,13 +81,13 @@ func (c *Clients) Init() error {
 }
 
 // Login logging in a client, returning a token if ok
-func (c *Clients) Login(a, s string) (string, error) {
+func (c *Clients) Login(a, s string) (string, string, error) {
 	if !c.stg.HasClient(a) {
-		return "", services.ErrLoginFailed
+		return "", "", services.ErrLoginFailed
 	}
 	cl, ok := c.stg.GetClient(a)
 	if ok && cl.Secret != s {
-		return "", services.ErrLoginFailed
+		return "", "", services.ErrLoginFailed
 	}
 
 	t := jwt.New()
@@ -103,9 +101,9 @@ func (c *Clients) Login(a, s string) (string, error) {
 	signed, err := jwt.Sign(t, jwa.RS256, c.srvkey)
 	if err != nil {
 		log.Printf("failed to sign token: %s", err)
-		return "", err
+		return "", "", err
 	}
-	return string(signed), nil
+	return string(signed), cl.Key, nil
 }
 
 // CreateEncryptKey creates a new encryption key, stores it into the storage with id
@@ -168,20 +166,6 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	return e, nil
 }
 
-// SetCertificate set the public certificate for this client
-func (c *Clients) SetCertificate(tk string, pc string) error {
-	jt, err := c.checkTk(tk)
-	if err != nil {
-		return err
-	}
-	name, ok := jt.Payload["name"]
-	if !ok {
-		return services.ErrNotExists
-	}
-	c.pubkeys.Store(name, pc)
-	return nil
-}
-
 // GetCertificate get the public certificate for another client (by name)
 func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 	if _, err := c.checkTk(tk); err != nil {
@@ -198,15 +182,15 @@ func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 	if dc == nil {
 		return "", services.ErrUnknowError
 	}
-	b, ok := c.pubkeys.Load(dc.Name)
-	if !ok {
-		return "", services.ErrUnknowError
+	k, err := cry.Pem2Prv(dc.Key)
+	if err != nil {
+		return "", err
 	}
-	bs, ok := b.(string)
-	if !ok {
-		return "", services.ErrUnknowError
+	ks, err := cry.Pub2Pem(&k.PublicKey)
+	if err != nil {
+		return "", err
 	}
-	return bs, nil
+	return string(ks), nil
 }
 
 // CryptSS server side en/decryption method

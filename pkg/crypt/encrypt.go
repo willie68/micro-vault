@@ -13,6 +13,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/willie68/micro-vault/internal/logging"
 )
 
 // Encrypt string to base64 crypto using AES
@@ -139,6 +141,7 @@ func SignCheckPEM(key string, signature, dt string) (bool, error) {
 	return true, nil
 }
 
+// Pem2pub converts a pem string with a public key into public key
 func Pem2pub(key string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(key))
 	if block == nil || block.Type != "PUBLIC KEY" {
@@ -154,6 +157,23 @@ func Pem2pub(key string) (*rsa.PublicKey, error) {
 		return nil, errors.New("key is not a rsa public key")
 	}
 	return pub, nil
+}
+
+// Pub2Pem converts a public key into a pem coded []byte
+func Pub2Pem(k *rsa.PublicKey) ([]byte, error) {
+	pubbuf, err := x509.MarshalPKIXPublicKey(k)
+	if err != nil {
+		logging.Logger.Errorf("create public key failed: %v", err)
+		return []byte{}, err
+	}
+
+	pemblock := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubbuf,
+	}
+
+	b := pem.EncodeToMemory(pemblock)
+	return b, nil
 }
 
 // Pem2Prv converts a pem string into a rsa private key
@@ -174,8 +194,8 @@ func Pem2Prv(key string) (*rsa.PrivateKey, error) {
 	return prv, nil
 }
 
-// Prv2PEM converts a private key to a PEM
-func Prv2PEM(rsk *rsa.PrivateKey) ([]byte, error) {
+// Prv2Pem converts a private key to a PEM
+func Prv2Pem(rsk *rsa.PrivateKey) ([]byte, error) {
 	pubbuf, err := x509.MarshalPKCS8PrivateKey(rsk)
 	if err != nil {
 		return []byte{}, err

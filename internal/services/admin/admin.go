@@ -1,13 +1,17 @@
 package admin
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/samber/do"
@@ -19,6 +23,7 @@ import (
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
+	cry "github.com/willie68/micro-vault/pkg/crypt"
 )
 
 // DoAdmin injection name
@@ -161,7 +166,7 @@ func (a *Admin) NewClient(tk, n string, gs []string) (*model.Client, error) {
 	if a.stg.HasClient(n) {
 		return nil, services.ErrAlreadyExists
 	}
-	cl, err := a.stg.CreateClient(n, gs)
+	cl, err := a.createClient(n, gs)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +229,36 @@ func (a *Admin) checkTk(tk string) error {
 		return errors.New("token not valid")
 	}
 	return nil
+}
+
+// CreateClient creates a new client with defined groups
+func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
+	token := make([]byte, 16)
+	_, err := rand.Read(token)
+	if err != nil {
+		return nil, err
+	}
+	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+	pem, err := cry.Prv2Pem(rsk)
+	if err != nil {
+		return nil, err
+	}
+
+	c := model.Client{
+		Name:      n,
+		AccessKey: uuid.NewString(),
+		Secret:    hex.EncodeToString(token),
+		Groups:    g,
+		Key:       string(pem),
+	}
+	_, err = a.stg.AddClient(c)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func search(ss any, s string) bool {

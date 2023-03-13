@@ -30,7 +30,7 @@ type conf struct {
 	AccessKey string `json:"accesskey"`
 	Token     string `json:"token"`
 	Expired   int64  `json:"expired"`
-	Admin     bool   `json"admin"`
+	Admin     bool   `json:"admin"`
 	URL       string `json:"url"`
 }
 

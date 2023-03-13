@@ -1,15 +1,12 @@
 package storage
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/google/uuid"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
@@ -144,26 +141,6 @@ func (f *FileStorage) HasClient(n string) bool {
 		log.Logger.Errorf("error has client: %v", err)
 	}
 	return found
-}
-
-// CreateClient creates a new client with defined groups
-func (f *FileStorage) CreateClient(n string, g []string) (*model.Client, error) {
-	token := make([]byte, 16)
-	_, err := rand.Read(token)
-	if err != nil {
-		return nil, err
-	}
-	c := model.Client{
-		Name:      n,
-		AccessKey: uuid.NewString(),
-		Secret:    hex.EncodeToString(token),
-		Groups:    g,
-	}
-	err = f.update(clientKey, c.AccessKey, c)
-	if err != nil {
-		return nil, err
-	}
-	return &c, nil
 }
 
 // AddClient adding the client to the internal storage

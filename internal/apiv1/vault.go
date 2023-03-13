@@ -3,7 +3,6 @@ package apiv1
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -34,7 +33,6 @@ func NewVaultHandler() api.Handler {
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/login", v.PostLogin)
-	router.Post("/certificate", v.PostCert)
 	router.Get("/certificate/{name}", v.GetCert)
 	router.Post("/keys", v.PostKeys)
 	router.Get("/keys/{id}", v.GetKey)
@@ -63,7 +61,7 @@ func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Req
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return
 	}
-	t, err := v.cl.Login(up.AccessKey, up.Secret)
+	t, k, err := v.cl.Login(up.AccessKey, up.Secret)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -84,48 +82,16 @@ func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Req
 		Token     string `json:"access_token"`
 		Type      string `json:"token_type"`
 		ExpiresIn int    `json:"expires_in"`
+		Key       string `json:"key"`
 	}{
 		Name:      name,
 		Token:     t,
 		Type:      "Bearer",
 		ExpiresIn: int(exp - iat),
+		Key:       k,
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, tk)
-}
-
-// PostCert posting the public key of a client certificate for the client
-// @Summary posting the public key of a client certificate for the client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
-func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Request) {
-	var b []byte
-	var err error
-	tk, err := token(request)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-
-	if b, err = io.ReadAll(request.Body); err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	pem := string(b)
-
-	err = v.cl.SetCertificate(tk, pem)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	render.Status(request, http.StatusOK)
 }
 
 // GetCert getting the public key of a client certificate for the named client

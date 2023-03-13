@@ -91,10 +91,17 @@ func TestClientStorage(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(0, len(cl))
 
-	c, err := mem.CreateClient("tester1", []string{"group1", "group2"})
+	c := model.Client{
+		Name:      "tester1",
+		AccessKey: "12345678",
+		Secret:    "yxcvb",
+		Groups:    []string{"group1", "group2"},
+		Key:       "PEMFILE",
+	}
+
+	n, err := mem.AddClient(c)
 	ast.Nil(err)
-	ast.NotEmpty(c.AccessKey)
-	ast.NotEmpty(c.Secret)
+	ast.Equal("tester1", n)
 
 	cl = make([]model.Client, 0)
 	err = mem.ListClients(func(c model.Client) bool {
@@ -114,7 +121,7 @@ func TestClientStorage(t *testing.T) {
 	ast.Nil(dc)
 }
 
-func TestAddClient(t *testing.T) {
+func TestCrudClient(t *testing.T) {
 	ast := assert.New(t)
 
 	mem := &Memory{}
@@ -140,6 +147,27 @@ func TestAddClient(t *testing.T) {
 	a, ok := mem.AccessKey(cl.Name)
 	ast.True(ok)
 	ast.Equal(cl.AccessKey, a)
+
+	cl.Secret = "bvcxy"
+
+	err = mem.UpdateClient(cl)
+	ast.Nil(err)
+
+	ok = mem.HasClient(cl.Name)
+	ast.True(ok)
+
+	c2, ok := mem.GetClient(cl.AccessKey)
+	ast.True(ok)
+	ast.Equal(cl.Name, c2.Name)
+	ast.Equal(cl.AccessKey, c2.AccessKey)
+	ast.Equal(cl.Secret, c2.Secret)
+
+	ok, err = mem.DeleteClient(cl.AccessKey)
+	ast.Nil(err)
+	ast.True(ok)
+
+	ok = mem.HasClient(cl.Name)
+	ast.False(ok)
 }
 
 func TestStoreEncryptKey(t *testing.T) {

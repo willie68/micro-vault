@@ -104,10 +104,17 @@ func TestClientStorageFS(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(0, len(cl))
 
-	c, err := stg.CreateClient("tester1", []string{"group1", "group2"})
+	c := model.Client{
+		Name:      "tester1",
+		AccessKey: "12345678",
+		Secret:    "yxcvb",
+		Groups:    []string{"group1", "group2"},
+		Key:       "PEMFILE",
+	}
+
+	n, err := stg.AddClient(c)
 	ast.Nil(err)
-	ast.NotEmpty(c.AccessKey)
-	ast.NotEmpty(c.Secret)
+	ast.Equal("tester1", n)
 
 	cl = make([]model.Client, 0)
 	err = stg.ListClients(func(c model.Client) bool {

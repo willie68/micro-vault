@@ -1,12 +1,9 @@
 package storage
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
@@ -103,23 +100,6 @@ func (m *Memory) HasClient(n string) bool {
 		return true
 	})
 	return f
-}
-
-// CreateClient creates a new client with defined groups
-func (m *Memory) CreateClient(n string, g []string) (*model.Client, error) {
-	token := make([]byte, 16)
-	_, err := rand.Read(token)
-	if err != nil {
-		return nil, err
-	}
-	c := model.Client{
-		Name:      n,
-		AccessKey: uuid.NewString(),
-		Secret:    hex.EncodeToString(token),
-		Groups:    g,
-	}
-	m.clients.Store(c.AccessKey, c)
-	return &c, nil
 }
 
 // AddClient adding the client to the internal storage

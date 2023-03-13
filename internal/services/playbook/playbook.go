@@ -1,6 +1,8 @@
 package playbook
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
+	cry "github.com/willie68/micro-vault/pkg/crypt"
 )
 
 // Playbook is a class which can play a playbook file for automated creation of groups and clients
@@ -61,6 +64,18 @@ func (p *Playbook) Play() error {
 		log.Logger.Infof("adding group %s", g.Name)
 	}
 	for _, c := range p.pm.Clients {
+		if c.Key == "" {
+			rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+			if err != nil {
+				return err
+			}
+			pem, err := cry.Prv2Pem(rsk)
+			if err != nil {
+				return err
+			}
+			c.Key = string(pem)
+			log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
+		}
 		_, err := p.stg.AddClient(c)
 		if err != nil {
 			log.Logger.Errorf("error adding client %s: %v", c.Name, err)

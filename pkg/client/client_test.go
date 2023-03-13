@@ -237,4 +237,5 @@ func TestNameToken(t *testing.T) {
 
 	ast.NotEmpty(cli.Token())
 	ast.Equal("tester1", cli.Name())
+	ast.NotNil(cli.privatekey)
 }

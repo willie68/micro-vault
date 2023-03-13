@@ -6,4 +6,5 @@ type Client struct {
 	AccessKey string   `json:"accesskey"`
 	Secret    string   `json:"secret"`
 	Groups    []string `json:"groups"`
+	Key       string   `json:"key"`
 }
