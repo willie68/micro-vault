@@ -7,4 +7,5 @@ type Client struct {
 	Secret    string   `json:"secret"`
 	Groups    []string `json:"groups"`
 	Key       string   `json:"key"`
+	KID       string   `json:"kid"`
 }

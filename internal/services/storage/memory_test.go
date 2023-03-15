@@ -132,6 +132,7 @@ func TestCrudClient(t *testing.T) {
 		AccessKey: "12345678",
 		Secret:    "yxcvb",
 		Groups:    []string{"group1"},
+		KID:       "kid87654321",
 	}
 	n, err := mem.AddClient(cl)
 	ast.Nil(err)
@@ -158,6 +159,7 @@ func TestCrudClient(t *testing.T) {
 
 	c2, ok := mem.GetClient(cl.AccessKey)
 	ast.True(ok)
+	ast.NotEmpty(c2.KID)
 	ast.Equal(cl.Name, c2.Name)
 	ast.Equal(cl.AccessKey, c2.AccessKey)
 	ast.Equal(cl.Secret, c2.Secret)
@@ -168,6 +170,29 @@ func TestCrudClient(t *testing.T) {
 
 	ok = mem.HasClient(cl.Name)
 	ast.False(ok)
+}
+
+func TestClientKID(t *testing.T) {
+	ast := assert.New(t)
+
+	mem := &Memory{}
+	err := mem.Init()
+	ast.Nil(err)
+	cl := model.Client{
+		Name:      "myname",
+		AccessKey: "12345678",
+		Secret:    "yxcvb",
+		Groups:    []string{"group1"},
+		KID:       "kid87654321",
+	}
+	n, err := mem.AddClient(cl)
+	ast.Nil(err)
+	ast.Equal(cl.Name, n)
+
+	c2, ok := mem.ClientByKID(cl.KID)
+	ast.True(ok)
+	ast.NotNil(c2)
+	ast.Equal(cl.AccessKey, c2.AccessKey)
 }
 
 func TestStoreEncryptKey(t *testing.T) {

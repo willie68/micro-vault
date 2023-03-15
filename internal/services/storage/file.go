@@ -220,6 +220,25 @@ func (f *FileStorage) GetClient(a string) (*model.Client, bool) {
 	return &cl, true
 }
 
+// ClientByKID returning a client by it's kid of the private key
+func (f *FileStorage) ClientByKID(k string) (*model.Client, bool) {
+	var c *model.Client
+	err := f.ListClients(func(g model.Client) bool {
+		if g.KID == k {
+			c = &g
+			return false
+		}
+		return true
+	})
+	if err != nil {
+		return nil, false
+	}
+	if c == nil {
+		return nil, false
+	}
+	return c, true
+}
+
 // AccessKey returning the access key of client with name
 func (f *FileStorage) AccessKey(n string) (string, bool) {
 	key := ""

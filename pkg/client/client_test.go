@@ -166,7 +166,13 @@ func TestSigning(t *testing.T) {
 	ast.NotEmpty(sig)
 	t.Logf("signature: %v", sig)
 
+	// Check locally
 	ok, err := cli2.SignCheck("tester1", sig.Signature, orgtxt)
+	ast.Nil(err)
+	ast.True(ok)
+
+	// Check message on server side
+	ok, err = cli2.SignCheckSS("tester1", *sig)
 	ast.Nil(err)
 	ast.True(ok)
 

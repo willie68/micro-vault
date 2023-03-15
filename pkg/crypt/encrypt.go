@@ -118,14 +118,19 @@ func Sign(pk rsa.PrivateKey, dt string) (string, error) {
 
 // SignCheckPEM check a signature of a data string
 func SignCheckPEM(key string, signature, dt string) (bool, error) {
-	// Before signing, we need to hash our message
-	// The hash is what we actually sign
-	msgHashSum, err := hashme(dt)
+	pub, err := Pem2pub(key)
 	if err != nil {
 		return false, err
 	}
 
-	pub, err := Pem2pub(key)
+	return SignCheck(pub, signature, dt)
+}
+
+// SignCheck check a signature of a data string
+func SignCheck(pub *rsa.PublicKey, signature, dt string) (bool, error) {
+	// Before signing, we need to hash our message
+	// The hash is what we actually sign
+	msgHashSum, err := hashme(dt)
 	if err != nil {
 		return false, err
 	}
@@ -234,4 +239,18 @@ func GetKID(rk *rsa.PrivateKey) (string, error) {
 		return "", err
 	}
 	return key.KeyID(), nil
+}
+
+// GetKIDOfPEM creates an KID for a private key
+func GetKIDOfPEM(p string) (string, error) {
+	rsk, err := Pem2Prv(p)
+	if err != nil {
+		return "", err
+	}
+
+	kid, err := GetKID(rsk)
+	if err != nil {
+		return "", err
+	}
+	return kid, nil
 }

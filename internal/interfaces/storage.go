@@ -22,6 +22,7 @@ type Storage interface {
 	DeleteClient(a string) (ok bool, err error)
 	ListClients(c func(g model.Client) bool) error
 	GetClient(a string) (*model.Client, bool)
+	ClientByKID(k string) (*model.Client, bool)
 	AccessKey(n string) (string, bool)
 	HasClient(n string) bool
 

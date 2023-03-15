@@ -76,6 +76,14 @@ func (p *Playbook) Play() error {
 			c.Key = string(pem)
 			log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
 		}
+
+		if c.KID == "" {
+			kid, err := cry.GetKIDOfPEM(c.Key)
+			if err != nil {
+				return err
+			}
+			c.KID = kid
+		}
 		_, err := p.stg.AddClient(c)
 		if err != nil {
 			log.Logger.Errorf("error adding client %s: %v", c.Name, err)

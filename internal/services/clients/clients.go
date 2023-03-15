@@ -8,12 +8,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/rs/xid"
 	"github.com/samber/do"
@@ -33,11 +31,10 @@ const DoClients = "clients"
 
 // Clients business logic for client management
 type Clients struct {
-	stg    interfaces.Storage
-	srvkey jwk.Key
-	kid    string
-	cfg    config.Config
-	kmn    keyman.Keyman
+	stg  interfaces.Storage
+	cfg  config.Config
+	kmn  keyman.Keyman
+	kids map[string]string // map key is the kid, value is the access key of the client
 }
 
 // NewClients creates a new clients service
@@ -55,29 +52,20 @@ func NewClients() (Clients, error) {
 	return c, err
 }
 
-// KID getting the kid
-func (c *Clients) KID() string {
-	return c.kid
-}
-
-// Key getting the server key
-func (c *Clients) Key() jwk.Key {
-	return c.srvkey
-}
-
 // Init initialize the clients service
 func (c *Clients) Init() error {
-	var err error
-
-	key, err := jwk.New(c.kmn.PrivateKey())
-
-	err = jwk.AssignKeyID(key)
-	if err != nil {
-		log.Printf("failed to generate private key: %s", err)
-		return err
-	}
-	c.srvkey = key
-	c.kid = key.KeyID()
+	c.kids = make(map[string]string)
+	c.stg.ListClients(func(g model.Client) bool {
+		if g.KID == "" {
+			kid, err := cry.GetKIDOfPEM(g.Key)
+			if err != nil {
+				return true
+			}
+			g.KID = kid
+		}
+		c.kids[g.KID] = g.AccessKey
+		return true
+	})
 	return nil
 }
 
@@ -99,7 +87,7 @@ func (c *Clients) Login(a, s string) (string, string, error) {
 	t.Set("groups", cl.Groups)
 
 	// Signing a token (using raw rsa.PrivateKey)
-	signed, err := jwt.Sign(t, jwa.RS256, c.srvkey)
+	signed, err := jwt.Sign(t, jwa.RS256, c.kmn.PrivateKey())
 	if err != nil {
 		logging.Logger.Infof("failed to sign token: %s", err)
 		return "", "", err
@@ -194,7 +182,7 @@ func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 	return string(ks), nil
 }
 
-// SignSS server side en/decryption method
+// SignSS server side signature
 func (c *Clients) SignSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessage, error) {
 	_, err := c.checkTk(tk)
 	if err != nil {
@@ -225,6 +213,38 @@ func (c *Clients) SignSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessag
 		KID: kid,
 	}
 	msg.KeyInfo = ki
+	return msg, nil
+}
+
+// CheckSS server side check signature
+func (c *Clients) CheckSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessage, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	var cl *model.Client
+	a, ok := c.kids[msg.KeyInfo.KID]
+	if !ok {
+		cl, ok = c.stg.ClientByKID(msg.KeyInfo.KID)
+		if !ok {
+			return nil, services.ErrNotExists
+		}
+		c.kids[cl.KID] = cl.AccessKey
+		a = cl.AccessKey
+	} else {
+		cl, ok = c.stg.GetClient(a)
+	}
+	rsk, err := cry.Pem2Prv(cl.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err = cry.SignCheck(&rsk.PublicKey, msg.Signature, msg.Message)
+	if err != nil {
+		return nil, err
+	}
+
+	msg.Valid = ok
 	return msg, nil
 }
 

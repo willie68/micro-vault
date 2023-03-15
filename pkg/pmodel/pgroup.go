@@ -28,6 +28,7 @@ type SignMessage struct {
 	KeyInfo   KeyInfo `json:"keyInfo"`
 	Message   string  `json:"message"`   // the message to en/decrypt
 	Signature string  `json:"signature"` // the signature
+	Valid     bool    `json:"valid"`
 }
 
 // KeyInfo some information about the used key

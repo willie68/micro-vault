@@ -155,6 +155,20 @@ func (m *Memory) GetClient(a string) (*model.Client, bool) {
 	return &c, ok
 }
 
+// ClientByKID returning a client by it's kid of the private key
+func (m *Memory) ClientByKID(k string) (*model.Client, bool) {
+	var ak string
+	m.clients.Range(func(key, value any) bool {
+		cl := value.(model.Client)
+		if cl.KID == k {
+			ak = cl.AccessKey
+			return false
+		}
+		return true
+	})
+	return m.GetClient(ak)
+}
+
 // AccessKey returning the access key of client with name
 func (m *Memory) AccessKey(n string) (string, bool) {
 	var ak string

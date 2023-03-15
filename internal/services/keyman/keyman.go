@@ -3,8 +3,10 @@ package keyman
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"log"
 	"os"
 
+	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/logging"
@@ -20,6 +22,7 @@ const DoKeyman = "keyman"
 type Keyman struct {
 	cfg config.Config
 	rsk *rsa.PrivateKey
+	kid string
 }
 
 // NewKeyman creates a new Keyman service
@@ -58,6 +61,16 @@ func (k *Keyman) Init() error {
 		}
 	}
 	k.rsk = rsk
+
+	key, err := jwk.New(rsk)
+
+	err = jwk.AssignKeyID(key)
+	if err != nil {
+		log.Printf("failed to generate private key: %s", err)
+		return err
+	}
+	k.kid = key.KeyID()
+
 	return nil
 }
 
@@ -69,6 +82,11 @@ func (k *Keyman) PrivateKey() *rsa.PrivateKey {
 // PublicKey return the public key for checking the signature of a token
 func (k *Keyman) PublicKey() rsa.PublicKey {
 	return k.rsk.PublicKey
+}
+
+// KID getting the kid
+func (k *Keyman) KID() string {
+	return k.kid
 }
 
 func loadFromFile(f string) (*rsa.PrivateKey, error) {

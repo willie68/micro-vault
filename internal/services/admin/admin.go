@@ -76,7 +76,7 @@ func (a *Admin) LoginUP(u string, p []byte) (string, error) {
 	t.Set("roles", []string{"mv-admin"})
 
 	// Signing a token (using raw rsa.PrivateKey)
-	signed, err := jwt.Sign(t, jwa.RS256, a.cls.Key())
+	signed, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
 	if err != nil {
 		log.Printf("failed to sign token: %s", err)
 		return "", err
@@ -246,13 +246,17 @@ func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	kid, err := cry.GetKID(rsk)
+	if err != nil {
+		return nil, err
+	}
 	c := model.Client{
 		Name:      n,
 		AccessKey: uuid.NewString(),
 		Secret:    hex.EncodeToString(token),
 		Groups:    g,
 		Key:       string(pem),
+		KID:       kid,
 	}
 	_, err = a.stg.AddClient(c)
 	if err != nil {

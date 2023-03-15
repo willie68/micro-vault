@@ -254,8 +254,6 @@ func (c *Client) Sign(dt string) (*pmodel.SignMessage, error) {
 		return nil, err
 	}
 	return &sm, nil
-
-	//	return cry.Sign(*c.privatekey, dt)
 }
 
 // SignCheck data with the public key
@@ -265,6 +263,30 @@ func (c *Client) SignCheck(n, sig, dt string) (bool, error) {
 		return false, err
 	}
 	return cry.SignCheckPEM(pub, sig, dt)
+}
+
+// SignCheckSS check signature of data on the server side
+func (c *Client) SignCheckSS(n string, smsg pmodel.SignMessage) (bool, error) {
+	err := c.checkToken()
+	if err != nil {
+		return false, err
+	}
+	res, err := c.PostJSON("vault/check", smsg)
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return false, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return false, ReadErr(res)
+	}
+	var sm pmodel.SignMessage
+	err = ReadJSON(res, &sm)
+	if err != nil {
+		logging.Logger.Errorf("read signature failed: %v", err)
+		return false, err
+	}
+	return sm.Valid, nil
 }
 
 // GetPublicKey getting the public key of another client by name
