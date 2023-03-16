@@ -70,7 +70,7 @@ func Decrypt(key []byte, cryptoText string) (string, error) {
 
 // EncryptPEM string to base64 crypto using PEM File with public key
 func EncryptPEM(key string, text string) (string, error) {
-	pub, err := Pem2pub(key)
+	pub, err := Pem2Pub(key)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func Sign(pk rsa.PrivateKey, dt string) (string, error) {
 
 // SignCheckPEM check a signature of a data string
 func SignCheckPEM(key string, signature, dt string) (bool, error) {
-	pub, err := Pem2pub(key)
+	pub, err := Pem2Pub(key)
 	if err != nil {
 		return false, err
 	}
@@ -147,8 +147,8 @@ func SignCheck(pub *rsa.PublicKey, signature, dt string) (bool, error) {
 	return true, nil
 }
 
-// Pem2pub converts a pem string with a public key into public key
-func Pem2pub(key string) (*rsa.PublicKey, error) {
+// Pem2Pub converts a pem string with a public key into public key
+func Pem2Pub(key string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(key))
 	if block == nil || block.Type != "PUBLIC KEY" {
 		return nil, errors.New("error getting public key")

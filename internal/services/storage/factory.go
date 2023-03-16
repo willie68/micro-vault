@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/willie68/micro-vault/internal/config"
@@ -27,6 +28,17 @@ func NewStorage(s config.Storage) (interfaces.Storage, error) {
 		if err != nil {
 			return nil, err
 		}
+	case "mongodb":
+		js, err := json.Marshal(s.Properties)
+		if err != nil {
+			return nil, err
+		}
+		var mdcfg MongoDBConfig
+		err = json.Unmarshal(js, &mdcfg)
+		if err != nil {
+			return nil, err
+		}
+		stg, err = NewMongoStorage(mdcfg)
 	}
 	return stg, nil
 }

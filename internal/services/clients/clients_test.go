@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
@@ -61,9 +60,10 @@ func init() {
 
 func TestClientLogin(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := cls.Login("12345678", "yxcvb")
+	tk, k, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
-	t.Logf("kid: %s, token: %s", cls.KID(), tk)
+	ast.NotEmpty(k)
+
 	jwt, err := auth.DecodeJWT(tk)
 	ast.Nil(err)
 	ast.NotNil(jwt)
@@ -74,7 +74,7 @@ func TestClientLogin(t *testing.T) {
 
 func TestGenerateAES(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := cls.Login("12345678", "yxcvb")
+	tk, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group1")
@@ -93,7 +93,7 @@ func TestGenerateAES(t *testing.T) {
 
 func TestGenAESWrGroup(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := cls.Login("12345678", "yxcvb")
+	tk, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group3")
@@ -104,7 +104,7 @@ func TestGenAESWrGroup(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(e)
 
-	tk2, err := cls.Login("345678", "yxcvb")
+	tk2, _, err := cls.Login("345678", "yxcvb")
 	ast.Nil(err)
 
 	e1, err := cls.GetEncryptKey(tk2, e.ID)
@@ -114,44 +114,25 @@ func TestGenAESWrGroup(t *testing.T) {
 
 func TestClientCertificate(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := cls.Login("12345678", "yxcvb")
+	tk, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	// generate private key
-	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
+	pub, err := cls.GetCertificate(tk, "tester1")
 	ast.Nil(err)
+	ast.NotEmpty(pub)
 
-	publickey := &privatekey.PublicKey
-	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
+	prv, err := cry.Pem2Pub(pub)
 	ast.Nil(err)
-
-	pemblock := &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubbuf,
-	}
-
-	b := pem.EncodeToMemory(pemblock)
-	bs := string(b)
-	t.Logf("pem: %s", bs)
-
-	err = cls.SetCertificate(tk, bs)
-	ast.Nil(err)
-
-	tk2, err := cls.Login("345678", "yxcvb")
-	ast.Nil(err)
-
-	pub, err := cls.GetCertificate(tk2, "tester1")
-	ast.Nil(err)
-	ast.Equal(bs, pub)
+	ast.NotNil(prv)
 }
 
 func TestSSGroup(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, err := cls.Login("12345678", "yxcvb")
+	tk1, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	tk2, err := cls.Login("87654321", "yxcvb")
+	tk2, _, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group2")
@@ -181,10 +162,10 @@ func TestSSGroupWG(t *testing.T) {
 	// testing server side crypt with wrong group
 	ast := assert.New(t)
 
-	tk1, err := cls.Login("12345678", "yxcvb")
+	tk1, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	tk2, err := cls.Login("87654321", "yxcvb")
+	tk2, _, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group1")
@@ -229,17 +210,16 @@ func buildGroupMessage(g string) (pmodel.Message, error) {
 func TestSSClient(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, err := cls.Login("12345678", "yxcvb")
+	tk1, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	tk2, err := cls.Login("87654321", "yxcvb")
+	_, prvpem, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
-	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
-	ast.Nil(err)
-	pm, err := publicPem(privatekey)
-	ast.Nil(err)
+	ast.NotEmpty(prvpem)
 
-	err = cls.SetCertificate(tk2, pm)
+	privateKey, err := cry.Pem2Prv(prvpem)
+	ast.Nil(err)
+	ast.NotNil(privateKey)
 
 	msg, err := buildClientMessage("tester2")
 	ast.Nil(err)
@@ -252,7 +232,7 @@ func TestSSClient(t *testing.T) {
 	ast.Equal(msg.Recipient, m.Recipient)
 	ast.Equal(msg.Type, m.Type)
 
-	ms, err := cry.DecryptKey(*privatekey, m.Message)
+	ms, err := cry.DecryptKey(*privateKey, m.Message)
 	ast.Nil(err)
 	ast.Equal(msg.Message, ms)
 }
@@ -295,4 +275,34 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 
 	b := pem.EncodeToMemory(pemblock)
 	return string(b), err
+}
+
+func TestSSSign(t *testing.T) {
+	ast := assert.New(t)
+
+	tk1, _, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+	ast.NotEmpty(tk1)
+
+	tk2, _, err := cls.Login("87654321", "yxcvb")
+	ast.Nil(err)
+	ast.NotEmpty(tk2)
+
+	msg := pmodel.SignMessage{
+		Message: "Dies ist eine Message",
+		Valid:   false,
+	}
+
+	msg2, err := cls.SignSS(tk1, &msg)
+	ast.Nil(err)
+	ast.NotNil(msg2)
+
+	ast.NotNil(msg2.KeyInfo)
+	ast.Equal(msg2.KeyInfo.Alg, "RS256")
+	ast.NotEmpty(msg2.KeyInfo.KID)
+
+	msg3, err := cls.CheckSS(tk2, msg2)
+	ast.Nil(err)
+	ast.NotNil(msg3)
+	ast.True(msg3.Valid)
 }

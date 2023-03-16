@@ -22,3 +22,5 @@ testdata/filestorage/
 testdata/private.pem
 
 *.pem
+
+*.bkp

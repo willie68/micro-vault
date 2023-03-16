@@ -32,13 +32,13 @@ func NewVaultHandler() api.Handler {
 // Routes getting all routes for the config endpoint
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
-	router.Post("/login", v.PostLogin)
-	router.Get("/certificate/{name}", v.GetCert)
-	router.Post("/keys", v.PostKeys)
-	router.Get("/keys/{id}", v.GetKey)
-	router.Post("/crypt", v.PostCrypt)
-	router.Post("/sign", v.PostSign)
-	router.Post("/check", v.PostCheck)
+	router.Post("/clients/login", v.PostLogin)
+	router.Get("/clients/certificate/{name}", v.GetCert)
+	router.Post("/groups/keys", v.PostKeys)
+	router.Get("/groups/keys/{id}", v.GetKey)
+	router.Post("/groups/crypt", v.PostCrypt)
+	router.Post("/signature/sign", v.PostSign)
+	router.Post("/signature/check", v.PostCheck)
 	return BaseURL + vaultSubpath, router
 }
 

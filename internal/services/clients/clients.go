@@ -321,7 +321,7 @@ func (c *Clients) ssClient(tk string, msg pmodel.Message) (*pmodel.Message, erro
 			return nil, err
 		}
 
-		pub, err := cry.Pem2pub(key)
+		pub, err := cry.Pem2Pub(key)
 		if err != nil {
 			return nil, err
 		}

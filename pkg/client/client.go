@@ -73,7 +73,7 @@ func (c *Client) Login() error {
 		AccessKey: c.accessKey,
 		Secret:    c.secret,
 	}
-	res, err := c.PostJSON("vault/login", up)
+	res, err := c.PostJSON("vault/clients/login", up)
 	if err != nil {
 		logging.Logger.Errorf("login request failed: %v", err)
 		return err
@@ -134,7 +134,7 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 	}{
 		Group: g,
 	}
-	res, err := c.PostJSON("vault/keys", jd)
+	res, err := c.PostJSON("vault/groups/keys", jd)
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return "", "", err
@@ -173,7 +173,7 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 		return "", err
 	}
 
-	res, err := c.Get(fmt.Sprintf("vault/keys/%s", id))
+	res, err := c.Get(fmt.Sprintf("vault/groups/keys/%s", id))
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return "", err
@@ -239,7 +239,7 @@ func (c *Client) Sign(dt string) (*pmodel.SignMessage, error) {
 	sm := pmodel.SignMessage{
 		Message: dt,
 	}
-	res, err := c.PostJSON("vault/sign", sm)
+	res, err := c.PostJSON("vault/signature/sign", sm)
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return nil, err
@@ -271,7 +271,7 @@ func (c *Client) SignCheckSS(n string, smsg pmodel.SignMessage) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	res, err := c.PostJSON("vault/check", smsg)
+	res, err := c.PostJSON("vault/signature/check", smsg)
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return false, err
@@ -296,7 +296,7 @@ func (c *Client) GetPublicKey(n string) (string, error) {
 		return "", err
 	}
 
-	res, err := c.Get(fmt.Sprintf("vault/certificate/%s", n))
+	res, err := c.Get(fmt.Sprintf("vault/clients/certificate/%s", n))
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return "", err
@@ -320,7 +320,7 @@ func (c *Client) CryptSS(m pmodel.Message) (*pmodel.Message, error) {
 		return nil, err
 	}
 
-	res, err := c.PostJSON("vault/crypt", m)
+	res, err := c.PostJSON("vault/groups/crypt", m)
 	if err != nil {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return nil, err

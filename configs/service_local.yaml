@@ -12,8 +12,14 @@ service:
   rootpwd: yxcvb
   privatekey: ./configs/private.pem
   storage:
-    type: memory
+    type: mongodb
     properties:
+      hosts:
+        - 127.0.0.1:27017
+      authdatabase: microvault
+      username: microvault
+      password: yxcvb
+      database: microvault
     
 logging:
     gelf-url: 127.0.0.1

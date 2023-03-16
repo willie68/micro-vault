@@ -4,25 +4,53 @@ micro-vault microservice dead simple key management service without any golden r
 
 ## Wofür gibt es diesen Server?
 
+### Ausgangslage
+
 Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
-Der Ansatz war ähnlich wie bei TLS. Es gibt einen dritten Vertrauten, dieser Service, der als Vermittler dient.
+Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Servicen über eine 3 nicht vertraute Umgebung.
 
-Ein Client wird zunächst auf den MicroVault Service eingerichtet. Dabei wird eine AccoutID und ein Secret generiert. Das Secret kann automatisch erneuert werden. Es kann aber auch statisch bleiben. 
-Jeder Client wird dann zu Gruppen hinzu gefügt. Er kann nur die Zertifikate dieser Gruppen sehen. 
+Schnell sieht man selbst wenn die eigentliche Kommunikation zwischen den einzelnen Servicen verschlüsselt stattfindet, kann ein Angreifer an die Daten gelangen. Denn wie die Datenablage erfolgt ist nicht immer ersichtlich und auf dem Messingsystem liegen zumindest zeitweise die Daten in unverschlüsselter Form vor. 
 
-Beim Login generiert der Client automatisch ein RSA Zertifikat. Dieses wird dann für diesen Client im MV gespeichert. (Sitzungszertifikat) Dieses Zertifikat kann dann zur direkten verschlüsselten Kommunikation mit diesem Service verwendet werden. Jeder weitere Client einer der von diesem CLient angehörigen Gruppen, kann das Public Zertifikat dieses Services abrufen. 
+![scenario_1](./doc/images/scenario_1.svg)
 
-Weiterhin kann jeder Client ein neues AES Verschlüsselungszertifikat im MS für einen Gruppe erstellen lassen. Dieses Erhält eine ID. Mit diesem Zertifikat kann dann jeder Client einer Gruppe Daten für diese Gruppe verschlüsseln und das Paket dann samt ID übertragen. Die Gegenstelle kann sich dann über die ID den AES Schlüssel zum Entschlüsseln besorgen, solange Sie ebenfalls zur gleichen Gruppe gehört. 
 
-Als 3. Feature kann man über einen Datenbereich eine Signatur bilden und diese auch wieder prüfen.
 
-Sämtliche Kommunikation vom und zum MV ist per TLS verschlüsselt. 
-Es gibt 2 Interface Bereiche, einmal der Admin Bereich für das Management und der Client Bereich für den Austausch. Später kann es noch einen Kommunikationsbereich geben, wo sich Client über Daten austauschen.   
+Man kann natürlich die Daten bereits auf der Sendeseite von MS1 verschlüsseln und dann auf der Empfangsseite von MS2 wieder entschlüsseln.
+
+![scenario_2](./doc/images/scenario_2.svg)
+
+Aber wie kommt der Schlüssel von A nach B? 
+
+Eine durchaus verbreitete Variante (ähnlich TLS) ist, den symmetrischen Schlüssel in der Payload zu schicken. Dieser wird dann mit dem öffentlichen Schlüssel des Zertifikates von Microservice 2 verschlüsselt. (Asymmetrische Verschlüsselung) Microservice 2 kann dann zunächst mit seinem privaten Schlüssel den symmetrischen Schlüssel dekodieren und dann die eigentliche Payload entschlüsseln.  
+
+Soweit funktioniert das auch recht gut. Nachteil ist allerdings, Microservice 1 muss irgendwie an den öffentlichen Schlüssel von Microservice 2 kommen. Um nicht eine direkte Abhängigkeit von MS1 zu MS2 zuhaben, kann man das konfigurativ erledigen oder man legt die Schlüssel in einen zentralen Schlüsselspeicher. D.h. Es gibt einen dritten Vertrauten, der als Vermittler dient.
+
+![scenario_3](./doc/images/scenario_3.svg)
+
+Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS2 muss einen asymmetrischen Schlüssel verwalten. In einer Multinodeumgebung ist die Verwaltung dabei eine Herausforderung. Nicht nur, dass auf der MS2 Seite nun die privaten Schlüssel an alle Nodes verteilt werden müssen. Auch beim Wiederruf müssen die neuen Zertifikate an alle Nodes und den Vault ausgerollt werden. Und auch die Schlüsselgenerierung auf der Client 1 Seite birgt Risiken. Besser wäre es wenn auch der private Schlüssel von MS 2 mit in dem Vault gelegt würde und nur bei Bedarf über eine sichere Verbindung übertragen wird. Der nächste logische Schritt ist es dann, auch die symmetrischen Schlüssel im Vault zu speichern und nur eine ID zur Identifizierung des Schlüssels an den Client 2 weiter zu geben. Vault kann dann durch zusätzliche Attribut checken, ob ein Zugriff auf den Schlüssel erlaubt ist. Somit entfällt auch die Notwendigkeit den symmetrischen Schlüssel mit dem öffentlichen Schlüssel von Client 2 zu verschlüsseln. Zusätzlich kann nun die Nachricht auch weiteren Clients zur Verfügung gestellt werden, den Zugriff auf die Schlüssel regelt dann Vault anhand von Zugriffsregeln. 
+
+![scenario_4](./doc/images/scenario_4.svg)
+
+
+
+Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschlüsseln bzw. das Signieren und den Check dazu auch komplett auf Vault verlegen. Die Clients verwalten dann nur noch eine Verbindung. Nachteil ist dann natürlich, dass Vault neben der Schlüssel- und Clientverwaltung, nun auch die deutlich Resourcen bindende Arbeit des Ver/Entschlüsselns bzw. der Signierung übernehmen muss. In sofern ist die Nutzung von Serverside Encryption auch nur bei kleiner Payload zu empfehlen. 
+
+### Was bietet nun MicroVault?
+
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden.
+
+Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. 
+
+Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
+
+1. In Memory: Hier werden alle relevanten Daten im Speicher von Vault gehalten. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können beim Start Clients und Gruppen erstellt werden. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
+2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage auch nicht möglich.
+3. MongoDB: Mit dem MongoDB Storage ist es möglich alle Daten verschlüsselt in eine MongoDB abzulegen. Dieser Storage kann auch im Multinode Betrieb verwendet werden.
+
+Zur Anbindung an die Clients werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich.   
 
 ## Speichermodelle
-
-Es gibt 3 Speichermodell
 
 ### Memory only
 
@@ -58,16 +86,22 @@ Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes
 - Client fordert den Public Key von Client B an -> MV prüft ob A und B gemeinsame Gruppen haben. Public Key B wird als Antwort zu Client A gesendet.
 - Client verschlüsselt die Nachricht und versendet das ganze.
 - Client B ruft die Nachricht ab.
+- Client B ruft seinen persönlichen Schlüssel ab.
 - Client B entschlüsselt die Nachricht mit persönlichem Schlüssel. 
 
 ### Usecase 3: Client A möchte Daten einer Nachricht mit einer Signatur versehen
 
 - Client A meldet sich mit AccessKey und Secret an -> MV gibt ein JWToken zurück
+- Client A ruft seinen persönlichen Schlüssel ab.
 - Client A bildet mit seinem privaten Schlüssel über die Daten eine Signatur
 - Client A versendet die Nachricht, die Signatur und seinen Namen.
 - Client B ruft die Nachricht, Signatur und den Namen ab.
 - Client B fordert den öffentlichen Schlüssel von Client A an -> MV prüft die gemeinsamen Gruppen 
 - Client B prüft die Signatur. 
+
+### Serverside Encryption/Signing
+
+ZUsätzlich zu der im Client implementierten Verschlüsselungs und Signierung implementiert MV auch einen Serverseitigen Ansatz. D.h. jeder Client kann Daten über den Server ver-/entschlüsseln bzw. signieren/validieren. Somit werden lokal keine Crypto Biblliotheken benötigt.
 
 ## Playbook
 
