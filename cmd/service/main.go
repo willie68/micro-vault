@@ -234,8 +234,8 @@ func main() {
 	initLogging()
 
 	if err := initServices(serviceConfig.Service); err != nil {
-		log.Logger.Alertf("error creating memory storage: %v", err)
-		panic("error creating memory storage")
+		log.Logger.Alertf("error creating services: %v", err)
+		panic("error creating services")
 	}
 
 	if pbexport != "" {
@@ -433,12 +433,12 @@ func initJaeger(servicename string, cnfg config.OpenTracing) (opentracing.Tracer
 }
 
 func initServices(c config.Service) error {
-	_, err := storage.NewStorage(c.Storage)
+	_, err := keyman.NewKeyman()
 	if err != nil {
 		return err
 	}
 
-	_, err = keyman.NewKeyman()
+	_, err = storage.NewStorage(c.Storage)
 	if err != nil {
 		return err
 	}
