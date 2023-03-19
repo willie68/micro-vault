@@ -62,7 +62,7 @@ Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zu
 
 ### MongoDB
 
-Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Der Verschlüssellungschlüssel wird entweder per Passwort generiert (Passwort aus der Config bzw. Secret) oder per Environment übergeben.
+Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie auch die Collection und der Index müssen von Hand angelegt werden. Für eine Development Instanz gibt es im Doc Ordner die Datei  dev.md mit den entsprechenden Befehlen für die Mongo Shell.
 
 ### Multinodebetrieb
 

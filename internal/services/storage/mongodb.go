@@ -3,6 +3,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -41,29 +42,20 @@ type MongoStorage struct {
 	database *driver.Database
 	ctx      context.Context
 	knm      keyman.Keyman
-	colCl    *driver.Collection
-	colGr    *driver.Collection
+	colObj   *driver.Collection
 }
 
-type bclient struct {
-	ID        primitive.ObjectID `bson:"_id"`
-	Name      string             `json:"name" bson:"name"`
-	AccessKey string             `json:"accesskey" bson:"accesskey"`
-	Secret    string             `json:"secret" bson:"secret"`
-	Groups    []string           `json:"groups" bson:"groups"`
-	Key       string             `json:"key" bson:"key"`
-	KID       string             `json:"kid" bson:"kid"`
-}
-
-type bgroup struct {
-	ID    primitive.ObjectID `bson:"_id"`
-	Name  string             `json:"name" bson:"name"`
-	Label map[string]string  `json:"label" bson:"label"`
+type bobject struct {
+	ID         primitive.ObjectID `bson:"_id"`
+	Class      string             `bson:"class"`
+	Identifier string             `bson:"identifier"`
+	Object     string             `bson:"object"`
 }
 
 const (
-	colClients = "clients"
-	colGroups  = "groups"
+	colObjects = "objects"
+	cCGroup    = "group"
+	cCClient   = "client"
 )
 
 // NewMongoStorage initialize the mongo db for usage in this service
@@ -110,82 +102,7 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 
 // Init initialize the connection to the mongo db. cerate collections with index as needed
 func (m *MongoStorage) Init() error {
-	err := m.initColClients()
-	if err != nil {
-		return err
-	}
-	err = m.initColGroups()
-	if err != nil {
-		return err
-	}
-	m.colCl = m.database.Collection(colClients)
-	m.colGr = m.database.Collection(colGroups)
-	return nil
-}
-
-func (m *MongoStorage) initColClients() error {
-	col := m.database.Collection(colClients)
-	// check for indexes
-	ok, err := hasIndex(col, "name")
-	if err != nil {
-		return err
-	}
-	if !ok {
-		log.Logger.Info("colcl: index name found, creating one")
-		mod := driver.IndexModel{
-			Keys: bson.M{
-				"name": 1, // index in ascending order
-			},
-			Options: options.Index().SetUnique(true).SetName("name"),
-		}
-		// Create an Index using the CreateOne() method
-		_, err := col.Indexes().CreateOne(m.ctx, mod)
-		if err != nil {
-			return err
-		}
-	}
-	ok, err = hasIndex(col, "accesskey")
-	if err != nil {
-		return err
-	}
-	if !ok {
-		log.Logger.Info("colcl: index name found, creating one")
-		mod := driver.IndexModel{
-			Keys: bson.M{
-				"accesskey": 1, // index in ascending order
-			},
-			Options: options.Index().SetUnique(true).SetName("accesskey"),
-		}
-		// Create an Index using the CreateOne() method
-		_, err := col.Indexes().CreateOne(m.ctx, mod)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *MongoStorage) initColGroups() error {
-	col := m.database.Collection(colGroups)
-	// check for indexes
-	ok, err := hasIndex(col, "name")
-	if err != nil {
-		return err
-	}
-	if !ok {
-		log.Logger.Info("colcl: index name found, creating one")
-		mod := driver.IndexModel{
-			Keys: bson.M{
-				"name": 1, // index in ascending order
-			},
-			Options: options.Index().SetUnique(true).SetName("name"),
-		}
-		// Create an Index using the CreateOne() method
-		_, err := col.Indexes().CreateOne(m.ctx, mod)
-		if err != nil {
-			return err
-		}
-	}
+	m.colObj = m.database.Collection(colObjects)
 	return nil
 }
 
@@ -218,11 +135,23 @@ func (m *MongoStorage) Close() error {
 // AddGroup adding a group to internal store
 func (m *MongoStorage) AddGroup(g model.Group) (string, error) {
 	if !m.HasGroup(g.Name) {
-		gr := bgroup{
-			Name:  g.Name,
-			Label: g.Label,
+		js, err := json.Marshal(g)
+		if err != nil {
+			return "", err
 		}
-		_, err := m.colGr.InsertOne(m.ctx, gr)
+		//		obj := bobject{
+		//			Class:      cCGroup,
+		//			Identifier: g.Name,
+		//			Object:     string(js),
+		//		}
+
+		obj := bson.D{
+			{"Class", cCGroup},
+			{"Identifier", g.Name},
+			{"Object", string(js)},
+		}
+
+		_, err = m.colObj.InsertOne(m.ctx, obj)
 		if err != nil {
 			return "", err
 		}
