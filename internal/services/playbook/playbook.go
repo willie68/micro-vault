@@ -56,40 +56,44 @@ func (p *Playbook) Play() error {
 		return nil
 	}
 	for _, g := range p.pm.Groups {
-		_, err := p.stg.AddGroup(g)
-		if err != nil {
-			log.Logger.Errorf("error adding group %s: %v", g.Name, err)
-			return err
+		if !p.stg.HasGroup(g.Name) {
+			_, err := p.stg.AddGroup(g)
+			if err != nil {
+				log.Logger.Errorf("error adding group %s: %v", g.Name, err)
+				return err
+			}
+			log.Logger.Infof("adding group %s", g.Name)
 		}
-		log.Logger.Infof("adding group %s", g.Name)
 	}
 	for _, c := range p.pm.Clients {
-		if c.Key == "" {
-			rsk, err := rsa.GenerateKey(rand.Reader, 2048)
-			if err != nil {
-				return err
+		if !p.stg.HasClient(c.Name) {
+			if c.Key == "" {
+				rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+				if err != nil {
+					return err
+				}
+				pem, err := cry.Prv2Pem(rsk)
+				if err != nil {
+					return err
+				}
+				c.Key = string(pem)
+				log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
 			}
-			pem, err := cry.Prv2Pem(rsk)
-			if err != nil {
-				return err
-			}
-			c.Key = string(pem)
-			log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
-		}
 
-		if c.KID == "" {
-			kid, err := cry.GetKIDOfPEM(c.Key)
+			if c.KID == "" {
+				kid, err := cry.GetKIDOfPEM(c.Key)
+				if err != nil {
+					return err
+				}
+				c.KID = kid
+			}
+			_, err := p.stg.AddClient(c)
 			if err != nil {
+				log.Logger.Errorf("error adding client %s: %v", c.Name, err)
 				return err
 			}
-			c.KID = kid
+			log.Logger.Infof("adding client %s", c.Name)
 		}
-		_, err := p.stg.AddClient(c)
-		if err != nil {
-			log.Logger.Errorf("error adding client %s: %v", c.Name, err)
-			return err
-		}
-		log.Logger.Infof("adding client %s", c.Name)
 	}
 	return nil
 }

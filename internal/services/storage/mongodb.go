@@ -134,35 +134,20 @@ func (m *MongoStorage) Close() error {
 
 // AddGroup adding a group to internal store
 func (m *MongoStorage) AddGroup(g model.Group) (string, error) {
-	if !m.HasGroup(g.Name) {
-		js, err := json.Marshal(g)
-		if err != nil {
-			return "", err
-		}
-		//		obj := bobject{
-		//			Class:      cCGroup,
-		//			Identifier: g.Name,
-		//			Object:     string(js),
-		//		}
-
-		obj := bson.D{
-			{"Class", cCGroup},
-			{"Identifier", g.Name},
-			{"Object", string(js)},
-		}
-
-		_, err = m.colObj.InsertOne(m.ctx, obj)
-		if err != nil {
-			return "", err
-		}
-		return g.Name, nil
+	err := m.upsert(cCGroup, g.Name, g)
+	if err != nil {
+		return "", err
 	}
-	return "", services.ErrAlreadyExists
+	return g.Name, nil
 }
 
 // HasGroup checks if a group is present
 func (m *MongoStorage) HasGroup(n string) (found bool) {
-	return false
+	found, err := m.exists(cCGroup, n)
+	if err != nil {
+		return false
+	}
+	return found
 }
 
 // DeleteGroup deletes a group if present
@@ -183,12 +168,24 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 
 // HasClient checks if a client is present
 func (m *MongoStorage) HasClient(n string) bool {
-	return false
+	found, err := m.exists(cCClient, n)
+	if err != nil {
+		return false
+	}
+	return found
 }
 
 // AddClient adding the client to the internal storage
 func (m *MongoStorage) AddClient(c model.Client) (string, error) {
-	return "", services.ErrNotImplementedYet
+	err := m.upsert(cCClient, c.Name, c)
+	if err != nil {
+		return "", err
+	}
+	err = m.upsert(cCClient, c.AccessKey, c)
+	if err != nil {
+		return "", err
+	}
+	return c.Name, nil
 }
 
 // UpdateClient adding the client to the internal storage
@@ -244,4 +241,48 @@ func (m *MongoStorage) clear() error {
 		}
 	}
 	return nil
+}
+
+func (m *MongoStorage) upsert(c, i string, o any) error {
+	js, err := json.Marshal(o)
+	if err != nil {
+		return err
+	}
+	obj := bson.D{
+		{"class", c},
+		{"identifier", i},
+		{"object", string(js)},
+	}
+	opts := options.FindOneAndReplace().SetUpsert(true)
+	flt := bson.D{
+		{"class", c},
+		{"identifier", i},
+	}
+	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
+	if res.Err() != nil {
+		if res.Err() == driver.ErrNoDocuments {
+			return nil
+		}
+		return res.Err()
+	}
+	return nil
+}
+
+func (m *MongoStorage) exists(c, i string) (bool, error) {
+	opts := options.FindOne()
+	obj := bson.D{
+		{"class", c},
+		{"identifier", i},
+	}
+	res := m.colObj.FindOne(m.ctx, obj, opts)
+	if res != nil {
+		if res.Err() == driver.ErrNoDocuments {
+			return false, nil
+		}
+		if res.Err() != nil {
+			return false, res.Err()
+		}
+		return true, nil
+	}
+	return false, services.ErrUnknowError
 }
