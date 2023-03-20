@@ -55,6 +55,9 @@ const (
 	colObjects = "objects"
 	cCGroup    = "group"
 	cCClient   = "client"
+	cCClientA  = "clientA"
+	cCClientK  = "clientK"
+	cCCrypt    = "crypt"
 )
 
 // NewMongoStorage initialize the mongo db for usage in this service
@@ -62,6 +65,22 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 	if len(mcnfg.Hosts) == 0 {
 		return nil, errors.New("no mongo hosts found. check config")
 	}
+	stg, err := prepareMongoClient(mcnfg)
+	if err != nil {
+		log.Logger.Errorf("%v", err)
+		return nil, err
+	}
+
+	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, stg)
+	err = stg.Init()
+	if err != nil {
+		log.Logger.Errorf("%v", err)
+		return nil, err
+	}
+	return stg, nil
+}
+
+func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
 	rb := bson.NewRegistryBuilder()
 	rb.RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
 
@@ -89,12 +108,6 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 		database: database,
 		ctx:      ctx,
 		knm:      do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
-	}
-	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, &stg)
-	err = stg.Init()
-	if err != nil {
-		log.Logger.Errorf("%v", err)
-		return nil, err
 	}
 	return &stg, nil
 }
@@ -204,6 +217,9 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 		log.Logger.Errorf("error: %v", err)
 		return nil, false
 	}
+	if !ok {
+		return nil, ok
+	}
 	return &g, ok
 }
 
@@ -218,55 +234,179 @@ func (m *MongoStorage) HasClient(n string) bool {
 
 // AddClient adding the client to the internal storage
 func (m *MongoStorage) AddClient(c model.Client) (string, error) {
-	err := m.upsert(cCClient, c.Name, c)
+	if m.HasClient(c.Name) {
+		return "", errors.New("client already exists")
+	}
+	ok, err := m.exists(cCClientA, c.AccessKey)
 	if err != nil {
 		return "", err
 	}
-	err = m.upsert(cCClient, c.AccessKey, c)
+	if ok {
+		return "", errors.New("client already exists")
+	}
+	err = m.upsert(cCClient, c.Name, c)
 	if err != nil {
 		return "", err
+	}
+	err = m.upsert(cCClientA, c.AccessKey, c)
+	if err != nil {
+		return "", err
+	}
+	if c.KID != "" {
+		err = m.upsert(cCClientK, c.KID, c)
+		if err != nil {
+			return "", err
+		}
 	}
 	return c.Name, nil
 }
 
 // UpdateClient adding the client to the internal storage
 func (m *MongoStorage) UpdateClient(c model.Client) error {
-	return services.ErrNotImplementedYet
+	var cl model.Client
+	ok, err := m.one(cCClient, c.Name, &cl)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		_, err = m.delete(cCClient, cl.Name)
+		if err != nil {
+			return err
+		}
+		_, err = m.delete(cCClientA, cl.AccessKey)
+		if err != nil {
+			return err
+		}
+		_, err = m.delete(cCClientK, cl.KID)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = m.AddClient(c)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // DeleteClient delete a client
 func (m *MongoStorage) DeleteClient(a string) (bool, error) {
-	return false, services.ErrNotImplementedYet
+	cl, ok := m.GetClient(a)
+	if !ok {
+		return false, nil
+	}
+	ok, err := m.delete(cCClient, cl.Name)
+	if err != nil {
+		return false, err
+	}
+	ok2, err := m.delete(cCClientA, cl.AccessKey)
+	if err != nil {
+		return false, err
+	}
+	_, err = m.delete(cCClientK, cl.KID)
+	if err != nil {
+		return false, err
+	}
+	return ok && ok2, nil
 }
 
 // ListClients list all clients via callback function
 func (m *MongoStorage) ListClients(c func(g model.Client) bool) error {
-	return services.ErrNotImplementedYet
+	opts := options.Find()
+	obj := bson.D{
+		{"class", cCClient},
+	}
+	cur, err := m.colObj.Find(m.ctx, obj, opts)
+	if err != nil {
+		return err
+	}
+	defer cur.Close(m.ctx)
+
+	for cur.Next(m.ctx) {
+		var result bson.D
+		err := cur.Decode(&result)
+		if err != nil {
+			return err
+		}
+		var g model.Client
+		res, ok := result.Map()["object"].(string)
+		if ok {
+			err = json.Unmarshal([]byte(res), &g)
+			if err != nil {
+				return err
+			}
+			ok := c(g)
+			if !ok {
+				break
+			}
+		}
+	}
+	if err := cur.Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetClient returning a client with an access key
 func (m *MongoStorage) GetClient(a string) (*model.Client, bool) {
-	return nil, false
+	var c model.Client
+	ok, err := m.one(cCClientA, a, &c)
+	if err != nil {
+		log.Logger.Errorf("error: %v", err)
+		return nil, false
+	}
+	if !ok {
+		return nil, ok
+	}
+	return &c, ok
 }
 
 // ClientByKID returning a client by it's kid of the private key
 func (m *MongoStorage) ClientByKID(k string) (*model.Client, bool) {
-	return nil, false
+	var cl model.Client
+	ok, err := m.one(cCClientK, k, &cl)
+	if err != nil {
+		return nil, false
+	}
+	if !ok {
+		return nil, false
+	}
+	return &cl, true
 }
 
 // AccessKey returning the access key of client with name
 func (m *MongoStorage) AccessKey(n string) (string, bool) {
-	return "", false
+	var c model.Client
+	ok, err := m.one(cCClient, n, &c)
+	if err != nil {
+		log.Logger.Errorf("error: %v", err)
+		return "", false
+	}
+	if !ok {
+		return "", false
+	}
+	return c.AccessKey, true
 }
 
 // StoreEncryptKey stores the encrypt keys
 func (m *MongoStorage) StoreEncryptKey(e model.EncryptKey) error {
-	return services.ErrNotImplementedYet
+	err := m.upsert(cCCrypt, e.ID, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetEncryptKey stores the encrypt keys
 func (m *MongoStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
-	return nil, false
+	var e model.EncryptKey
+	ok, err := m.one(cCCrypt, id, &e)
+	if err != nil || !ok {
+		return nil, false
+	}
+	return &e, true
 }
 
 func (m *MongoStorage) clear() error {
