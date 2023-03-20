@@ -343,10 +343,7 @@ func (m *MongoStorage) ListClients(c func(g model.Client) bool) error {
 			}
 		}
 	}
-	if err := cur.Err(); err != nil {
-		return err
-	}
-	return nil
+	return cur.Err()
 }
 
 // GetClient returning a client with an access key
