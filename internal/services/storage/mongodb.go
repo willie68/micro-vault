@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/samber/do"
@@ -103,10 +102,17 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 // Init initialize the connection to the mongo db. cerate collections with index as needed
 func (m *MongoStorage) Init() error {
 	m.colObj = m.database.Collection(colObjects)
+	ok, err := checkForIndex(m.colObj)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		log.Logger.Alert("There is no additional index on mongo collection \"objects\". \r\nPlease consider to add an extra index. See readme for explanation.")
+	}
 	return nil
 }
 
-func hasIndex(c *driver.Collection, n string) (bool, error) {
+func checkForIndex(c *driver.Collection) (bool, error) {
 	idx := c.Indexes()
 	opts := options.ListIndexes().SetMaxTime(2 * time.Second)
 	cursor, err := idx.List(context.TODO(), opts)
@@ -117,13 +123,7 @@ func hasIndex(c *driver.Collection, n string) (bool, error) {
 	if err = cursor.All(context.TODO(), &result); err != nil {
 		return false, err
 	}
-	found := false
-	for _, i := range result {
-		if strings.EqualFold(i["name"].(string), n) {
-			found = true
-		}
-	}
-	return found, nil
+	return len(result) > 1, nil
 }
 
 // Close closing the connection to mongo
@@ -152,18 +152,59 @@ func (m *MongoStorage) HasGroup(n string) (found bool) {
 
 // DeleteGroup deletes a group if present
 func (m *MongoStorage) DeleteGroup(n string) (bool, error) {
-	return false, services.ErrNotImplementedYet
+	ok, err := m.delete(cCGroup, n)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }
 
 // GetGroups getting a list of all groups defined
 func (m *MongoStorage) GetGroups() ([]model.Group, error) {
-	return nil, services.ErrNotImplementedYet
+	opts := options.Find()
+	obj := bson.D{
+		{"class", cCGroup},
+	}
+	cur, err := m.colObj.Find(m.ctx, obj, opts)
+	if err != nil {
+		return []model.Group{}, err
+	}
+	defer cur.Close(m.ctx)
 
+	gl := make([]model.Group, 0)
+
+	for cur.Next(m.ctx) {
+		var result bson.D
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Logger.Errorf("error: %v", err)
+		}
+		var g model.Group
+		res, ok := result.Map()["object"].(string)
+		if ok {
+			err = json.Unmarshal([]byte(res), &g)
+			if err != nil {
+				log.Logger.Errorf("error: %v", err)
+			} else {
+				gl = append(gl, g)
+			}
+		}
+	}
+	if err := cur.Err(); err != nil {
+		return []model.Group{}, err
+	}
+	return gl, nil
 }
 
 // GetGroup getting a single group
 func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
-	return nil, false
+	var g model.Group
+	ok, err := m.one(cCGroup, n, &g)
+	if err != nil {
+		log.Logger.Errorf("error: %v", err)
+		return nil, false
+	}
+	return &g, ok
 }
 
 // HasClient checks if a client is present
@@ -229,16 +270,9 @@ func (m *MongoStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 }
 
 func (m *MongoStorage) clear() error {
-	cols, err := m.database.ListCollectionNames(m.ctx, nil, options.ListCollections().SetNameOnly(true))
+	err := m.colObj.Drop(m.ctx)
 	if err != nil {
 		return err
-	}
-	for _, col := range cols {
-		dc := m.database.Collection(col)
-		err := dc.Drop(m.ctx)
-		if err != nil {
-			log.Logger.Errorf("drop collection error: %v", err)
-		}
 	}
 	return nil
 }
@@ -285,4 +319,51 @@ func (m *MongoStorage) exists(c, i string) (bool, error) {
 		return true, nil
 	}
 	return false, services.ErrUnknowError
+}
+
+func (m *MongoStorage) one(c, i string, obj any) (bool, error) {
+	opts := options.FindOne()
+	flt := bson.D{
+		{"class", c},
+		{"identifier", i},
+	}
+	res := m.colObj.FindOne(m.ctx, flt, opts)
+	if res != nil {
+		if res.Err() == driver.ErrNoDocuments {
+			return false, nil
+		}
+		if res.Err() != nil {
+			return false, res.Err()
+		}
+		var result bson.D
+		err := res.Decode(&result)
+		if err != nil {
+			return false, err
+		}
+		res, ok := result.Map()["object"].(string)
+		if ok {
+			err = json.Unmarshal([]byte(res), &obj)
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *MongoStorage) delete(c, i string) (bool, error) {
+	opts := options.Delete()
+	flt := bson.D{
+		{"class", c},
+		{"identifier", i},
+	}
+	res, err := m.colObj.DeleteOne(m.ctx, flt, opts)
+	if err != nil {
+		return false, err
+	}
+	if res != nil {
+		return res.DeletedCount == 1, nil
+	}
+	return false, nil
 }
