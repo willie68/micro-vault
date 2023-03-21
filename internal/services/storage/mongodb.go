@@ -3,18 +3,23 @@ package storage
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
+	"github.com/rs/xid"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/keyman"
+	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -42,12 +47,14 @@ type MongoStorage struct {
 	ctx      context.Context
 	knm      keyman.Keyman
 	colObj   *driver.Collection
+	cryptkey []byte
 }
 
 type bobject struct {
 	ID         primitive.ObjectID `bson:"_id"`
 	Class      string             `bson:"class"`
 	Identifier string             `bson:"identifier"`
+	CID        string             `bson:"cid"`
 	Object     string             `bson:"object"`
 }
 
@@ -58,6 +65,8 @@ const (
 	cCClientA  = "clientA"
 	cCClientK  = "clientK"
 	cCCrypt    = "crypt"
+
+	cCMasterCrypt = "master"
 )
 
 // NewMongoStorage initialize the mongo db for usage in this service
@@ -122,6 +131,10 @@ func (m *MongoStorage) Init() error {
 	if !ok {
 		log.Logger.Alert("There is no additional index on mongo collection \"objects\". \r\nPlease consider to add an extra index. See readme for explanation.")
 	}
+	err = m.ensureEncryption()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -137,6 +150,97 @@ func checkForIndex(c *driver.Collection) (bool, error) {
 		return false, err
 	}
 	return len(result) > 1, nil
+}
+
+func (m *MongoStorage) ensureEncryption() error {
+	opts := options.FindOne()
+	flt := bson.D{
+		{"class", cCCrypt},
+		{"identifier", cCMasterCrypt},
+		{"cid", m.knm.KID()},
+	}
+
+	res := m.colObj.FindOne(m.ctx, flt, opts)
+	if res == nil || res.Err() == driver.ErrNoDocuments {
+		return m.setEncryption()
+	}
+	if res.Err() != nil {
+		return res.Err()
+	}
+	var result bson.D
+	err := res.Decode(&result)
+	if err != nil {
+		return err
+	}
+	sobj, ok := result.Map()["object"].(string)
+	if ok {
+		obj, err := cry.DecryptKey(*m.knm.PrivateKey(), sobj)
+		if err != nil {
+			return err
+		}
+		var e model.EncryptKey
+		err = json.Unmarshal([]byte(obj), &e)
+		if err != nil {
+			return err
+		}
+		m.cryptkey, err = hex.DecodeString(e.Key)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return services.ErrUnknowError
+}
+
+func (m *MongoStorage) setEncryption() error {
+	id := xid.New().String()
+	buf := make([]byte, 32)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return err
+	}
+	_, err = aes.NewCipher(buf)
+	if err != nil {
+		return err
+	}
+
+	e := model.EncryptKey{
+		ID:      id,
+		Alg:     "AES-256",
+		Key:     hex.EncodeToString(buf),
+		Created: time.Now(),
+		Group:   "system",
+	}
+	js, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	ct, err := cry.EncryptKey(m.knm.PublicKey(), string(js))
+	if err != nil {
+		return err
+	}
+
+	opts := options.FindOneAndReplace().SetUpsert(true)
+	flt := bson.D{
+		{"class", cCCrypt},
+		{"identifier", cCMasterCrypt},
+		{"cid", m.knm.KID()},
+	}
+
+	obj := bobject{
+		Class:      cCCrypt,
+		Identifier: cCMasterCrypt,
+		CID:        m.knm.KID(),
+		Object:     ct,
+	}
+	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
+	if res.Err() != nil {
+		if res.Err() != driver.ErrNoDocuments {
+			return res.Err()
+		}
+	}
+	m.cryptkey = buf
+	return nil
 }
 
 // Close closing the connection to mongo
@@ -195,7 +299,7 @@ func (m *MongoStorage) GetGroups() ([]model.Group, error) {
 		var g model.Group
 		res, ok := result.Map()["object"].(string)
 		if ok {
-			err = json.Unmarshal([]byte(res), &g)
+			err = m.decrypt(res, &g)
 			if err != nil {
 				log.Logger.Errorf("error: %v", err)
 			} else {
@@ -333,7 +437,7 @@ func (m *MongoStorage) ListClients(c func(g model.Client) bool) error {
 		var g model.Client
 		res, ok := result.Map()["object"].(string)
 		if ok {
-			err = json.Unmarshal([]byte(res), &g)
+			err = m.decrypt(res, &g)
 			if err != nil {
 				return err
 			}
@@ -415,14 +519,14 @@ func (m *MongoStorage) clear() error {
 }
 
 func (m *MongoStorage) upsert(c, i string, o any) error {
-	js, err := json.Marshal(o)
+	so, err := m.encrypt(o)
 	if err != nil {
 		return err
 	}
 	obj := bson.D{
 		{"class", c},
 		{"identifier", i},
-		{"object", string(js)},
+		{"object", so},
 	}
 	opts := options.FindOneAndReplace().SetUpsert(true)
 	flt := bson.D{
@@ -479,7 +583,7 @@ func (m *MongoStorage) one(c, i string, obj any) (bool, error) {
 		}
 		res, ok := result.Map()["object"].(string)
 		if ok {
-			err = json.Unmarshal([]byte(res), &obj)
+			err = m.decrypt(res, &obj)
 			if err != nil {
 				return false, err
 			}
@@ -503,4 +607,24 @@ func (m *MongoStorage) delete(c, i string) (bool, error) {
 		return res.DeletedCount == 1, nil
 	}
 	return false, nil
+}
+
+func (m *MongoStorage) decrypt(j string, o any) error {
+	ds, err := cry.Decrypt(m.cryptkey, j)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(ds), &o)
+}
+
+func (m *MongoStorage) encrypt(o any) (string, error) {
+	js, err := json.Marshal(o)
+	if err != nil {
+		return "", err
+	}
+	cs, err := cry.Encrypt(m.cryptkey, string(js))
+	if err != nil {
+		return "", err
+	}
+	return cs, nil
 }

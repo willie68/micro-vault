@@ -84,6 +84,17 @@ func EncryptPEM(key string, text string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
+// EncryptKey encrypting a message with a public key
+func EncryptKey(pub rsa.PublicKey, text string) (string, error) {
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &pub, []byte(text), nil)
+
+	if err != nil {
+		return "", err
+	}
+	// convert to base64
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
 // DecryptKey decrypting a message with a private key
 func DecryptKey(pk rsa.PrivateKey, dt string) (string, error) {
 	b, err := base64.StdEncoding.DecodeString(dt)

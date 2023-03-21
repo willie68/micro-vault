@@ -53,6 +53,10 @@ func mongoInit() {
 	if err != nil {
 		panic(err)
 	}
+	err = mem.Init()
+	if err != nil {
+		panic(err)
+	}
 	mgo = mem
 }
 
