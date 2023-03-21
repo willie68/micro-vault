@@ -27,6 +27,25 @@ func TestEnDecodeAES(t *testing.T) {
 	t.Logf("dec: %s", text)
 }
 
+func TestCryptKey(t *testing.T) {
+	ast := assert.New(t)
+
+	originalText := "encrypt this golang"
+
+	rsk, err := generateKey()
+	ast.Nil(err)
+
+	cryptoText, err := EncryptKey(rsk.PublicKey, originalText)
+	ast.Nil(err)
+	ast.NotEmpty(cryptoText)
+
+	dec, err := DecryptKey(*rsk, cryptoText)
+	ast.Nil(err)
+	ast.NotEmpty(dec)
+
+	ast.Equal(originalText, dec)
+}
+
 func TestCryptPEM(t *testing.T) {
 	ast := assert.New(t)
 
@@ -35,11 +54,11 @@ func TestCryptPEM(t *testing.T) {
 	rsk, err := generateKey()
 	ast.Nil(err)
 
-	pem, err := Pub2Pem(&rsk.PublicKey)
+	pubpem, err := Pub2Pem(&rsk.PublicKey)
 	ast.Nil(err)
-	ast.NotEmpty(pem)
+	ast.NotEmpty(pubpem)
 
-	cryptoText, err := EncryptPEM(string(pem), originalText)
+	cryptoText, err := EncryptPEM(string(pubpem), originalText)
 	ast.Nil(err)
 	ast.NotEmpty(cryptoText)
 

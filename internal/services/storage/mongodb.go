@@ -227,12 +227,13 @@ func (m *MongoStorage) setEncryption() error {
 		{"cid", m.knm.KID()},
 	}
 
-	obj := bobject{
-		Class:      cCCrypt,
-		Identifier: cCMasterCrypt,
-		CID:        m.knm.KID(),
-		Object:     ct,
+	obj := bson.D{
+		{"class", cCCrypt},
+		{"identifier", cCMasterCrypt},
+		{"cid", m.knm.KID()},
+		{"object", ct},
 	}
+
 	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
 	if res.Err() != nil {
 		if res.Err() != driver.ErrNoDocuments {
