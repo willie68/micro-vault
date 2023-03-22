@@ -203,6 +203,14 @@ func TestStoreEncryptKeyFS(t *testing.T) {
 	err := stg.StoreEncryptKey(e)
 	ast.Nil(err)
 
+	keys := make([]model.EncryptKey, 0)
+	err = stg.ListEncryptKeys(func(c model.EncryptKey) bool {
+		keys = append(keys, c)
+		return true
+	})
+	ast.Nil(err)
+	ast.Equal(1, len(keys))
+
 	e1, ok := stg.GetEncryptKey(e.ID)
 	ast.True(ok)
 

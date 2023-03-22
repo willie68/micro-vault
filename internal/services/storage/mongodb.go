@@ -332,7 +332,15 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 func (m *MongoStorage) HasClient(n string) bool {
 	found, err := m.exists(cCClient, n)
 	if err != nil {
+		log.Logger.Errorf("has client: %v", err)
 		return false
+	}
+	if !found {
+		found, err = m.exists(cCClientA, n)
+		if err != nil {
+			log.Logger.Errorf("has client: %v", err)
+			return false
+		}
 	}
 	return found
 }
@@ -509,6 +517,43 @@ func (m *MongoStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 		return nil, false
 	}
 	return &e, true
+}
+
+// ListEncryptKeys list all clients via callback function
+func (m *MongoStorage) ListEncryptKeys(c func(c model.EncryptKey) bool) error {
+	opts := options.Find()
+	obj := bson.D{
+		{"class", cCCrypt},
+		{"identifier", bson.D{{"$ne", cCMasterCrypt}}},
+	}
+	cur, err := m.colObj.Find(m.ctx, obj, opts)
+	if err != nil {
+		return err
+	}
+	defer cur.Close(m.ctx)
+
+	for cur.Next(m.ctx) {
+		var result bson.D
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Logger.Errorf("lkeys: error: %v", err)
+			continue
+		}
+		var g model.EncryptKey
+		res, ok := result.Map()["object"].(string)
+		if ok {
+			err = m.decrypt(res, &g)
+			if err != nil {
+				log.Logger.Errorf("lkeys: error: %v", err)
+				continue
+			}
+			ok := c(g)
+			if !ok {
+				break
+			}
+		}
+	}
+	return cur.Err()
 }
 
 func (m *MongoStorage) clear() error {

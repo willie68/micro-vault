@@ -219,6 +219,20 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 	return ok, nil
 }
 
+// Keys get all defined clients
+func (a *Admin) Keys(tk string) ([]model.EncryptKey, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return []model.EncryptKey{}, err
+	}
+	cl := make([]model.EncryptKey, 0)
+	err = a.stg.ListEncryptKeys(func(c model.EncryptKey) bool {
+		cl = append(cl, c)
+		return true
+	})
+	return cl, err
+}
+
 func (a *Admin) checkTk(tk string) error {
 	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.kmn.PublicKey()))
 	if err != nil {

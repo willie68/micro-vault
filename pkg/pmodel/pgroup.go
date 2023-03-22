@@ -1,5 +1,7 @@
 package pmodel
 
+import "time"
+
 // Group the public group model
 type Group struct {
 	Name  string            `json:"name"`
@@ -35,4 +37,13 @@ type SignMessage struct {
 type KeyInfo struct {
 	Alg string `json:"alg"`
 	KID string `json:"kid"`
+}
+
+// EncryptKeyInfo some information about the used key
+type EncryptKeyInfo struct {
+	Alg     string    `json:"alg"`
+	ID      string    `json:"kid"`
+	Group   string    `json:"group"`
+	Key     string    `json:"key"`
+	Created time.Time `json:"created"`
 }

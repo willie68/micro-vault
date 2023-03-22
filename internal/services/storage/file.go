@@ -279,6 +279,32 @@ func (f *FileStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 	return &e, true
 }
 
+// ListEncryptKeys list all clients via callback function
+func (f *FileStorage) ListEncryptKeys(c func(c model.EncryptKey) bool) error {
+	err := f.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte(encryptionKey)
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			var g model.EncryptKey
+			valCopy, err := item.ValueCopy(nil)
+			err = json.Unmarshal(valCopy, &g)
+			if err != nil {
+				return err
+			}
+			if !c(g) {
+				break
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (f *FileStorage) update(t, k string, p any) error {
 	v, err := json.Marshal(p)
 	if err != nil {

@@ -28,4 +28,5 @@ type Storage interface {
 
 	StoreEncryptKey(e model.EncryptKey) error
 	GetEncryptKey(id string) (*model.EncryptKey, bool)
+	ListEncryptKeys(c func(g model.EncryptKey) bool) error
 }

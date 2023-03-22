@@ -243,6 +243,14 @@ func TestMongoStoreEncryptKey(t *testing.T) {
 	err := mgo.StoreEncryptKey(e)
 	ast.Nil(err)
 
+	keys := make([]model.EncryptKey, 0)
+	err = mgo.ListEncryptKeys(func(c model.EncryptKey) bool {
+		keys = append(keys, c)
+		return true
+	})
+	ast.Nil(err)
+	ast.Equal(1, len(keys))
+
 	e1, ok := mgo.GetEncryptKey(e.ID)
 	ast.True(ok)
 

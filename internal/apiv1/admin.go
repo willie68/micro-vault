@@ -46,6 +46,7 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Get("/clients", a.GetClients)
 	router.Post("/clients", a.PostClient)
 	router.Delete("/clients/{name}", a.DeleteClient)
+	router.Get("/groupkeys", a.GetKeys)
 	return BaseURL + adminSubpath, router
 }
 
@@ -399,4 +400,42 @@ func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.
 		return
 	}
 	render.Status(request, http.StatusOK)
+}
+
+// GetKeys getting a list of groupkeys
+// @Summary getting a list of groupkeys
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groupkeys [post]
+func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	cs, err := a.adm.Keys(tk)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cls := make([]pmodel.EncryptKeyInfo, 0)
+	for _, c := range cs {
+		cls = append(cls, pmodel.EncryptKeyInfo{
+			Alg:     c.Alg,
+			ID:      c.ID,
+			Group:   c.Group,
+			Key:     c.Key,
+			Created: c.Created,
+		})
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, cls)
 }

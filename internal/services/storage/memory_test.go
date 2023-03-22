@@ -213,6 +213,14 @@ func TestStoreEncryptKey(t *testing.T) {
 	err = mem.StoreEncryptKey(e)
 	ast.Nil(err)
 
+	keys := make([]model.EncryptKey, 0)
+	err = mem.ListEncryptKeys(func(c model.EncryptKey) bool {
+		keys = append(keys, c)
+		return true
+	})
+	ast.Nil(err)
+	ast.Equal(1, len(keys))
+
 	e1, ok := mem.GetEncryptKey(e.ID)
 	ast.True(ok)
 

@@ -198,3 +198,12 @@ func (m *Memory) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 	e := k.(model.EncryptKey)
 	return &e, true
 }
+
+// ListEncryptKeys list all clients via callback function
+func (m *Memory) ListEncryptKeys(c func(c model.EncryptKey) bool) error {
+	m.keys.Range(func(key, value any) bool {
+		cl := value.(model.EncryptKey)
+		return c(cl)
+	})
+	return nil
+}
