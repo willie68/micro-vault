@@ -244,7 +244,7 @@ func TestMongoStoreEncryptKey(t *testing.T) {
 	ast.Nil(err)
 
 	keys := make([]model.EncryptKey, 0)
-	err = mgo.ListEncryptKeys(func(c model.EncryptKey) bool {
+	err = mgo.ListEncryptKeys(0, 10, func(c model.EncryptKey) bool {
 		keys = append(keys, c)
 		return true
 	})

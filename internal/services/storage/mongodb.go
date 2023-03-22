@@ -520,8 +520,8 @@ func (m *MongoStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 }
 
 // ListEncryptKeys list all clients via callback function
-func (m *MongoStorage) ListEncryptKeys(c func(c model.EncryptKey) bool) error {
-	opts := options.Find()
+func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
+	opts := options.Find().SetSort(bson.D{{"identifier", 1}}).SetSkip(s).SetLimit(l)
 	obj := bson.D{
 		{"class", cCCrypt},
 		{"identifier", bson.D{{"$ne", cCMasterCrypt}}},

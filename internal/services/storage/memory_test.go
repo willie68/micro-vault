@@ -214,7 +214,7 @@ func TestStoreEncryptKey(t *testing.T) {
 	ast.Nil(err)
 
 	keys := make([]model.EncryptKey, 0)
-	err = mem.ListEncryptKeys(func(c model.EncryptKey) bool {
+	err = mem.ListEncryptKeys(0, 10, func(c model.EncryptKey) bool {
 		keys = append(keys, c)
 		return true
 	})

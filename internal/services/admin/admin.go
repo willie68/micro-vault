@@ -220,13 +220,13 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 }
 
 // Keys get all defined clients
-func (a *Admin) Keys(tk string) ([]model.EncryptKey, error) {
+func (a *Admin) Keys(tk string, s, l int64) ([]model.EncryptKey, error) {
 	err := a.checkTk(tk)
 	if err != nil {
 		return []model.EncryptKey{}, err
 	}
 	cl := make([]model.EncryptKey, 0)
-	err = a.stg.ListEncryptKeys(func(c model.EncryptKey) bool {
+	err = a.stg.ListEncryptKeys(s, l, func(c model.EncryptKey) bool {
 		cl = append(cl, c)
 		return true
 	})

@@ -421,7 +421,7 @@ func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	cs, err := a.adm.Keys(tk)
+	cs, err := a.adm.Keys(tk, 0, 100)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return

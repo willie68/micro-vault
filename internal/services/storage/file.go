@@ -280,21 +280,26 @@ func (f *FileStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 }
 
 // ListEncryptKeys list all clients via callback function
-func (f *FileStorage) ListEncryptKeys(c func(c model.EncryptKey) bool) error {
+func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
+	var cnt int64
+	cnt = 0
 	err := f.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		prefix := []byte(encryptionKey)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			var g model.EncryptKey
-			valCopy, err := item.ValueCopy(nil)
-			err = json.Unmarshal(valCopy, &g)
-			if err != nil {
-				return err
-			}
-			if !c(g) {
-				break
+			cnt++
+			if cnt > s && cnt < (s+l) {
+				item := it.Item()
+				var g model.EncryptKey
+				valCopy, err := item.ValueCopy(nil)
+				err = json.Unmarshal(valCopy, &g)
+				if err != nil {
+					return err
+				}
+				if !c(g) {
+					break
+				}
 			}
 		}
 		return nil
