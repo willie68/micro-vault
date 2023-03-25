@@ -6,7 +6,7 @@ micro-vault microservice dead simple key management service without any golden r
 
 ### Ausgangslage
 
-Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
+Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Auch nicht für einen Administrator. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
 Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Servicen über eine 3 nicht vertraute Umgebung.
 
@@ -28,13 +28,13 @@ Soweit funktioniert das auch recht gut. Nachteil ist allerdings, Microservice 1 
 
 ![scenario_3](./doc/images/scenario_3.svg)
 
-Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS2 muss einen asymmetrischen Schlüssel verwalten. In einer Multinodeumgebung ist die Verwaltung dabei eine Herausforderung. Nicht nur, dass auf der MS2 Seite nun die privaten Schlüssel an alle Nodes verteilt werden müssen. Auch beim Wiederruf müssen die neuen Zertifikate an alle Nodes und den Vault ausgerollt werden. Und auch die Schlüsselgenerierung auf der Client 1 Seite birgt Risiken. Besser wäre es wenn auch der private Schlüssel von MS 2 mit in dem Vault gelegt würde und nur bei Bedarf über eine sichere Verbindung übertragen wird. Der nächste logische Schritt ist es dann, auch die symmetrischen Schlüssel im Vault zu speichern und nur eine ID zur Identifizierung des Schlüssels an den Client 2 weiter zu geben. Vault kann dann durch zusätzliche Attribut checken, ob ein Zugriff auf den Schlüssel erlaubt ist. Somit entfällt auch die Notwendigkeit den symmetrischen Schlüssel mit dem öffentlichen Schlüssel von Client 2 zu verschlüsseln. Zusätzlich kann nun die Nachricht auch weiteren Clients zur Verfügung gestellt werden, den Zugriff auf die Schlüssel regelt dann Vault anhand von Zugriffsregeln. 
+Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS2 muss einen asymmetrischen Schlüssel verwalten. In einer Multinode-Umgebung ist die Verwaltung dabei eine Herausforderung. Nicht nur, dass auf der MS2 Seite nun die privaten Schlüssel an alle Nodes verteilt werden müssen. Auch beim Wiederruf müssen die neuen Zertifikate an alle Nodes und den Vault ausgerollt werden. Und auch die Schlüsselgenerierung auf der Client 1 Seite birgt Risiken. Besser wäre es wenn auch der private Schlüssel von MS 2 mit in dem Vault gelegt würde und nur bei Bedarf über eine sichere Verbindung übertragen wird. Der nächste logische Schritt ist es dann, auch die symmetrischen Schlüssel im Vault zu speichern und nur eine ID zur Identifizierung des Schlüssels an den Client 2 weiter zu geben. Vault kann dann durch zusätzliche Attribut checken, ob ein Zugriff auf den Schlüssel erlaubt ist. Somit entfällt auch die Notwendigkeit den symmetrischen Schlüssel mit dem öffentlichen Schlüssel von Client 2 zu verschlüsseln. Zusätzlich kann nun die Nachricht auch weiteren Clients zur Verfügung gestellt werden, den Zugriff auf die Schlüssel regelt dann Vault anhand von Zugriffsregeln. 
 
 ![scenario_4](./doc/images/scenario_4.svg)
 
 
 
-Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschlüsseln bzw. das Signieren und den Check dazu auch komplett auf Vault verlegen. Die Clients verwalten dann nur noch eine Verbindung. Nachteil ist dann natürlich, dass Vault neben der Schlüssel- und Clientverwaltung, nun auch die deutlich Resourcen bindende Arbeit des Ver/Entschlüsselns bzw. der Signierung übernehmen muss. In sofern ist die Nutzung von Serverside Encryption auch nur bei kleiner Payload zu empfehlen. 
+Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschlüsseln bzw. das Signieren und den Check dazu auch komplett auf Vault verlegen. Die Clients verwalten dann nur noch eine Verbindung. Nachteil ist dann natürlich, dass Vault neben der Schlüssel- und Clientverwaltung, nun auch die deutlich Resourcen-bindende Arbeit des Ver/Entschlüsselns bzw. der Signierung übernehmen muss. In sofern ist die Nutzung von Serverside Encryption auch nur bei kleiner Payload zu empfehlen. 
 
 ### Was bietet nun MicroVault?
 
@@ -45,7 +45,7 @@ Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem
 Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
 
 1. In Memory: Hier werden alle relevanten Daten im Speicher von Vault gehalten. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können beim Start Clients und Gruppen erstellt werden. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
-2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage auch nicht möglich.
+2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
 3. MongoDB: Mit dem MongoDB Storage ist es möglich alle Daten verschlüsselt in eine MongoDB abzulegen. Dieser Storage kann auch im Multinode Betrieb verwendet werden.
 
 Zur Anbindung an die Clients werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich.   
@@ -58,7 +58,7 @@ Im Memory-only Modell werden alle Daten ausschließlich im Speicher gehalten. Wi
 
 ### Filesystem
 
-Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Das Filesystem hat allerdings Vorrang.
+Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Breits gespeicherte Objekte haben allerdings Vorrang. Als Speicher wird eine BadgerDB verwendet. 
 
 ### MongoDB
 
@@ -66,7 +66,7 @@ Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie au
 
 ### Multinodebetrieb
 
-Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes verteilt.  
+Vorraussetzung für den Multinodebetrieb ist die Verwendung einer Datenbank als Speicher. Jeder Node muss nun mit dem gleichen Zertifikat ausgestattet werden. 
 
 ## Kommunikationsablauf
 
@@ -101,7 +101,7 @@ Im Multinodebetrieb werden alle Daten über ein eigenes Protokoll zu allen Nodes
 
 ### Serverside Encryption/Signing
 
-ZUsätzlich zu der im Client implementierten Verschlüsselungs und Signierung implementiert MV auch einen Serverseitigen Ansatz. D.h. jeder Client kann Daten über den Server ver-/entschlüsseln bzw. signieren/validieren. Somit werden lokal keine Crypto Biblliotheken benötigt.
+Zusätzlich zu der im Client (Goclient) implementierten Verschlüsselung und Signierung implementiert MV auch einen Serverseitigen Ansatz. D.h. jeder Client kann Daten über den Server ver-/entschlüsseln bzw. signieren/validieren. Somit werden lokal keine Crypto Bibliotheken benötigt.
 
 ## Playbook
 
