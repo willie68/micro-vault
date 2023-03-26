@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../Virtual-TPS"
+		},
+		{
+			"path": "../ReCoS-Remote-Command-Service"
 		}
 	]
 }

@@ -71,7 +71,7 @@ func (a *AdminHandler) PostLogin(response http.ResponseWriter, request *http.Req
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return
 	}
-	t, err := a.adm.LoginUP(up.Username, []byte(up.Password))
+	t, rt, err := a.adm.LoginUP(up.Username, []byte(up.Password))
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -86,13 +86,15 @@ func (a *AdminHandler) PostLogin(response http.ResponseWriter, request *http.Req
 	i := jt.Payload["iat"]
 	iat := i.(float64)
 	tk := struct {
-		Token     string `json:"access_token"`
-		Type      string `json:"token_type"`
-		ExpiresIn int    `json:"expires_in"`
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
 	}{
-		Token:     t,
-		Type:      "Bearer",
-		ExpiresIn: int(exp - iat),
+		Token:        t,
+		RefreshToken: rt,
+		Type:         "Bearer",
+		ExpiresIn:    int(exp - iat),
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, tk)

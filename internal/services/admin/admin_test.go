@@ -68,25 +68,37 @@ func installPlaybook() {
 
 func TestLoginAdmin(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
 	ast.Nil(err)
 	ast.NotEmpty(tk)
+	ast.NotEmpty(rt)
 	t.Logf("tk: %s", tk)
+	t.Logf("rt: %s", rt)
 
 	err = adm.checkTk(tk)
 	ast.Nil(err)
+
+	err = adm.checkRtk(rt)
+	ast.Nil(err)
 }
+
 func TestWrongLogin(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := adm.LoginUP("root1", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP("root1", []byte("yxcvb"))
 	ast.NotNil(err)
 	ast.Empty(tk)
 }
 
 func TestWrongToken(t *testing.T) {
 	ast := assert.New(t)
+	
 	tk := "eyJhbGciOiJSUzI1NiIsImtpZCI6IndrRVRwcVZiZVpzVWtnRFFLbUNDSmZ6UjdnbjBHdFFVMzFZU0swSmJFZ3MiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc3Njc1NjIzLCJpYXQiOjE2Nzc2NzUzMjMsInJvbGVzIjpbIm12LWFkbWluIl19.1CtJtXIjL6SLU8RtLF3p7HQSFfW9WHpgVAaQhTEPSXYQm5gMbpr_sR_coW9j_5QCfnDkzKW7OeUmEcWYWiCPgXLCKMRVHGQN9xVUdpl-QOk9fHTyfCiIecrBwHQY0WZY52z2YobNBEelI4PXSc8I44_9UMSj70Z2IzSwmaR6IeGRg0dp9ZNdxQ0-zXGfONP5zepdOWGcnheRhRXBYqz3pPQswjkTfM5R4TG0x1Qwk6zfJbUhMvNsVwJNDqWk5PAbzYMPOUPvumV7XmcBaz_ksr5-mSw7SoCq54Sf4GSyff2v1dbkihywOnabb49MvOSheybUXD-VW3syT1cUawgR4g"
+	rt := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc5ODQ4NTc4LCJpYXQiOjE2Nzk4NDQ5NzgsInJvbGVzIjpbIm12LXJlZnJlc2giXSwidXNhZ2UiOiJtdi1yZWZyZXNoIn0.MdfUKl2Ew5YUklt5cAnWnDXJUdNjZlf8CNLRMKiQPaVF6Dn0nB8tXM5AVgHXaxgOHzO4MCy99uh2aX9P_3Dh11jk82WZ7avlkmVak79r6JN203Izr42Hr6cJSlxbQ5OPjoO5XMoyKRPR6MA0BC3K8u6Ylm56FFv8z-8fnRwNhPX4eMXgoMx-jc2CVqxUWF5OgxRdxilMiUDQYrkvg5Hh_B8tQPPB9SeYzRrq-F4sYb9ygn_loEZ4PwzKuFdy8Wk7f3q9RYs0GlUsPcL9rvuR4CbtX33DPTk-6XWXsfXTqP5h8kCLpRGcZBPpq1pr6KGKGdJTFzbZQCWjnkW8Ia_e4g"
+	
 	err := adm.checkTk(tk)
+	ast.NotNil(err)
+
+	err = adm.checkRtk(rt)
 	ast.NotNil(err)
 
 	err = adm.Playbook(tk, model.Playbook{})
@@ -117,7 +129,7 @@ func TestPlaybook(t *testing.T) {
 	ast := assert.New(t)
 	err := stg.Init()
 	ast.Nil(err)
-	tk, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -157,7 +169,7 @@ func TestGroup(t *testing.T) {
 	ast := assert.New(t)
 	installPlaybook()
 
-	tk, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -201,7 +213,7 @@ func TestGroup(t *testing.T) {
 
 func TestClientCRUD(t *testing.T) {
 	ast := assert.New(t)
-	tk, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 

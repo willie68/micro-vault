@@ -63,25 +63,84 @@ func (a *Admin) Init() error {
 	return nil
 }
 
-// LoginUP logging in a admin account
-func (a *Admin) LoginUP(u string, p []byte) (string, error) {
+// LoginUP logging in an admin account
+func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 	if !strings.EqualFold(u, a.rootusr) || hash(p) != a.pwdhash {
-		return "", services.ErrLoginFailed
+		return "", "", services.ErrLoginFailed
 	}
 
+	no := time.Now()
+
+	// Signing a token (using raw rsa.PrivateKey)
+	rtsig, err := a.generateRefreshToken(no)
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	tsig, err := a.generateToken(no)
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	return tsig, rtsig, nil
+}
+
+// Refresh refreshing an admin account
+func (a *Admin) Refresh(rt string) (string, string, error) {
+	err := a.checkRtk(rt)
+	if err != nil {
+		return "", "", err
+	}
+	no := time.Now()
+
+	// Signing a token (using raw rsa.PrivateKey)
+	rtsig, err := a.generateRefreshToken(no)
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	tsig, err := a.generateToken(no)
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	return tsig, rtsig, nil
+}
+
+func (a *Admin) generateToken(no time.Time) (string, error) {
 	t := jwt.New()
 	t.Set(jwt.AudienceKey, "microvault-admins")
-	t.Set(jwt.IssuedAtKey, time.Now())
-	t.Set(jwt.ExpirationKey, time.Now().Add(5*time.Minute))
+	t.Set(jwt.IssuedAtKey, no)
+	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
 	t.Set("roles", []string{"mv-admin"})
 
 	// Signing a token (using raw rsa.PrivateKey)
-	signed, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
+	tsig, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
 	if err != nil {
 		log.Printf("failed to sign token: %s", err)
 		return "", err
 	}
-	return string(signed), nil
+	return string(tsig), nil
+}
+
+func (a *Admin) generateRefreshToken(no time.Time) (string, error) {
+	t := jwt.New()
+	t.Set(jwt.AudienceKey, "microvault-admins")
+	t.Set(jwt.IssuedAtKey, no)
+	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
+	t.Set("usage", "mv-refresh")
+
+	// Signing a token (using raw rsa.PrivateKey)
+	tsig, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", err
+	}
+	return string(tsig), nil
 }
 
 // Playbook plays the playbook
@@ -240,6 +299,18 @@ func (a *Admin) checkTk(tk string) error {
 	}
 	roles := token.PrivateClaims()["roles"]
 	if !search(roles, "mv-admin") {
+		return errors.New("token not valid")
+	}
+	return nil
+}
+
+func (a *Admin) checkRtk(tk string) error {
+	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.kmn.PublicKey()))
+	if err != nil {
+		return err
+	}
+	usage := token.PrivateClaims()["usage"]
+	if usage != "mv-refresh" {
 		return errors.New("token not valid")
 	}
 	return nil
