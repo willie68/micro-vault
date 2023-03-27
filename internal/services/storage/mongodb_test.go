@@ -9,6 +9,7 @@ import (
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services/keyman"
+	"github.com/willie68/micro-vault/internal/utils"
 )
 
 const (
@@ -60,7 +61,22 @@ func mongoInit() {
 	mgo = mem
 }
 
-func TestMongoGroupCRUD(t *testing.T) {
+func TestRevokeTokenMgo(t *testing.T) {
+	ast := assert.New(t)
+	mongoInit()
+
+	id := utils.GenerateID()
+
+	ast.False(mgo.IsRevoked(id))
+
+	exp := time.Now().Add(1 * time.Second)
+	err := mgo.RevokeToken(id, exp)
+	ast.Nil(err)
+
+	ast.True(mgo.IsRevoked(id))
+}
+
+func TestGroupCRUDMgo(t *testing.T) {
 	ast := assert.New(t)
 
 	mongoInit()
@@ -100,7 +116,7 @@ func TestMongoGroupCRUD(t *testing.T) {
 	ast.False(ok)
 }
 
-func TestMongoUnknownGroup(t *testing.T) {
+func TestUnknownGroupMgo(t *testing.T) {
 	ast := assert.New(t)
 
 	mongoInit()
@@ -113,7 +129,7 @@ func TestMongoUnknownGroup(t *testing.T) {
 	ast.Nil(dg)
 }
 
-func TestMongoClientStorage(t *testing.T) {
+func TestClientStorageMgo(t *testing.T) {
 	ast := assert.New(t)
 
 	mongoInit()
@@ -156,7 +172,7 @@ func TestMongoClientStorage(t *testing.T) {
 	ast.Nil(dc)
 }
 
-func TestMongoCrudClient(t *testing.T) {
+func TestCrudClientMgo(t *testing.T) {
 	ast := assert.New(t)
 	mongoInit()
 
@@ -205,7 +221,7 @@ func TestMongoCrudClient(t *testing.T) {
 	ast.False(ok)
 }
 
-func TestMongoClientKID(t *testing.T) {
+func TestClientKIDMgo(t *testing.T) {
 	ast := assert.New(t)
 
 	mongoInit()
@@ -227,7 +243,7 @@ func TestMongoClientKID(t *testing.T) {
 	ast.Equal(cl.AccessKey, c2.AccessKey)
 }
 
-func TestMongoStoreEncryptKey(t *testing.T) {
+func TestStoreEncryptKeyMgo(t *testing.T) {
 	ast := assert.New(t)
 
 	mongoInit()

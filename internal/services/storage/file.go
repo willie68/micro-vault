@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/samber/do"
@@ -15,8 +17,9 @@ import (
 
 // FileStorage storage engine on file system
 type FileStorage struct {
-	path string
-	db   *badger.DB
+	path    string
+	db      *badger.DB
+	revokes sync.Map
 }
 
 const (
@@ -54,6 +57,7 @@ func (f *FileStorage) Init() error {
 		return err
 	}
 	f.db = b
+	f.revokes = sync.Map{}
 	return nil
 }
 
@@ -62,6 +66,21 @@ func (f *FileStorage) Close() error {
 	f.db.Close()
 	do.ShutdownNamed(nil, interfaces.DoStorage)
 	return nil
+}
+
+// RevokeToken set this token id to the revoked token
+func (f *FileStorage) RevokeToken(id string, exp time.Time) error {
+	if time.Now().After(exp) {
+		return nil
+	}
+	f.revokes.Store(id, exp)
+	return nil
+}
+
+// IsRevoked checking if an token id is already revoked
+func (f *FileStorage) IsRevoked(id string) bool {
+	_, ok := f.revokes.Load(id)
+	return ok
 }
 
 // AddGroup adding a group to internal store

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/internal/utils"
 )
 
 const (
@@ -18,6 +19,24 @@ func TestCreateMemoryStorage(t *testing.T) {
 	mem := &Memory{}
 	err := mem.Init()
 	ast.Nil(err)
+}
+
+func TestRevokeToken(t *testing.T) {
+	ast := assert.New(t)
+
+	mem := &Memory{}
+	err := mem.Init()
+	ast.Nil(err)
+
+	id := utils.GenerateID()
+
+	ast.False(mem.IsRevoked(id))
+
+	exp := time.Now().Add(1 * time.Second)
+	err = mem.RevokeToken(id, exp)
+	ast.Nil(err)
+
+	ast.True(mem.IsRevoked(id))
 }
 
 func TestGroupCRUD(t *testing.T) {

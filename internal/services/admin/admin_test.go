@@ -27,8 +27,9 @@ func init() {
 	}
 	c := config.Config{
 		Service: config.Service{
-			Rootuser: "root",
-			Rootpwd:  "yxcvb",
+			Rootuser:   "root",
+			Rootpwd:    "yxcvb",
+			PrivateKey: "../../../testdata/private.pem",
 		},
 	}
 	c.Provide()
@@ -78,8 +79,44 @@ func TestLoginAdmin(t *testing.T) {
 	err = adm.checkTk(tk)
 	ast.Nil(err)
 
-	err = adm.checkRtk(rt)
+	_, err = adm.checkRtk(rt)
 	ast.Nil(err)
+}
+
+func TestRefresh(t *testing.T) {
+	ast := assert.New(t)
+	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+	ast.NotEmpty(rt)
+
+	gs, err := adm.Groups(tk)
+	ast.Nil(err)
+	ast.NotNil(gs)
+
+	_, err = adm.Groups(rt)
+	ast.NotNil(err)
+
+	tk2, rt2, err := adm.Refresh(rt)
+	ast.Nil(err)
+
+	ast.NotEmpty(tk2)
+	ast.NotEmpty(rt2)
+
+	gs, err = adm.Groups(tk2)
+	ast.Nil(err)
+	ast.NotNil(gs)
+
+	_, err = adm.Groups(rt2)
+	ast.NotNil(err)
+
+	_, err = adm.checkRtk(rt)
+	ast.NotNil(err)
+
+	tk3, rt3, err := adm.Refresh(rt)
+	ast.NotNil(err)
+	ast.Empty(tk3)
+	ast.Empty(rt3)
 }
 
 func TestWrongLogin(t *testing.T) {
@@ -91,14 +128,14 @@ func TestWrongLogin(t *testing.T) {
 
 func TestWrongToken(t *testing.T) {
 	ast := assert.New(t)
-	
+
 	tk := "eyJhbGciOiJSUzI1NiIsImtpZCI6IndrRVRwcVZiZVpzVWtnRFFLbUNDSmZ6UjdnbjBHdFFVMzFZU0swSmJFZ3MiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc3Njc1NjIzLCJpYXQiOjE2Nzc2NzUzMjMsInJvbGVzIjpbIm12LWFkbWluIl19.1CtJtXIjL6SLU8RtLF3p7HQSFfW9WHpgVAaQhTEPSXYQm5gMbpr_sR_coW9j_5QCfnDkzKW7OeUmEcWYWiCPgXLCKMRVHGQN9xVUdpl-QOk9fHTyfCiIecrBwHQY0WZY52z2YobNBEelI4PXSc8I44_9UMSj70Z2IzSwmaR6IeGRg0dp9ZNdxQ0-zXGfONP5zepdOWGcnheRhRXBYqz3pPQswjkTfM5R4TG0x1Qwk6zfJbUhMvNsVwJNDqWk5PAbzYMPOUPvumV7XmcBaz_ksr5-mSw7SoCq54Sf4GSyff2v1dbkihywOnabb49MvOSheybUXD-VW3syT1cUawgR4g"
 	rt := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc5ODQ4NTc4LCJpYXQiOjE2Nzk4NDQ5NzgsInJvbGVzIjpbIm12LXJlZnJlc2giXSwidXNhZ2UiOiJtdi1yZWZyZXNoIn0.MdfUKl2Ew5YUklt5cAnWnDXJUdNjZlf8CNLRMKiQPaVF6Dn0nB8tXM5AVgHXaxgOHzO4MCy99uh2aX9P_3Dh11jk82WZ7avlkmVak79r6JN203Izr42Hr6cJSlxbQ5OPjoO5XMoyKRPR6MA0BC3K8u6Ylm56FFv8z-8fnRwNhPX4eMXgoMx-jc2CVqxUWF5OgxRdxilMiUDQYrkvg5Hh_B8tQPPB9SeYzRrq-F4sYb9ygn_loEZ4PwzKuFdy8Wk7f3q9RYs0GlUsPcL9rvuR4CbtX33DPTk-6XWXsfXTqP5h8kCLpRGcZBPpq1pr6KGKGdJTFzbZQCWjnkW8Ia_e4g"
-	
+
 	err := adm.checkTk(tk)
 	ast.NotNil(err)
 
-	err = adm.checkRtk(rt)
+	_, err = adm.checkRtk(rt)
 	ast.NotNil(err)
 
 	err = adm.Playbook(tk, model.Playbook{})
@@ -122,6 +159,19 @@ func TestWrongToken(t *testing.T) {
 	ast.NotNil(err)
 
 	_, err = adm.NewClient(tk, "hello", []string{"group1"})
+	ast.NotNil(err)
+}
+
+func TestOldToken(t *testing.T) {
+	ast := assert.New(t)
+
+	tk := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc5ODk5OTk1LCJpYXQiOjE2Nzk4OTk2OTUsInJvbGVzIjpbIm12LWFkbWluIl19.IF6f7yHKD8Y5RFnAptNK_LB7AENJb0cCHwk8L7XA979gyThbI6k9qbQlCmPxuxpsJPtzkXMUpzWAhagr11OmRC5Xffaq-bt-eqA2FK7goDmRLy2ZM13SWDmlNulIcZmqUpJBsvHFPEN2kve3aM0aNAjd5FTSjpCuarOtlsw9ykQAETwEaspcXqx16i9KjYznQo9P92KNwnapNEghmWTnjjhQ0pNe0jUuxNoxc0wvt_f0W36rQQVtCvCrgvsbYH2PR_3bqMNx1B7nbVPYyZxR2LjVU2bZ-XO4McAHEOO4sNZx64qGFkC2MJJ5G4nJ1zXMjdQk6WrRpHdr1WJhHoW-Hw"
+	rt := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsibWljcm92YXVsdC1hZG1pbnMiXSwiZXhwIjoxNjc5OTAzNzY2LCJpYXQiOjE2Nzk5MDAxNjYsInVzYWdlIjoibXYtcmVmcmVzaCJ9.r9GLTkeVVVWJIVBqT9SGHqwdwRIFDw6vmirLfTNF8PdS728xKRYzrkqM40Et5be_S13NjuGDRCfwj5dkb44QF-4cY-KbzEiT2XwmVnJB23qIXHxKFCXSL9Hju_hXfXtlX41kJ4eUHiJHu92ZvEe2-nod6vdr9q5zMBYlKlCX72b7bFOLuNiJcGYax2m4ft1qgZJNkE2FO2aeDHsffOdHqX7-pwJ1D8zp0hFF3QgTzquDlkvab9XWKF9UI00_G2C9IDJSRQNtpRV9C6u5GJMSHnJp15m6u5l104giLKHvxQy68i8fpD_rw2Uu3wL04pRKbTntHmcxmQJ4Y7_Fyx0Fhg"
+
+	err := adm.checkTk(tk)
+	ast.NotNil(err)
+
+	_, err = adm.checkRtk(rt)
 	ast.NotNil(err)
 }
 

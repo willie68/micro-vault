@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"log"
 	"strings"
 	"time"
@@ -23,11 +22,18 @@ import (
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
+	"github.com/willie68/micro-vault/internal/utils"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 )
 
 // DoAdmin injection name
-const DoAdmin = "admin"
+const (
+	DoAdmin     = "admin"
+	tkRolesKey  = "roles"
+	tkRoleAdmin = "mv-admin"
+	rtUsageKey  = "usage"
+	rtUsage     = "mv-refresh"
+)
 
 // Admin admin service business logic
 type Admin struct {
@@ -89,12 +95,12 @@ func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 
 // Refresh refreshing an admin account
 func (a *Admin) Refresh(rt string) (string, string, error) {
-	err := a.checkRtk(rt)
+	tk, err := a.checkRtk(rt)
 	if err != nil {
 		return "", "", err
 	}
-	no := time.Now()
 
+	no := time.Now()
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := a.generateRefreshToken(no)
 	if err != nil {
@@ -108,15 +114,24 @@ func (a *Admin) Refresh(rt string) (string, string, error) {
 		return "", "", err
 	}
 
+	// refresh token is used, so it can be revoked
+	exp := tk.Expiration()
+	err = a.stg.RevokeToken(tk.JwtID(), exp)
+	if err != nil {
+		log.Printf("failed to revoke token: %s", err)
+	}
+
 	return tsig, rtsig, nil
 }
 
 func (a *Admin) generateToken(no time.Time) (string, error) {
+	id := utils.GenerateID()
 	t := jwt.New()
 	t.Set(jwt.AudienceKey, "microvault-admins")
 	t.Set(jwt.IssuedAtKey, no)
 	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
-	t.Set("roles", []string{"mv-admin"})
+	t.Set(jwt.JwtIDKey, id)
+	t.Set(tkRolesKey, []string{tkRoleAdmin})
 
 	// Signing a token (using raw rsa.PrivateKey)
 	tsig, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
@@ -128,11 +143,13 @@ func (a *Admin) generateToken(no time.Time) (string, error) {
 }
 
 func (a *Admin) generateRefreshToken(no time.Time) (string, error) {
+	id := utils.GenerateID()
 	t := jwt.New()
 	t.Set(jwt.AudienceKey, "microvault-admins")
 	t.Set(jwt.IssuedAtKey, no)
-	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
-	t.Set("usage", "mv-refresh")
+	t.Set(jwt.ExpirationKey, no.Add(60*time.Minute))
+	t.Set(jwt.JwtIDKey, id)
+	t.Set(rtUsageKey, rtUsage)
 
 	// Signing a token (using raw rsa.PrivateKey)
 	tsig, err := jwt.Sign(t, jwa.RS256, a.kmn.PrivateKey())
@@ -297,23 +314,36 @@ func (a *Admin) checkTk(tk string) error {
 	if err != nil {
 		return err
 	}
-	roles := token.PrivateClaims()["roles"]
-	if !search(roles, "mv-admin") {
-		return errors.New("token not valid")
+	et := token.Expiration()
+	no := time.Now()
+	if no.After(et) {
+		return services.ErrTokenExpired
+	}
+	roles := token.PrivateClaims()[tkRolesKey]
+	if !search(roles, tkRoleAdmin) {
+		return services.ErrTokenNotValid
 	}
 	return nil
 }
 
-func (a *Admin) checkRtk(tk string) error {
+func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 	token, err := jwt.Parse([]byte(tk), jwt.WithVerify(jwa.RS256, a.kmn.PublicKey()))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	usage := token.PrivateClaims()["usage"]
-	if usage != "mv-refresh" {
-		return errors.New("token not valid")
+	et := token.Expiration()
+	if time.Now().After(et) {
+		return nil, services.ErrTokenExpired
 	}
-	return nil
+	id := token.JwtID()
+	if a.stg.IsRevoked(id) {
+		return nil, services.ErrTokenNotValid
+	}
+	usage := token.PrivateClaims()[rtUsageKey]
+	if usage != rtUsage {
+		return nil, services.ErrTokenNotValid
+	}
+	return token, nil
 }
 
 // CreateClient creates a new client with defined groups

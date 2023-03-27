@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/rs/xid"
@@ -48,6 +49,7 @@ type MongoStorage struct {
 	knm      keyman.Keyman
 	colObj   *driver.Collection
 	cryptkey []byte
+	revokes  sync.Map
 }
 
 type bobject struct {
@@ -58,8 +60,14 @@ type bobject struct {
 	Object     string             `bson:"object"`
 }
 
+type tkrevoke struct {
+	ID      string    `json:"id"`
+	Expires time.Time `json:"expires"`
+}
+
 const (
 	colObjects = "objects"
+	cCTkRevoke = "tkrevoke"
 	cCGroup    = "group"
 	cCClient   = "client"
 	cCClientA  = "clientA"
@@ -135,6 +143,7 @@ func (m *MongoStorage) Init() error {
 	if err != nil {
 		return err
 	}
+	m.revokes = sync.Map{}
 	return nil
 }
 
@@ -248,6 +257,28 @@ func (m *MongoStorage) setEncryption() error {
 func (m *MongoStorage) Close() error {
 	m.client.Disconnect(m.ctx)
 	return nil
+}
+
+// RevokeToken set this token id to the revoked token
+func (m *MongoStorage) RevokeToken(id string, exp time.Time) error {
+	if time.Now().After(exp) {
+		return nil
+	}
+	et := tkrevoke{
+		ID:      id,
+		Expires: exp,
+	}
+	err := m.upsert(cCTkRevoke, id, et)
+	return err
+}
+
+// IsRevoked checking if an token id is already revoked
+func (m *MongoStorage) IsRevoked(id string) bool {
+	found, err := m.exists(cCTkRevoke, id)
+	if err != nil {
+		return false
+	}
+	return found
 }
 
 // AddGroup adding a group to internal store

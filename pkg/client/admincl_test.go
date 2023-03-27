@@ -21,6 +21,29 @@ func init() {
 	adm = ad
 }
 
+func TestRefresh(t *testing.T) {
+	ast := assert.New(t)
+	ast.NotNil(adm)
+
+	tk := adm.token
+	ex := adm.expired
+	rt := adm.refreshToken
+
+	_, err := adm.Groups()
+	ast.Nil(err)
+
+	err = adm.Refresh()
+	ast.Nil(err)
+
+	ast.NotEqual(tk, adm.token)
+	ast.NotEqual(rt, adm.refreshToken)
+	ast.NotEqual(ex, adm.expired)
+
+	_, err = adm.Groups()
+	ast.Nil(err)
+
+}
+
 func TestAdmPlaybook(t *testing.T) {
 	ast := assert.New(t)
 	ast.NotNil(adm)

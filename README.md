@@ -1,6 +1,7 @@
 # micro-vault
 
-micro-vault microservice dead simple key management service without any golden rings, just simple and secure
+micro-vault microservice dead simple key management service without any golden rings, just simple and secure.
+The following documentation is written in German.
 
 ## Wofür gibt es diesen Server?
 
@@ -38,7 +39,7 @@ Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschl�
 
 ### Was bietet nun MicroVault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden.
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden.
 
 Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. 
 
@@ -176,7 +177,22 @@ Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server
 
 # Admin Endpunkte
 
-Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar.
+Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
+
+Der übliche Kommunikationsablauf (im Basic Auth Betrieb) ist wie folgt:
+Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig. ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
+
+## Login
+
+Anmeldung als Admin an MV. 
+
+URL: POST /api/v1/admin/login
+
+In; Username/Password
+
+Out: Token, RefreshToken
+
+
 
 ## Client CRUD
 
@@ -196,7 +212,7 @@ Out: Accesskey, Secretablaufdatum, Gruppenzugehörigkeit
 
 ### Client Secreterneuerung (Update)
 
-Hier wird ein für den CLient ein neues Secret angefordert. 
+Hier wird ein für den Client ein neues Secret angefordert. 
 
 In: altes Secret
 

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/internal/utils"
 )
 
 var stg interfaces.Storage
@@ -36,6 +37,21 @@ func TestCreateFileStorage(t *testing.T) {
 	testInit(ast)
 
 	defer stg.Close()
+}
+
+func TestRevokeTokenFS(t *testing.T) {
+	ast := assert.New(t)
+	testInit(ast)
+
+	id := utils.GenerateID()
+
+	ast.False(stg.IsRevoked(id))
+
+	exp := time.Now().Add(1 * time.Second)
+	err := stg.RevokeToken(id, exp)
+	ast.Nil(err)
+
+	ast.True(stg.IsRevoked(id))
 }
 
 func TestGroupCRUDFS(t *testing.T) {

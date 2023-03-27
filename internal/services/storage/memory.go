@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
@@ -14,6 +15,7 @@ type Memory struct {
 	groups  map[string]model.Group
 	clients sync.Map
 	keys    sync.Map
+	revokes sync.Map
 }
 
 var _ interfaces.Storage = &Memory{}
@@ -33,6 +35,8 @@ func NewMemory() (interfaces.Storage, error) {
 func (m *Memory) Init() error {
 	m.groups = make(map[string]model.Group)
 	m.clients = sync.Map{}
+	m.keys = sync.Map{}
+	m.revokes = sync.Map{}
 	return nil
 }
 
@@ -40,8 +44,25 @@ func (m *Memory) Init() error {
 func (m *Memory) Close() error {
 	m.groups = make(map[string]model.Group)
 	m.clients = sync.Map{}
+	m.keys = sync.Map{}
+	m.revokes = sync.Map{}
 	do.ShutdownNamed(nil, interfaces.DoStorage)
 	return nil
+}
+
+// RevokeToken set this token id to the revoked token
+func (m *Memory) RevokeToken(id string, exp time.Time) error {
+	if time.Now().After(exp) {
+		return nil
+	}
+	m.revokes.Store(id, exp)
+	return nil
+}
+
+// IsRevoked checking if an token id is already revoked
+func (m *Memory) IsRevoked(id string) bool {
+	_, ok := m.revokes.Load(id)
+	return ok
 }
 
 // AddGroup adding a group to internal store

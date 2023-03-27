@@ -19,14 +19,15 @@ import (
 
 // AdminCl this is the admin client
 type AdminCl struct {
-	url      string
-	username string
-	password []byte
-	token    string
-	expired  time.Time
-	clt      http.Client
-	ctx      context.Context
-	insecure bool
+	url          string
+	username     string
+	password     []byte
+	token        string
+	refreshToken string
+	expired      time.Time
+	clt          http.Client
+	ctx          context.Context
+	insecure     bool
 }
 
 func (a *AdminCl) init(u string) error {
@@ -77,9 +78,10 @@ func (a *AdminCl) Login() error {
 		return ReadErr(res)
 	}
 	ds := struct {
-		Token     string `json:"access_token"`
-		Type      string `json:"token_type"`
-		ExpiresIn int    `json:"expires_in"`
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
@@ -90,6 +92,41 @@ func (a *AdminCl) Login() error {
 		return errors.New("getting no token")
 	}
 	a.token = ds.Token
+	a.refreshToken = ds.RefreshToken
+	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
+	return nil
+}
+
+// Refresh refresh the tokens
+func (a *AdminCl) Refresh() error {
+	//tk := a.token
+	a.token = a.refreshToken
+	res, err := a.Get("admin/login/refresh")
+	if err != nil {
+		logging.Logger.Errorf("refresh request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	ds := struct {
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+	}{}
+	err = ReadJSON(res, &ds)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return err
+	}
+	if ds.Token == "" {
+		return errors.New("getting no token")
+	}
+	a.token = ds.Token
+	a.refreshToken = ds.RefreshToken
 	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
 }
@@ -359,8 +396,12 @@ func (a *AdminCl) newRequest(method, endpoint string, body io.Reader) (*http.Req
 
 func (a *AdminCl) checkToken() error {
 	if time.Now().After(a.expired) {
-		a.token = ""
-		return a.Login()
+		err := a.Refresh()
+		if err != nil {
+			a.token = ""
+			return a.Login()
+		}
+		return nil
 	}
 	return nil
 }
