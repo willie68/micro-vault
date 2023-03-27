@@ -42,6 +42,7 @@ func TestCreateFileStorage(t *testing.T) {
 func TestRevokeTokenFS(t *testing.T) {
 	ast := assert.New(t)
 	testInit(ast)
+	defer stg.Close()
 
 	id := utils.GenerateID()
 
