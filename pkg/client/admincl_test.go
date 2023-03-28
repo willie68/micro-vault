@@ -41,7 +41,6 @@ func TestRefresh(t *testing.T) {
 
 	_, err = adm.Groups()
 	ast.Nil(err)
-
 }
 
 func TestAdmPlaybook(t *testing.T) {

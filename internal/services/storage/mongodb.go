@@ -24,8 +24,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 // checking interface compatibility
@@ -53,20 +55,22 @@ type MongoStorage struct {
 }
 
 type bobject struct {
-	ID         primitive.ObjectID `bson:"_id"`
-	Class      string             `bson:"class"`
-	Identifier string             `bson:"identifier"`
-	CID        string             `bson:"cid"`
-	Object     string             `bson:"object"`
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	Class      string             `bson:"class,omitempty"`
+	Identifier string             `bson:"identifier,omitempty"`
+	CID        string             `bson:"cid,omitempty"`
+	Object     string             `bson:"object,omitempty"`
+	Expires    *time.Time         `bson:"expires,omitempty"`
 }
 
 type tkrevoke struct {
-	ID      string    `json:"id"`
-	Expires time.Time `json:"expires"`
+	ID      string    `json:"id" bson:"identifier"`
+	Expires time.Time `json:"expires" bson:"expires"`
 }
 
 const (
 	colObjects = "objects"
+	colTTL     = "ttlobjects"
 	cCTkRevoke = "tkrevoke"
 	cCGroup    = "group"
 	cCClient   = "client"
@@ -74,7 +78,8 @@ const (
 	cCClientK  = "clientK"
 	cCCrypt    = "crypt"
 
-	cCMasterCrypt = "master"
+	cCMasterCrypt     = "master"
+	cMasterKeyMessage = "micro-vault-master-key"
 )
 
 // NewMongoStorage initialize the mongo db for usage in this service
@@ -139,12 +144,30 @@ func (m *MongoStorage) Init() error {
 	if !ok {
 		log.Logger.Alert("There is no additional index on mongo collection \"objects\". \r\nPlease consider to add an extra index. See readme for explanation.")
 	}
+	_, err = m.ensureTTLIndex(m.colObj)
+	if err != nil {
+		return err
+	}
 	err = m.ensureEncryption()
 	if err != nil {
 		return err
 	}
 	m.revokes = sync.Map{}
 	return nil
+}
+
+func (m *MongoStorage) ensureTTLIndex(c *driver.Collection) (bool, error) {
+	idx := c.Indexes()
+	index := mongo.IndexModel{
+		Keys:    bsonx.Doc{{Key: "expires", Value: bsonx.Int32(1)}},
+		Options: options.Index().SetExpireAfterSeconds(60).SetName("expires"),
+	}
+
+	_, err := idx.CreateOne(m.ctx, index)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func checkForIndex(c *driver.Collection) (bool, error) {
@@ -181,6 +204,11 @@ func (m *MongoStorage) ensureEncryption() error {
 	if err != nil {
 		return err
 	}
+	// Testing if database can be used with the service key pair
+	err = m.ensureDatabase(result.Map())
+	if err != nil {
+		return err
+	}
 	sobj, ok := result.Map()["object"].(string)
 	if ok {
 		obj, err := cry.DecryptKey(*m.knm.PrivateKey(), sobj)
@@ -199,6 +227,20 @@ func (m *MongoStorage) ensureEncryption() error {
 		return nil
 	}
 	return services.ErrUnknowError
+}
+
+func (m *MongoStorage) ensureDatabase(mp primitive.M) error {
+	mk, ok := mp["message"].(string)
+	if ok {
+		msg, err := cry.DecryptKey(*m.knm.PrivateKey(), mk)
+		if err != nil {
+			return err
+		}
+		if msg != cMasterKeyMessage {
+			return errors.New("Can't use mongo database. Different encryption key.")
+		}
+	}
+	return nil
 }
 
 func (m *MongoStorage) setEncryption() error {
@@ -220,6 +262,12 @@ func (m *MongoStorage) setEncryption() error {
 		Created: time.Now(),
 		Group:   "system",
 	}
+
+	mk, err := cry.EncryptKey(m.knm.PublicKey(), cMasterKeyMessage)
+	if err != nil {
+		return err
+	}
+
 	js, err := json.Marshal(e)
 	if err != nil {
 		return err
@@ -241,6 +289,7 @@ func (m *MongoStorage) setEncryption() error {
 		{"identifier", cCMasterCrypt},
 		{"cid", m.knm.KID()},
 		{"object", ct},
+		{"message", mk},
 	}
 
 	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
@@ -268,8 +317,11 @@ func (m *MongoStorage) RevokeToken(id string, exp time.Time) error {
 		ID:      id,
 		Expires: exp,
 	}
-	err := m.upsert(cCTkRevoke, id, et)
-	return err
+	err := m.upsert(cCTkRevoke, id, &exp, et)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // IsRevoked checking if an token id is already revoked
@@ -283,7 +335,7 @@ func (m *MongoStorage) IsRevoked(id string) bool {
 
 // AddGroup adding a group to internal store
 func (m *MongoStorage) AddGroup(g model.Group) (string, error) {
-	err := m.upsert(cCGroup, g.Name, g)
+	err := m.upsert(cCGroup, g.Name, nil, g)
 	if err != nil {
 		return "", err
 	}
@@ -388,16 +440,16 @@ func (m *MongoStorage) AddClient(c model.Client) (string, error) {
 	if ok {
 		return "", errors.New("client already exists")
 	}
-	err = m.upsert(cCClient, c.Name, c)
+	err = m.upsert(cCClient, c.Name, nil, c)
 	if err != nil {
 		return "", err
 	}
-	err = m.upsert(cCClientA, c.AccessKey, c)
+	err = m.upsert(cCClientA, c.AccessKey, nil, c)
 	if err != nil {
 		return "", err
 	}
 	if c.KID != "" {
-		err = m.upsert(cCClientK, c.KID, c)
+		err = m.upsert(cCClientK, c.KID, nil, c)
 		if err != nil {
 			return "", err
 		}
@@ -533,7 +585,7 @@ func (m *MongoStorage) AccessKey(n string) (string, bool) {
 
 // StoreEncryptKey stores the encrypt keys
 func (m *MongoStorage) StoreEncryptKey(e model.EncryptKey) error {
-	err := m.upsert(cCCrypt, e.ID, e)
+	err := m.upsert(cCCrypt, e.ID, nil, e)
 	if err != nil {
 		return err
 	}
@@ -595,16 +647,21 @@ func (m *MongoStorage) clear() error {
 	return nil
 }
 
-func (m *MongoStorage) upsert(c, i string, o any) error {
+func (m *MongoStorage) upsert(c, i string, exp *time.Time, o any) error {
 	so, err := m.encrypt(o)
 	if err != nil {
 		return err
 	}
-	obj := bson.D{
-		{"class", c},
-		{"identifier", i},
-		{"object", so},
+
+	obj := bobject{
+		Class:      c,
+		Identifier: i,
+		Object:     so,
 	}
+	if exp != nil {
+		obj.Expires = exp
+	}
+
 	opts := options.FindOneAndReplace().SetUpsert(true)
 	flt := bson.D{
 		{"class", c},
