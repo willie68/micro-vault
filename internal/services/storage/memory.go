@@ -16,6 +16,8 @@ type Memory struct {
 	clients sync.Map
 	keys    sync.Map
 	revokes sync.Map
+	ticker  *time.Ticker
+	tckDone chan bool
 }
 
 var _ interfaces.Storage = &Memory{}
@@ -37,6 +39,20 @@ func (m *Memory) Init() error {
 	m.clients = sync.Map{}
 	m.keys = sync.Map{}
 	m.revokes = sync.Map{}
+	m.tckDone = make(chan bool)
+	m.ticker = time.NewTicker(1 * time.Minute)
+
+	go func() {
+		for {
+			select {
+			case <-m.tckDone:
+				return
+			case <-m.ticker.C:
+				m.cleanup()
+			}
+		}
+	}()
+
 	return nil
 }
 
@@ -47,7 +63,19 @@ func (m *Memory) Close() error {
 	m.keys = sync.Map{}
 	m.revokes = sync.Map{}
 	do.ShutdownNamed(nil, interfaces.DoStorage)
+	m.ticker.Stop()
+	m.tckDone <- true
 	return nil
+}
+
+func (m *Memory) cleanup() {
+	m.revokes.Range(func(key, value any) bool {
+		exp := value.(time.Time)
+		if time.Now().After(exp) {
+			m.revokes.Delete(key)
+		}
+		return true
+	})
 }
 
 // RevokeToken set this token id to the revoked token

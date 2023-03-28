@@ -53,6 +53,13 @@ func TestRevokeTokenFS(t *testing.T) {
 	ast.Nil(err)
 
 	ast.True(stg.IsRevoked(id))
+
+	time.Sleep(2 * time.Second)
+	s, ok := stg.(*FileStorage)
+	ast.True(ok)
+	s.cleanup()
+
+	ast.False(stg.IsRevoked(id))
 }
 
 func TestGroupCRUDFS(t *testing.T) {

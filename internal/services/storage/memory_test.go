@@ -37,6 +37,11 @@ func TestRevokeToken(t *testing.T) {
 	ast.Nil(err)
 
 	ast.True(mem.IsRevoked(id))
+
+	time.Sleep(2 * time.Second)
+	mem.cleanup()
+
+	ast.False(mem.IsRevoked(id))
 }
 
 func TestGroupCRUD(t *testing.T) {

@@ -20,6 +20,8 @@ type FileStorage struct {
 	path    string
 	db      *badger.DB
 	revokes sync.Map
+	ticker  *time.Ticker
+	tckDone chan bool
 }
 
 const (
@@ -58,6 +60,20 @@ func (f *FileStorage) Init() error {
 	}
 	f.db = b
 	f.revokes = sync.Map{}
+	f.tckDone = make(chan bool)
+	f.ticker = time.NewTicker(1 * time.Minute)
+
+	go func() {
+		for {
+			select {
+			case <-f.tckDone:
+				return
+			case <-f.ticker.C:
+				f.cleanup()
+			}
+		}
+	}()
+
 	return nil
 }
 
@@ -65,7 +81,19 @@ func (f *FileStorage) Init() error {
 func (f *FileStorage) Close() error {
 	f.db.Close()
 	do.ShutdownNamed(nil, interfaces.DoStorage)
+	f.ticker.Stop()
+	f.tckDone <- true
 	return nil
+}
+
+func (f *FileStorage) cleanup() {
+	f.revokes.Range(func(key, value any) bool {
+		exp := value.(time.Time)
+		if time.Now().After(exp) {
+			f.revokes.Delete(key)
+		}
+		return true
+	})
 }
 
 // RevokeToken set this token id to the revoked token
