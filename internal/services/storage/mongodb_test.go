@@ -267,6 +267,8 @@ func TestStoreEncryptKeyMgo(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(1, len(keys))
 
+	ast.True(mgo.HasEncryptKey(e.ID))
+
 	e1, ok := mgo.GetEncryptKey(e.ID)
 	ast.True(ok)
 

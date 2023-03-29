@@ -248,6 +248,12 @@ func (m *Memory) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 	return &e, true
 }
 
+// HasEncryptKey checks if a key is present
+func (m *Memory) HasEncryptKey(id string) bool {
+	_, ok := m.keys.Load(id)
+	return ok
+}
+
 // ListEncryptKeys list all clients via callback function
 func (m *Memory) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
 	var cnt int64

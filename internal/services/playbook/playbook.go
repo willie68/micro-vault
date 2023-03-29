@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -55,18 +56,8 @@ func (p *Playbook) Play() error {
 	if p.pm == nil {
 		return nil
 	}
-	for _, g := range p.pm.Groups {
-		if !p.stg.HasGroup(g.Name) {
-			_, err := p.stg.AddGroup(g)
-			if err != nil {
-				log.Logger.Errorf("error adding group %s: %v", g.Name, err)
-				return err
-			}
-			log.Logger.Infof("adding group %s", g.Name)
-		}
-	}
 	for _, c := range p.pm.Clients {
-		if !p.stg.HasClient(c.Name) {
+		if !p.stg.HasGroup(c.Name) && !p.stg.HasClient(c.Name) {
 			if c.Key == "" {
 				rsk, err := rsa.GenerateKey(rand.Reader, 2048)
 				if err != nil {
@@ -92,7 +83,39 @@ func (p *Playbook) Play() error {
 				log.Logger.Errorf("error adding client %s: %v", c.Name, err)
 				return err
 			}
+			g := model.Group{
+				Name: c.Name,
+			}
+			_, err = p.stg.AddGroup(g)
+			if err != nil {
+				log.Logger.Errorf("error adding group for client %s: %v", c.Name, err)
+				return err
+			}
 			log.Logger.Infof("adding client %s", c.Name)
+		} else {
+			log.Logger.Errorf("can't import client \"%s\", client or group already exists.", c.Name)
+		}
+	}
+
+	for _, g := range p.pm.Groups {
+		if !p.stg.HasGroup(g.Name) {
+			_, err := p.stg.AddGroup(g)
+			if err != nil {
+				log.Logger.Errorf("error adding group %s: %v", g.Name, err)
+				return err
+			}
+			log.Logger.Infof("adding group %s", g.Name)
+		}
+	}
+
+	for _, k := range p.pm.Keys {
+		if !p.stg.HasEncryptKey(k.ID) {
+			err := p.stg.StoreEncryptKey(k)
+			if err != nil {
+				log.Logger.Errorf("error adding key %s: %v", k.ID, err)
+				return err
+			}
+			log.Logger.Infof("adding key %s", k.ID)
 		}
 	}
 	return nil
@@ -103,17 +126,35 @@ func (p *Playbook) Export(pf string) error {
 	pb := model.Playbook{
 		Groups:  make([]model.Group, 0),
 		Clients: make([]model.Client, 0),
+		Keys:    make([]model.EncryptKey, 0),
 	}
+	err := p.stg.ListClients(func(g model.Client) bool {
+		pb.Clients = append(pb.Clients, g)
+		return true
+	})
+	if err != nil {
+		return err
+	}
+
 	gs, err := p.stg.GetGroups()
 	if err != nil {
 		return err
 	}
-	pb.Groups = gs
-	p.stg.ListClients(func(g model.Client) bool {
-		pb.Clients = append(pb.Clients, g)
+	for _, g := range gs {
+		if !p.stg.HasClient(g.Name) {
+			pb.Groups = append(pb.Groups, g)
+		}
+	}
+
+	err = p.stg.ListEncryptKeys(0, math.MaxInt64, func(g model.EncryptKey) bool {
+		pb.Keys = append(pb.Keys, g)
 		return true
 	})
-	file, err := os.OpenFile(pf, os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(pf)
 	if err != nil {
 		return err
 	}

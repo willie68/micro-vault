@@ -105,8 +105,9 @@ func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, 
 	if !ok {
 		return nil, errors.New("token not valid, no groups")
 	}
+	n, ok := jt.Payload["name"].(string)
 	f := search(gr, group)
-	if !f {
+	if !f && (!ok || (group != n)) {
 		return nil, errors.New("group not valid, can't create a key for this group")
 	}
 	id := xid.New().String()
@@ -147,8 +148,9 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 		return nil, services.ErrNotExists
 	}
 
+	n, ok := jt.Payload["name"].(string)
 	f := search(gr, e.Group)
-	if !f {
+	if !f && (!ok || (e.Group != n)) {
 		return nil, errors.New("access to key permitted")
 	}
 

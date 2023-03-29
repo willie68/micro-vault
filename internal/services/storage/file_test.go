@@ -235,6 +235,8 @@ func TestStoreEncryptKeyFS(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(1, len(keys))
 
+	ast.True(stg.HasEncryptKey(e.ID))
+
 	e1, ok := stg.GetEncryptKey(e.ID)
 	ast.True(ok)
 

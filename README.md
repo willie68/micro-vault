@@ -39,19 +39,19 @@ Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschl�
 
 ### Was bietet nun MicroVault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen.   
-
-Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. 
-
-Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
-
-1. In Memory: Hier werden alle relevanten Daten im Speicher von Vault gehalten. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können beim Start Clients und Gruppen erstellt werden. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
-2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
-3. MongoDB: Mit dem MongoDB Storage ist es möglich alle Daten verschlüsselt in eine MongoDB abzulegen. Dieser Storage kann auch im Multinode Betrieb verwendet werden.
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen.   
 
 Zur Anbindung an die Clients werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich.   
 
-## Speichermodelle
+Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Bei Verwendung des internen Adminzugangs gibt es auch einen Requesttoken zur Refresh des Tokens. 
+
+## Persistierung/Speichermodelle
+
+Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
+
+1. In Memory: Hier werden alle relevanten Daten im Speicher des Microservice gehalten. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können beim Start Clients und Gruppen erstellt werden. Ein echter Multinodebetrieb ist mit diesem Storage nicht möglich. jedoch kann bei gleichem Playbook eine einfache Lasstverteilung erfolgen. ACHTUNG: Bei dieser Art sind Änderungen weder persistent noch können diese auf andere Nodes übertragen werden.  
+2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
+3. MongoDB: Mit dem MongoDB Storage ist es möglich alle Daten verschlüsselt in eine MongoDB abzulegen. Dieser Storage kann auch im Multinode Betrieb verwendet werden.
 
 ### Memory only
 
@@ -67,7 +67,7 @@ Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie au
 
 ### Multinodebetrieb
 
-Vorraussetzung für den Multinodebetrieb ist die Verwendung einer Datenbank als Speicher. Jeder Node muss nun mit dem gleichen Zertifikat ausgestattet werden. 
+Vorraussetzung für den Multinodebetrieb ist die Verwendung einer Datenbank als Speicher. Da die Daten in der Datenbank verschlüsselt abgelegt werden muss jeder Service-Node mit dem gleichen Zertifikat ausgestattet werden. Eine externe Zertifikatsrotation ist mit Hilfe des MV-Migrationstool möglich möglich.
 
 ## Kommunikationsablauf
 
@@ -114,59 +114,54 @@ playbook.json
 
 ```json
 {
-    "groups": [
-        {
+    "groups": [{
             "name": "group1",
-            "label":
-            {
-                "en": "Group 1",
-                "de": "Gruppe 1"
+            "label": {
+                "de": "Gruppe 1",
+                "en": "Group 1"
             }
-        },
-        {
+        }, {
             "name": "group3",
-            "label":
-            {
-                "en": "Group 3",
-                "de": "Gruppe 3"
+            "label": {
+                "de": "Gruppe 3",
+                "en": "Group 3"
             }
-        },
-        {
+        }, {
             "name": "group4",
-            "label":
-            {
-                "en": "Group 4",
-                "de": "Gruppe 4"
+            "label": {
+                "de": "Gruppe 4",
+                "en": "Group 4"
             }
         }
     ],
-    "clients": [
-        {
+    "clients": [{
             "name": "tester1",
             "accesskey": "12345678",
             "secret": "yxcvb",
-            "groups": [
-                "group1",
-                "group2",
-                "group4"
-            ]
-        },
-        {
+            "groups": ["group1", "group4"],
+            "key": "{PEM file content} -----BEGIN PRIVATE KEY-----  \nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKc...\n-----END PRIVATE KEY-----",
+            "kid": "h_oL_duFx67WHB9fd5-VKXnCHNvHj33ZDIokD_dEhyQ"
+<        }, {
             "name": "tester2",
             "accesskey": "87654321",
             "secret": "yxcvb",
-            "groups": [
-                "group2",
-                "group4"
-            ]
-        },
-        {
-            "name": "tester3",
-            "accesskey": "345678",
-            "secret": "yxcvb",
-            "groups": [
-                "group3"
-            ]
+            "groups": ["group2", "group4"],
+            "key": "{PEM file content} -----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwgg...\n-----END PRIVATE KEY-----",
+            "kid": "M5pQtcH5y2zxBtdhs-eAS7iJWiQzFsrsYMorkCMRi3s"
+        }
+    ],
+    "keys": [{
+            "ID": "cgi3qlg11fjkco1661j0",
+            "Alg": "AES-256",
+            "Key": "ab6e010b7889d9547e0005459342a04a292e0866df11caf27bba3e108f7ff178",
+            "Created": "2023-03-29T15:29:58.2497919+02:00",
+            "Group": "group1"
+        }, {
+            "ID": "cghve2g11fjp746madig",
+            "Alg": "AES-256",
+            "Key": "efe722017f1798051d96f6e7d888ae6614cf111b5e43ad57180c9ba74b833a6c",
+            "Created": "2023-03-29T10:30:02.5429664+02:00",
+            "Group": "group1"
         }
     ]
 }

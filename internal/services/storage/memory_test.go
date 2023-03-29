@@ -245,6 +245,8 @@ func TestStoreEncryptKey(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(1, len(keys))
 
+	ast.True(mem.HasEncryptKey(e.ID))
+
 	e1, ok := mem.GetEncryptKey(e.ID)
 	ast.True(ok)
 

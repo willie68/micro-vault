@@ -326,6 +326,11 @@ func (f *FileStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 	return &e, true
 }
 
+// HasEncryptKey checks if a key is present
+func (f *FileStorage) HasEncryptKey(id string) bool {
+	return f.has(encryptionKey, id)
+}
+
 // ListEncryptKeys list all clients via callback function
 func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
 	var cnt int64

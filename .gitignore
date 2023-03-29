@@ -24,3 +24,5 @@ testdata/private.pem
 *.pem
 
 *.bkp
+
+testdata/playbook_export.json

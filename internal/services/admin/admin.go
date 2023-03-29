@@ -16,6 +16,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/clients"
@@ -239,9 +240,6 @@ func (a *Admin) NewClient(tk, n string, gs []string) (*model.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	if a.stg.HasClient(n) {
-		return nil, services.ErrAlreadyExists
-	}
 	cl, err := a.createClient(n, gs)
 	if err != nil {
 		return nil, err
@@ -348,10 +346,7 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 
 // CreateClient creates a new client with defined groups
 func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
-	if a.stg.HasClient(n) {
-		return nil, services.ErrAlreadyExists
-	}
-	if a.stg.HasGroup(n) {
+	if a.stg.HasClient(n) || a.stg.HasGroup(n) {
 		return nil, services.ErrAlreadyExists
 	}
 	token := make([]byte, 16)
@@ -381,6 +376,21 @@ func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
 	}
 	_, err = a.stg.AddClient(c)
 	if err != nil {
+		return nil, err
+	}
+
+	cg := model.Group{
+		Name: c.Name,
+	}
+	_, err = a.stg.AddGroup(cg)
+	if err != nil {
+		ak, ok := a.stg.AccessKey(c.Name)
+		if ok {
+			_, err = a.stg.DeleteClient(ak)
+			if err != nil {
+				logging.Logger.Errorf("error deleting client after failure of adding client group: %v", err)
+			}
+		}
 		return nil, err
 	}
 	return &c, nil

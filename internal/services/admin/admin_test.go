@@ -208,7 +208,7 @@ func TestPlaybook(t *testing.T) {
 
 	gs, err := adm.Groups(tk)
 	ast.Nil(err)
-	ast.Equal(2, len(gs))
+	ast.Equal(4, len(gs))
 
 	cs, err := adm.Clients(tk)
 	ast.Nil(err)
@@ -278,6 +278,11 @@ func TestClientCRUD(t *testing.T) {
 	cls, err := adm.Clients(tk)
 	ast.Nil(err)
 	ast.True(len(cls) > 0)
+
+	ast.True(adm.HasGroup(tk, "client1"))
+
+	_, err = adm.AddGroup(tk, model.Group{Name: "client1"})
+	ast.NotNil(err)
 
 	cl2, err := adm.Client(tk, "client1")
 	ast.Nil(err)

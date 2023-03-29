@@ -602,6 +602,16 @@ func (m *MongoStorage) GetEncryptKey(id string) (*model.EncryptKey, bool) {
 	return &e, true
 }
 
+// HasEncryptKey checks if a key is present
+func (m *MongoStorage) HasEncryptKey(id string) bool {
+	var e model.EncryptKey
+	ok, err := m.one(cCCrypt, id, &e)
+	if err != nil || !ok {
+		return false
+	}
+	return true
+}
+
 // ListEncryptKeys list all clients via callback function
 func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
 	opts := options.Find().SetSort(bson.D{{"identifier", 1}}).SetSkip(s).SetLimit(l)
