@@ -348,6 +348,12 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 
 // CreateClient creates a new client with defined groups
 func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
+	if a.stg.HasClient(n) {
+		return nil, services.ErrAlreadyExists
+	}
+	if a.stg.HasGroup(n) {
+		return nil, services.ErrAlreadyExists
+	}
 	token := make([]byte, 16)
 	_, err := rand.Read(token)
 	if err != nil {

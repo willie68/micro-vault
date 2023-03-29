@@ -72,6 +72,25 @@ func TestClientLogin(t *testing.T) {
 	t.Logf("token decoded: %s", string(js))
 }
 
+func TestGeneratePrivateAES(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+
+	e, err := cls.CreateEncryptKey(tk, "tester1")
+	ast.Nil(err)
+	ast.NotNil(e)
+
+	e1, err := cls.GetEncryptKey(tk, e.ID)
+	ast.Nil(err)
+
+	ast.Equal(e.ID, e1.ID)
+	ast.Equal(e.Alg, e1.Alg)
+	ast.Equal(e.Key, e1.Key)
+	ast.Equal(e.Created, e1.Created)
+	ast.Equal(e.Group, e1.Group)
+}
+
 func TestGenerateAES(t *testing.T) {
 	ast := assert.New(t)
 	tk, _, err := cls.Login("12345678", "yxcvb")

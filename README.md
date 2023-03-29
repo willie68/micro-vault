@@ -39,7 +39,7 @@ Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschl�
 
 ### Was bietet nun MicroVault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden.
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Anmeldung erfolgt allerdings per AccessKey und Secret. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen.   
 
 Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. 
 
