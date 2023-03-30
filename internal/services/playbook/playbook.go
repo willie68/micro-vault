@@ -56,47 +56,83 @@ func (p *Playbook) Play() error {
 	if p.pm == nil {
 		return nil
 	}
-	for _, c := range p.pm.Clients {
-		if !p.stg.HasGroup(c.Name) && !p.stg.HasClient(c.Name) {
-			if c.Key == "" {
-				rsk, err := rsa.GenerateKey(rand.Reader, 2048)
-				if err != nil {
-					return err
-				}
-				pem, err := cry.Prv2Pem(rsk)
-				if err != nil {
-					return err
-				}
-				c.Key = string(pem)
-				log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
-			}
 
-			if c.KID == "" {
-				kid, err := cry.GetKIDOfPEM(c.Key)
-				if err != nil {
-					return err
-				}
-				c.KID = kid
-			}
-			_, err := p.stg.AddClient(c)
-			if err != nil {
-				log.Logger.Errorf("error adding client %s: %v", c.Name, err)
-				return err
-			}
-			g := model.Group{
-				Name: c.Name,
-			}
-			_, err = p.stg.AddGroup(g)
-			if err != nil {
-				log.Logger.Errorf("error adding group for client %s: %v", c.Name, err)
-				return err
-			}
-			log.Logger.Infof("adding client %s", c.Name)
-		} else {
+	err := p.addClients()
+	if err != nil {
+		return err
+	}
+
+	err = p.addGroups()
+	if err != nil {
+		return err
+	}
+
+	err = p.addKeys()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Playbook) addClients() error {
+	for _, c := range p.pm.Clients {
+		if p.stg.HasGroup(c.Name) || p.stg.HasClient(c.Name) {
 			log.Logger.Errorf("can't import client \"%s\", client or group already exists.", c.Name)
+			continue
+		}
+		err := p.ensureAddClient(c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Playbook) ensureAddClient(c model.Client) (err error) {
+	if c.Key == "" {
+		log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
+		c.Key, err = p.generateNewKeyPem()
+		if err != nil {
+			return err
 		}
 	}
 
+	if c.KID == "" {
+		c.KID, err = cry.GetKIDOfPEM(c.Key)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = p.stg.AddClient(c)
+	if err != nil {
+		log.Logger.Errorf("error adding client %s: %v", c.Name, err)
+		return err
+	}
+	g := model.Group{
+		Name: c.Name,
+	}
+	_, err = p.stg.AddGroup(g)
+	if err != nil {
+		log.Logger.Errorf("error adding group for client %s: %v", c.Name, err)
+		return err
+	}
+	log.Logger.Infof("adding client %s", c.Name)
+	return nil
+}
+
+func (p *Playbook) generateNewKeyPem() (string, error) {
+	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+	pem, err := cry.Prv2Pem(rsk)
+	if err != nil {
+		return "", err
+	}
+	return string(pem), nil
+}
+
+func (p *Playbook) addGroups() error {
 	for _, g := range p.pm.Groups {
 		if !p.stg.HasGroup(g.Name) {
 			_, err := p.stg.AddGroup(g)
@@ -107,7 +143,10 @@ func (p *Playbook) Play() error {
 			log.Logger.Infof("adding group %s", g.Name)
 		}
 	}
+	return nil
+}
 
+func (p *Playbook) addKeys() error {
 	for _, k := range p.pm.Keys {
 		if !p.stg.HasEncryptKey(k.ID) {
 			err := p.stg.StoreEncryptKey(k)

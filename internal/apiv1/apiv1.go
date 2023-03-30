@@ -16,6 +16,7 @@ var BaseURL = fmt.Sprintf("/api/v%s", APIVersion)
 const configSubpath = "/config"
 const vaultSubpath = "/vault"
 const adminSubpath = "/admin"
+const jwksSubpath = "/.well-known"
 
 func token(r *http.Request) (string, error) {
 	tk := r.Header.Get("Authorization")

@@ -123,7 +123,6 @@ func TestPlaybookExport(t *testing.T) {
 
 	err = pb.Export("../../../testdata/playbook_export.json")
 	ast.Nil(err)
-
 }
 
 func TestBigExport(t *testing.T) {

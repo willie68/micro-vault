@@ -11,20 +11,9 @@ import (
 	log "github.com/willie68/micro-vault/internal/logging"
 )
 
-var myhealthy bool
-
 // check This is the healtchcheck you will have to provide
 func check(_ opentracing.Tracer) (bool, string) {
-	// TODO implement here your healthcheck.
-	myhealthy = !myhealthy
-	message := ""
-	if myhealthy {
-		log.Logger.Info("healthy")
-	} else {
-		log.Logger.Info("not healthy")
-		message = "ungesund"
-	}
-	return myhealthy, message
+	return true, "healthy"
 }
 
 // ##### template internal functions for processing the healthchecks #####

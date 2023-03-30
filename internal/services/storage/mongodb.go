@@ -24,7 +24,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
@@ -158,7 +157,7 @@ func (m *MongoStorage) Init() error {
 
 func (m *MongoStorage) ensureTTLIndex(c *driver.Collection) (bool, error) {
 	idx := c.Indexes()
-	index := mongo.IndexModel{
+	index := driver.IndexModel{
 		Keys:    bsonx.Doc{{Key: "expires", Value: bsonx.Int32(1)}},
 		Options: options.Index().SetExpireAfterSeconds(60).SetName("expires"),
 	}
@@ -237,7 +236,7 @@ func (m *MongoStorage) ensureDatabase(mp primitive.M) error {
 			return err
 		}
 		if msg != cMasterKeyMessage {
-			return errors.New("Can't use mongo database. Different encryption key.")
+			return errors.New("can't use mongo database. Different encryption key")
 		}
 	}
 	return nil

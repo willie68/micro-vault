@@ -399,6 +399,7 @@ func (a *AdminCl) checkToken() error {
 		err := a.Refresh()
 		if err != nil {
 			a.token = ""
+			a.refreshToken = ""
 			return a.Login()
 		}
 		return nil

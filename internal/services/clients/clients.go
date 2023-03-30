@@ -8,11 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/rs/xid"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/auth"
@@ -22,12 +23,18 @@ import (
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/keyman"
+	"github.com/willie68/micro-vault/internal/utils"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 // DoClients constant for dependency injection
-const DoClients = "clients"
+const (
+	DoClients      = "clients"
+	jkAudience     = "microvault-client"
+	rtUsageKey     = "usage"
+	rtUsageRefresh = "mv-refresh"
+)
 
 // Clients business logic for client management
 type Clients struct {
@@ -69,30 +76,118 @@ func (c *Clients) Init() error {
 	return nil
 }
 
-// Login logging in a client, returning a token if ok
-func (c *Clients) Login(a, s string) (string, string, error) {
+// Login logging in a client, returning a token if ok,
+// return token, refreshtoken, key, error
+func (c *Clients) Login(a, s string) (string, string, string, error) {
 	if !c.stg.HasClient(a) {
-		return "", "", services.ErrLoginFailed
+		return "", "", "", services.ErrLoginFailed
 	}
 	cl, ok := c.stg.GetClient(a)
-	if ok && cl.Secret != s {
-		return "", "", services.ErrLoginFailed
+	if !ok || (ok && cl.Secret != s) {
+		return "", "", "", services.ErrLoginFailed
 	}
 
-	t := jwt.New()
-	t.Set(jwt.AudienceKey, "microvault-clients")
-	t.Set(jwt.IssuedAtKey, time.Now())
-	t.Set(jwt.ExpirationKey, time.Now().Add(5*time.Minute))
-	t.Set("name", cl.Name)
-	t.Set("groups", cl.Groups)
+	no := time.Now()
 
 	// Signing a token (using raw rsa.PrivateKey)
-	signed, err := jwt.Sign(t, jwa.RS256, c.kmn.PrivateKey())
+	rtsig, err := c.generateRefreshToken(no, cl.Name)
 	if err != nil {
-		logging.Logger.Infof("failed to sign token: %s", err)
+		log.Printf("failed to generate token: %s", err)
+		return "", "", "", err
+	}
+
+	tsig, err := c.generateToken(no, cl.Name, cl.Groups)
+	if err != nil {
+		log.Printf("failed to generate token: %s", err)
+		return "", "", "", err
+	}
+
+	return tsig, rtsig, cl.Key, nil
+}
+
+// Refresh refreshing an admin account
+func (c *Clients) Refresh(rt string) (string, string, error) {
+	tk, err := c.checkRtk(rt)
+	if err != nil {
 		return "", "", err
 	}
-	return string(signed), cl.Key, nil
+
+	n, ok := tk.PrivateClaims()["name"].(string)
+	if !ok {
+		logging.Logger.Error("failed to refresh, token not valid")
+		return "", "", services.ErrTokenNotValid
+	}
+
+	a, ok := c.stg.AccessKey(n)
+	if !ok {
+		logging.Logger.Error("failed to refresh, token not valid")
+		return "", "", services.ErrTokenNotValid
+	}
+	cl, ok := c.stg.GetClient(a)
+	if !ok {
+		logging.Logger.Error("failed to refresh, token not valid")
+		return "", "", services.ErrTokenNotValid
+	}
+
+	no := time.Now()
+	// Signing a token (using raw rsa.PrivateKey)
+	rtsig, err := c.generateRefreshToken(no, cl.Name)
+	if err != nil {
+		logging.Logger.Errorf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	tsig, err := c.generateToken(no, cl.Name, cl.Groups)
+	if err != nil {
+		logging.Logger.Errorf("failed to sign token: %s", err)
+		return "", "", err
+	}
+
+	// refresh token is used, so it can be revoked
+	exp := tk.Expiration()
+	err = c.stg.RevokeToken(tk.JwtID(), exp)
+	if err != nil {
+		logging.Logger.Errorf("failed to revoke token: %s", err)
+	}
+
+	return tsig, rtsig, nil
+}
+
+func (c *Clients) generateToken(no time.Time, n string, gr []string) (string, error) {
+	id := utils.GenerateID()
+	t := jwt.New()
+	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.IssuedAtKey, no)
+	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
+	t.Set(jwt.JwtIDKey, id)
+	t.Set("name", n)
+	t.Set("groups", gr)
+
+	// Signing a token (using raw rsa.PrivateKey)
+	tsig, err := jwt.Sign(t, jwt.WithKey(jwa.RS256, c.kmn.SignPrivateKey()))
+	if err != nil {
+		log.Printf("failed to sign token: %s", err)
+		return "", err
+	}
+	return string(tsig), nil
+}
+
+func (c *Clients) generateRefreshToken(no time.Time, n string) (string, error) {
+	id := utils.GenerateID()
+	t := jwt.New()
+	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.IssuedAtKey, no)
+	t.Set(jwt.ExpirationKey, no.Add(60*time.Minute))
+	t.Set(jwt.JwtIDKey, id)
+	t.Set("name", n)
+	t.Set(rtUsageKey, rtUsageRefresh)
+
+	tsig, err := jwt.Sign(t, jwt.WithKey(jwa.RS256, c.kmn.SignPrivateKey()))
+	if err != nil {
+		logging.Logger.Errorf("failed to sign token: %s", err)
+		return "", err
+	}
+	return string(tsig), nil
 }
 
 // CreateEncryptKey creates a new encryption key, stores it into the storage with id
@@ -350,6 +445,33 @@ func (c *Clients) checkTk(tk string) (*auth.JWT, error) {
 		return nil, errors.New("token not valid")
 	}
 	return &jt, nil
+}
+
+func (c *Clients) checkRtk(tk string) (jwt.Token, error) {
+	token, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, c.kmn.PublicKey()))
+	if err != nil {
+		return nil, err
+	}
+	auds := token.Audience()
+	if len(auds) != 1 {
+		return nil, services.ErrTokenNotValid
+	}
+	if auds[0] != jkAudience {
+		return nil, services.ErrTokenNotValid
+	}
+	et := token.Expiration()
+	if time.Now().After(et) {
+		return nil, services.ErrTokenExpired
+	}
+	id := token.JwtID()
+	if c.stg.IsRevoked(id) {
+		return nil, services.ErrTokenNotValid
+	}
+	usage := token.PrivateClaims()[rtUsageKey]
+	if usage != rtUsageRefresh {
+		return nil, services.ErrTokenNotValid
+	}
+	return token, nil
 }
 
 func search(ss any, s string) bool {

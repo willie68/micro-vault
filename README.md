@@ -170,14 +170,37 @@ playbook.json
 
 Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server zu exportieren.  Allerdings gibt es einen Commandozeilen Parameter mit dem das Binary eine playbook.json aus einer Installation erzeugt. Dazu muss das Binary mit den gleichen Einstellungen wie der Service gestartet werden.  
 
-# Admin Endpunkte
+# Endpunkte
+
+## öffentlicher  Schlüssel
+
+Zum Validieren der Tokens steht der öffentliche Schlüssel (JWKS konform) unter `/.well-known/jwks.json` zur Verfügung. Als Antwort bekommt man die folgende Struktur:
+
+```json
+{
+    "keys": [
+        {
+            "alg": "RS256",
+            "e": "AQAB",
+            "kid": "7sBXW-qQqZbjjCtnT5h4YqZwDiJtA73oYeErP7k59SM",
+            "kty": "RSA",
+            "n": "qJdyURUnM9N1UYk1RViSYFgSi41cO7K-G3Grdp4kk1PxDR-H2MIn9HkdKpqy5ul_0RHIe9D-s66Oy2LJl50Wjh3fBW6psZuQKWOqzisgUB60ChieW9fryyXzfXagBWpEDvW9j6hundG7pR2w8-SgARwyDgs10Egal9Oi-3zHG-T6ie_Uc-QZh4r8n3q2HR7c-afdt9zlGmx38jto4hXIcpvRol9rH5qafoZ730TVX1q48I3IKOMtwFcoIXQXBzR3D-fLt8Pu9DCbOsbuP8u-6ynExHwy9x-rjqyMa1ZjxAQhwqOpnhNHvTlzNY3v8wdO5enHi0JzIwhmNdzlJEoKiQ",
+            "use": "sig"
+        }
+    ]
+}
+```
+
+
+
+## Admin
 
 Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
 
 Der übliche Kommunikationsablauf (im Basic Auth Betrieb) ist wie folgt:
 Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig. ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
 
-## Login
+### Login
 
 Anmeldung als Admin an MV. 
 
@@ -189,9 +212,9 @@ Out: Token, RefreshToken
 
 
 
-## Client CRUD
+### Client CRUD
 
-### Client erzeugen (Create)
+#### Client erzeugen (Create)
 
 Hiermit wird ein neuer Client erzeugt. 
 
@@ -199,13 +222,13 @@ In: Gruppen
 
 Out: Access-Key, Secret
 
-### Client Info (READ) *all 
+#### Client Info (READ) *all 
 
 Info über den Client 
 
 Out: Accesskey, Secretablaufdatum, Gruppenzugehörigkeit
 
-### Client Secreterneuerung (Update)
+#### Client Secreterneuerung (Update)
 
 Hier wird ein für den Client ein neues Secret angefordert. 
 
@@ -213,33 +236,33 @@ In: altes Secret
 
 Out: neues Secret 
 
-### Client löschen (Delete)
+#### Client löschen (Delete)
 
 Löscht den Client vom MV Service
 
-### Client Groups AD
+#### Client Groups AD
 
 Add, Delete fügt neue Gruppen zu einem Client hinzu, bzw. löscht mehere GRuppen eines Clients
 
-## Gruppen CRUD
+### Gruppen CRUD
 
 Crud Endpunkte für die Gruppen. 
 
-### Gruppe anlegen (Create), Update(Update) und Löschen (Delete)
+#### Gruppe anlegen (Create), Update(Update) und Löschen (Delete)
 
 Verwaltung der Gruppen
 
-### Gruppe lesen (Read) *all
+#### Gruppe lesen (Read) *all
 
 die Gruppeninfos aller Gruppen sind für jeden angemeldeten Client lesbar.
 
-## Playbook Post
+### Playbook Post
 
 Mit diesem Endpunkt kann ein Playbook nur einmal nach dem Start innerhalb einer in der Config einstellbaren Zeit hoch geladen werden. Dieses gilt dann als Basis für den weiteren Betrieb.  
 
-# Client Endpunkte
+## Client
 
-## Client Login
+### Client Login
 
 POST: /api/v1/vault/login
 

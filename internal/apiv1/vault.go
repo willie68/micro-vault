@@ -33,6 +33,7 @@ func NewVaultHandler() api.Handler {
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/clients/login", v.PostLogin)
+	router.Get("/clients/login/refresh", v.GetRefresh)
 	router.Get("/clients/certificate/{name}", v.GetCert)
 	router.Post("/groups/keys", v.PostKeys)
 	router.Get("/groups/keys/{id}", v.GetKey)
@@ -63,7 +64,7 @@ func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Req
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return
 	}
-	t, k, err := v.cl.Login(up.AccessKey, up.Secret)
+	t, rt, k, err := v.cl.Login(up.AccessKey, up.Secret)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -80,17 +81,69 @@ func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Req
 	i := jt.Payload["iat"]
 	iat := i.(float64)
 	tk := struct {
-		Name      string `json:"name"`
-		Token     string `json:"access_token"`
-		Type      string `json:"token_type"`
-		ExpiresIn int    `json:"expires_in"`
-		Key       string `json:"key"`
+		Name         string `json:"name"`
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+		Key          string `json:"key"`
 	}{
-		Name:      name,
-		Token:     t,
-		Type:      "Bearer",
-		ExpiresIn: int(exp - iat),
-		Key:       k,
+		Name:         name,
+		Token:        t,
+		RefreshToken: rt,
+		Type:         "Bearer",
+		ExpiresIn:    int(exp - iat),
+		Key:          k,
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, tk)
+}
+
+// GetRefresh refresh a client to the vault service
+// @Summary refresh a client to the vault service
+// @Tags configs
+// @Accept  json
+// @Produce  json
+// @Param Accesskey, Secret as strings for login
+// @Param payload body string true "Add store"
+// @Success 200 {object} token for further processing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/login [post]
+func (v *VaultHandler) GetRefresh(response http.ResponseWriter, request *http.Request) {
+	rt, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	t, rt, err := v.cl.Refresh(rt)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	jt, err := auth.DecodeJWT(t)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	n := jt.Payload["name"]
+	name := n.(string)
+	e := jt.Payload["exp"]
+	exp := e.(float64)
+	i := jt.Payload["iat"]
+	iat := i.(float64)
+	tk := struct {
+		Name         string `json:"name"`
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+	}{
+		Name:         name,
+		Token:        t,
+		RefreshToken: rt,
+		Type:         "Bearer",
+		ExpiresIn:    int(exp - iat),
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, tk)

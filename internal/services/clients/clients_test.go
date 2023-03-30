@@ -7,8 +7,9 @@ import (
 	"encoding/pem"
 	"testing"
 
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
-	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/logging"
@@ -60,21 +61,48 @@ func init() {
 
 func TestClientLogin(t *testing.T) {
 	ast := assert.New(t)
-	tk, k, err := cls.Login("12345678", "yxcvb")
+	tk, rt, k, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 	ast.NotEmpty(k)
+	ast.NotEmpty(rt)
+	ast.NotEmpty(tk)
 
-	jwt, err := auth.DecodeJWT(tk)
+	checkToken(tk, ast)
+	checkRToken(rt, ast)
+}
+
+func TestRefresh(t *testing.T) {
+	ast := assert.New(t)
+	tk, rt, k, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
-	ast.NotNil(jwt)
-	js, err := json.Marshal(jwt)
+	ast.NotEmpty(k)
+	ast.NotEmpty(rt)
+	ast.NotEmpty(tk)
+
+	checkToken(tk, ast)
+	checkRToken(rt, ast)
+
+	tk2, rt2, err := cls.Refresh(rt)
 	ast.Nil(err)
-	t.Logf("token decoded: %s", string(js))
+
+	ast.NotEmpty(tk2)
+	ast.NotEmpty(rt2)
+
+	checkToken(tk2, ast)
+	checkRToken(rt2, ast)
+
+	_, err = cls.checkRtk(rt)
+	ast.NotNil(err)
+
+	tk3, rt3, err := cls.Refresh(rt)
+	ast.NotNil(err)
+	ast.Empty(tk3)
+	ast.Empty(rt3)
 }
 
 func TestGeneratePrivateAES(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "tester1")
@@ -93,7 +121,7 @@ func TestGeneratePrivateAES(t *testing.T) {
 
 func TestGenerateAES(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group1")
@@ -112,7 +140,7 @@ func TestGenerateAES(t *testing.T) {
 
 func TestGenAESWrGroup(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group3")
@@ -123,7 +151,7 @@ func TestGenAESWrGroup(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(e)
 
-	tk2, _, err := cls.Login("345678", "yxcvb")
+	tk2, _, _, err := cls.Login("345678", "yxcvb")
 	ast.Nil(err)
 
 	e1, err := cls.GetEncryptKey(tk2, e.ID)
@@ -133,7 +161,7 @@ func TestGenAESWrGroup(t *testing.T) {
 
 func TestClientCertificate(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
 	pub, err := cls.GetCertificate(tk, "tester1")
@@ -148,10 +176,10 @@ func TestClientCertificate(t *testing.T) {
 func TestSSGroup(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	tk2, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group2")
@@ -181,10 +209,10 @@ func TestSSGroupWG(t *testing.T) {
 	// testing server side crypt with wrong group
 	ast := assert.New(t)
 
-	tk1, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	tk2, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group1")
@@ -229,10 +257,10 @@ func buildGroupMessage(g string) (pmodel.Message, error) {
 func TestSSClient(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 
-	_, prvpem, err := cls.Login("87654321", "yxcvb")
+	_, _, prvpem, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 	ast.NotEmpty(prvpem)
 
@@ -299,11 +327,11 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 func TestSSSign(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "yxcvb")
 	ast.Nil(err)
 	ast.NotEmpty(tk1)
 
-	tk2, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "yxcvb")
 	ast.Nil(err)
 	ast.NotEmpty(tk2)
 
@@ -324,4 +352,34 @@ func TestSSSign(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(msg3)
 	ast.True(msg3.Valid)
+}
+
+func checkToken(tk string, ast *assert.Assertions) {
+	jt, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, cls.kmn.PrivateKey()))
+	ast.Nil(err)
+	ast.NotNil(jt)
+	auds := jt.Audience()
+	ast.True(len(auds) > 0)
+	ast.Equal("microvault-client", auds[0])
+	n, ok := jt.PrivateClaims()["name"].(string)
+	ast.True(ok)
+	ast.Equal("tester1", n)
+	gs, ok := jt.PrivateClaims()["groups"].([]any)
+	ast.True(ok)
+	ast.Equal(3, len(gs))
+}
+
+func checkRToken(rt string, ast *assert.Assertions) {
+	jt, err := jwt.Parse([]byte(rt), jwt.WithKey(jwa.RS256, cls.kmn.PrivateKey()))
+	ast.Nil(err)
+	ast.NotNil(jt)
+	u, ok := jt.PrivateClaims()["usage"].(string)
+	ast.True(ok)
+	ast.Equal("mv-refresh", u)
+	auds := jt.Audience()
+	ast.True(len(auds) > 0)
+	ast.Equal("microvault-client", auds[0])
+	n, ok := jt.PrivateClaims()["name"].(string)
+	ast.True(ok)
+	ast.Equal("tester1", n)
 }

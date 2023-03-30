@@ -27,6 +27,32 @@ func init() {
 	}
 }
 
+func TestRefreshClient(t *testing.T) {
+	ast := assert.New(t)
+	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+
+	defer cli.Logout()
+
+	tk := cli.token
+	ex := cli.expired
+	rt := cli.refreshToken
+
+	_, err = cli.Sign("willie is signed")
+	ast.Nil(err)
+
+	err = cli.Refresh()
+	ast.Nil(err)
+
+	ast.NotEqual(tk, cli.token)
+	ast.NotEqual(rt, cli.refreshToken)
+	ast.NotEqual(ex, cli.expired)
+
+	_, err = cli.Sign("willie is signed")
+	ast.Nil(err)
+}
+
 func TestEncryptSameUser(t *testing.T) {
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
@@ -172,7 +198,7 @@ func TestSigning(t *testing.T) {
 	ast.True(ok)
 
 	// Check message on server side
-	ok, err = cli2.SignCheckSS("tester1", *sig)
+	ok, err = cli2.SignCheckSS(*sig)
 	ast.Nil(err)
 	ast.True(ok)
 

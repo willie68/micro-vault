@@ -24,16 +24,17 @@ const tokenHeader = "Authorization"
 
 // Client the main client for the service calls
 type Client struct {
-	url        string
-	accessKey  string
-	secret     string
-	name       string
-	token      string
-	expired    time.Time
-	clt        http.Client
-	ctx        context.Context
-	insecure   bool
-	privatekey *rsa.PrivateKey
+	url          string
+	accessKey    string
+	secret       string
+	name         string
+	token        string
+	refreshToken string
+	expired      time.Time
+	clt          http.Client
+	ctx          context.Context
+	insecure     bool
+	privatekey   *rsa.PrivateKey
 }
 
 func (c *Client) init(u string) error {
@@ -83,11 +84,12 @@ func (c *Client) Login() error {
 		return ReadErr(res)
 	}
 	ds := struct {
-		Name      string `json:"name"`
-		Token     string `json:"access_token"`
-		Type      string `json:"token_type"`
-		ExpiresIn int    `json:"expires_in"`
-		Key       string `json:"key"`
+		Name         string `json:"name"`
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+		Key          string `json:"key"`
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
@@ -98,12 +100,46 @@ func (c *Client) Login() error {
 		return errors.New("getting no token")
 	}
 	c.token = ds.Token
+	c.refreshToken = ds.RefreshToken
 	c.name = ds.Name
 	c.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	c.privatekey, err = cry.Pem2Prv(ds.Key)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// Refresh refresh the tokens
+func (c *Client) Refresh() error {
+	c.token = c.refreshToken
+	res, err := c.Get("vault/clients/login/refresh")
+	if err != nil {
+		logging.Logger.Errorf("refresh request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	ds := struct {
+		Token        string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		Type         string `json:"token_type"`
+		ExpiresIn    int    `json:"expires_in"`
+	}{}
+	err = ReadJSON(res, &ds)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return err
+	}
+	if ds.Token == "" {
+		return errors.New("getting no token")
+	}
+	c.token = ds.Token
+	c.refreshToken = ds.RefreshToken
+	c.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
 }
 
@@ -120,6 +156,7 @@ func (c *Client) Name() string {
 // Logout logging out this client
 func (c *Client) Logout() {
 	c.token = ""
+	c.refreshToken = ""
 }
 
 // Encrypt4Group encrypting data string for a group
@@ -266,7 +303,7 @@ func (c *Client) SignCheck(n, sig, dt string) (bool, error) {
 }
 
 // SignCheckSS check signature of data on the server side
-func (c *Client) SignCheckSS(n string, smsg pmodel.SignMessage) (bool, error) {
+func (c *Client) SignCheckSS(smsg pmodel.SignMessage) (bool, error) {
 	err := c.checkToken()
 	if err != nil {
 		return false, err
@@ -403,8 +440,13 @@ func (c *Client) newRequest(method, endpoint string, body io.Reader) (*http.Requ
 
 func (c *Client) checkToken() error {
 	if time.Now().After(c.expired) {
-		c.token = ""
-		return c.Login()
+		err := c.Refresh()
+		if err != nil {
+			c.token = ""
+			c.refreshToken = ""
+			return c.Login()
+		}
+		return nil
 	}
 	return nil
 }

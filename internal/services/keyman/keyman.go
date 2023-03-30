@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/logging"
@@ -20,9 +20,11 @@ const DoKeyman = "keyman"
 
 // Keyman the key manager service
 type Keyman struct {
-	cfg config.Config
-	rsk *rsa.PrivateKey
-	kid string
+	cfg     config.Config
+	rsk     *rsa.PrivateKey
+	kid     string
+	jwks    jwk.Set
+	signKey jwk.Key
 }
 
 // NewKeyman creates a new Keyman service
@@ -62,14 +64,25 @@ func (k *Keyman) Init() error {
 	}
 	k.rsk = rsk
 
-	key, err := jwk.New(rsk)
+	key, err := jwk.FromRaw(rsk)
 
 	err = jwk.AssignKeyID(key)
 	if err != nil {
 		log.Printf("failed to generate private key: %s", err)
 		return err
 	}
+	k.signKey = key
+
 	k.kid = key.KeyID()
+	kin, err := key.PublicKey() //jwk.FromRaw(rsk.PublicKey)
+	if err != nil {
+		log.Printf("failed to generate jwks: %s", err)
+		return err
+	}
+	kin.Set(jwk.AlgorithmKey, "RS256")
+	kin.Set(jwk.KeyUsageKey, jwk.ForSignature)
+	k.jwks = jwk.NewSet()
+	k.jwks.AddKey(kin)
 
 	return nil
 }
@@ -77,6 +90,11 @@ func (k *Keyman) Init() error {
 // PrivateKey getting the private key for this service
 func (k *Keyman) PrivateKey() *rsa.PrivateKey {
 	return k.rsk
+}
+
+// SignPrivateKey getting the private key for this service
+func (k *Keyman) SignPrivateKey() jwk.Key {
+	return k.signKey
 }
 
 // PublicKey return the public key for checking the signature of a token
@@ -117,4 +135,8 @@ func saveToFile(f string, rsk *rsa.PrivateKey) error {
 		}
 	}
 	return nil
+}
+
+func (k *Keyman) JWKS() jwk.Set {
+	return k.jwks
 }

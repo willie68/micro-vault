@@ -90,6 +90,7 @@ func apiRoutes() (*chi.Mux, error) {
 	router.Route("/", func(r chi.Router) {
 		r.Mount(apiv1.NewVaultHandler().Routes())
 		r.Mount(apiv1.NewAdminHandler().Routes())
+		r.Mount(apiv1.NewJWKSHandler().Routes())
 		r.Mount("/", health.Routes())
 		if serviceConfig.Metrics.Enable {
 			r.Mount("/metrics", promhttp.Handler())
