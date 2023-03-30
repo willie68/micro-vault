@@ -43,31 +43,31 @@ MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verw
 
 Zur Anbindung an die Clients werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich.   
 
-Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Bei Verwendung des internen Adminzugangs gibt es auch einen Requesttoken zur Refresh des Tokens. 
+Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Auch der Adminzugangs arbeitet mit Token/RequestToken. 
 
 ## Persistierung/Speichermodelle
 
 Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
 
-1. In Memory: Hier werden alle relevanten Daten im Speicher des Microservice gehalten. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können beim Start Clients und Gruppen erstellt werden. Ein echter Multinodebetrieb ist mit diesem Storage nicht möglich. jedoch kann bei gleichem Playbook eine einfache Lasstverteilung erfolgen. ACHTUNG: Bei dieser Art sind Änderungen weder persistent noch können diese auf andere Nodes übertragen werden.  
-2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Dazu wird BadgerDB als Datenbank verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
-3. MongoDB: Mit dem MongoDB Storage ist es möglich alle Daten verschlüsselt in eine MongoDB abzulegen. Dieser Storage kann auch im Multinode Betrieb verwendet werden.
+1. In Memory: Hier werden alle relevanten Daten im Speicher des Microservice gehalten. Kein Multinodebetrieb.
+2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Kein Multinodebetrieb.
+3. MongoDB: Hier werden alle Daten in einer MongoDB abgelegt. 
 
-### Memory only
+### InMemory
 
-Im Memory-only Modell werden alle Daten ausschließlich im Speicher gehalten. Wird der Service neu gestartet, werden alle Einstellungen neu generiert. Es findet keine dauerhafte Persistierung statt. Direkt nach dem Start kann zur einmaligen Initialisierung ein Playbook in den Server geladen werden. Dort können Gruppen und Clients definiert werden.      
+Im Memory-only Modell werden alle Daten ausschließlich im Speicher gehalten. Wird der Service neu gestartet, werden alle Einstellungen neu generiert. Es findet keine dauerhafte Persistierung statt. Für die Initialisierung beim Start kann ein Playbook verwendet werden. Somit können Clients, Gruppen und Keys direkt beim Start erstellt werden. Ein echter Multinodebetrieb ist mit diesem Storage aber nicht möglich, da neu angelegte Keys (wie auch Clients und Groups) zwischen den verschiedenen Knoten nicht ausgetauscht werden. Werden keine neuen Schlüssel erzeugt, kann bei gleichem Playbook eine einfache Lastverteilung erfolgen. ACHTUNG: Bei dieser Art sind Änderungen weder persistent noch können diese auf andere Nodes übertragen werden.  
 
 ### Filesystem
 
-Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Breits gespeicherte Objekte haben allerdings Vorrang. Als Speicher wird eine BadgerDB verwendet. 
+Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Breits gespeicherte Objekte haben allerdings Vorrang. Als Speicher wird eine BadgerDB verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
 
 ### MongoDB
 
-Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie auch die Collection und der Index müssen von Hand angelegt werden. Für eine Development Instanz gibt es im Doc Ordner die Datei  dev.md mit den entsprechenden Befehlen für die Mongo Shell.
+Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie auch die Collection und der Index müssen von Hand angelegt werden. Für eine Development Instanz gibt es im Doc Ordner die Datei  dev.md mit den entsprechenden Befehlen für die Mongo Shell. Dieser Storage kann auch im Multinode Betrieb verwendet werden, wenn alle Nodes auf die gleiche MongoDB Zugriff haben. Hier werden alle Informationen ausgetauscht.
 
 ### Multinodebetrieb
 
-Vorraussetzung für den Multinodebetrieb ist die Verwendung einer Datenbank als Speicher. Da die Daten in der Datenbank verschlüsselt abgelegt werden muss jeder Service-Node mit dem gleichen Zertifikat ausgestattet werden. Eine externe Zertifikatsrotation ist mit Hilfe des MV-Migrationstool möglich möglich.
+Voraussetzung für den Multinodebetrieb ist die Verwendung einer Datenbank als Speicher. Da die Daten in der Datenbank verschlüsselt abgelegt werden, muss jeder Service-Node mit dem gleichen Zertifikat ausgestattet werden. Eine externe Zertifikatsrotation ist mit Hilfe des MV-Migrationstool möglich.
 
 ## Kommunikationsablauf
 
@@ -198,7 +198,7 @@ Zum Validieren der Tokens steht der öffentliche Schlüssel (JWKS konform) unter
 Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
 
 Der übliche Kommunikationsablauf (im Basic Auth Betrieb) ist wie folgt:
-Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig. ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
+Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig und kann nur zum Tokenrefresh verwendet werden. Ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
 
 ### Login
 
@@ -210,7 +210,15 @@ In; Username/Password
 
 Out: Token, RefreshToken
 
+### Refresh
 
+Refresh einer Anmeldung als Admin an MV. 
+
+URL: GET /api/v1/admin/login/refresh
+
+In; Authorization mit dem Refreshtoken
+
+Out: Token, RefreshToken
 
 ### Client CRUD
 
@@ -258,7 +266,7 @@ die Gruppeninfos aller Gruppen sind für jeden angemeldeten Client lesbar.
 
 ### Playbook Post
 
-Mit diesem Endpunkt kann ein Playbook nur einmal nach dem Start innerhalb einer in der Config einstellbaren Zeit hoch geladen werden. Dieses gilt dann als Basis für den weiteren Betrieb.  
+Mit diesem Endpunkt kann ein Playbook hoch geladen und ausgeführt werden. Dieses gilt dann als Basis für den weiteren Betrieb.  Mit dem Playbook können Clients, Gruppen und Keys erstellt werden.
 
 ## Client
 
