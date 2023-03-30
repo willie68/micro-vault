@@ -16,7 +16,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/rs/xid"
 	"github.com/samber/do"
-	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/logging"
@@ -196,11 +195,11 @@ func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, 
 	if err != nil {
 		return nil, err
 	}
-	gr, ok := jt.Payload["groups"]
+	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
 		return nil, errors.New("token not valid, no groups")
 	}
-	n, ok := jt.Payload["name"].(string)
+	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, group)
 	if !f && (!ok || (group != n)) {
 		return nil, errors.New("group not valid, can't create a key for this group")
@@ -233,7 +232,7 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	if err != nil {
 		return nil, err
 	}
-	gr, ok := jt.Payload["groups"]
+	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
 		return nil, errors.New("token not valid, no groups")
 	}
@@ -243,7 +242,7 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 		return nil, services.ErrNotExists
 	}
 
-	n, ok := jt.Payload["name"].(string)
+	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, e.Group)
 	if !f && (!ok || (e.Group != n)) {
 		return nil, errors.New("access to key permitted")
@@ -436,42 +435,50 @@ func (c *Clients) ssClient(tk string, msg pmodel.Message) (*pmodel.Message, erro
 	return nil, errors.New("server side private decryption is not supported")
 }
 
-func (c *Clients) checkTk(tk string) (*auth.JWT, error) {
-	jt, err := auth.DecodeJWT(tk)
+func (c *Clients) checkTk(tk string) (jwt.Token, error) {
+	jt, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, cls.kmn.PrivateKey()))
 	if err != nil {
 		return nil, err
 	}
-	if !jt.IsValid {
-		return nil, errors.New("token not valid")
-	}
-	return &jt, nil
-}
-
-func (c *Clients) checkRtk(tk string) (jwt.Token, error) {
-	token, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, c.kmn.PublicKey()))
-	if err != nil {
-		return nil, err
-	}
-	auds := token.Audience()
+	auds := jt.Audience()
 	if len(auds) != 1 {
 		return nil, services.ErrTokenNotValid
 	}
 	if auds[0] != jkAudience {
 		return nil, services.ErrTokenNotValid
 	}
-	et := token.Expiration()
+	et := jt.Expiration()
 	if time.Now().After(et) {
 		return nil, services.ErrTokenExpired
 	}
-	id := token.JwtID()
+	return jt, nil
+}
+
+func (c *Clients) checkRtk(tk string) (jwt.Token, error) {
+	jt, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, c.kmn.PublicKey()))
+	if err != nil {
+		return nil, err
+	}
+	auds := jt.Audience()
+	if len(auds) != 1 {
+		return nil, services.ErrTokenNotValid
+	}
+	if auds[0] != jkAudience {
+		return nil, services.ErrTokenNotValid
+	}
+	et := jt.Expiration()
+	if time.Now().After(et) {
+		return nil, services.ErrTokenExpired
+	}
+	id := jt.JwtID()
 	if c.stg.IsRevoked(id) {
 		return nil, services.ErrTokenNotValid
 	}
-	usage := token.PrivateClaims()[rtUsageKey]
+	usage := jt.PrivateClaims()[rtUsageKey]
 	if usage != rtUsageRefresh {
 		return nil, services.ErrTokenNotValid
 	}
-	return token, nil
+	return jt, nil
 }
 
 func search(ss any, s string) bool {
@@ -502,7 +509,7 @@ func (c *Clients) client(tk string) (*model.Client, error) {
 		return nil, err
 	}
 
-	n, ok := jt.Payload["name"]
+	n, ok := jt.PrivateClaims()["name"]
 	if !ok {
 		return nil, errors.New("token not valid, no name")
 	}
