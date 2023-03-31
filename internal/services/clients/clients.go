@@ -436,7 +436,7 @@ func (c *Clients) ssClient(tk string, msg pmodel.Message) (*pmodel.Message, erro
 }
 
 func (c *Clients) checkTk(tk string) (jwt.Token, error) {
-	jt, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, cls.kmn.PrivateKey()))
+	jt, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, c.kmn.PrivateKey()))
 	if err != nil {
 		return nil, err
 	}

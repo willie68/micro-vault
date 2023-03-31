@@ -1,20 +1,26 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
 import Login from './components/Login.vue';
-import TheWelcome from './components/TheWelcome.vue'
+import { useLoginStore } from './stores/login';
+
+const loginStore = useLoginStore()
+console.log(process.env.NODE_ENV)
+if (process.env.NODE_ENV === "development") {
+  var baseURL = "https://localhost:9543/api/v1/"
+  loginStore.setBase(baseURL)
+} else {
+  var baseURL = window.location.protocol + window.location.hostname + ":" + window.location.port + "/api/v1/"
+  loginStore.setBase(baseURL)
+}
+
+/*const submit = () => {
+  loginStore.afterlogin("token", "refreshtoken")
+}*/
 </script>
 
 <template>
-  <header>
-    <img alt="Vault logo" class="logo" src="./assets/vault.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
   <main>
-    <Login></Login>
+    <Login v-if="!loginStore.isLoggedIn"></Login>
   </main>
 </template>
 
