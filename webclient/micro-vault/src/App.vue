@@ -1,4 +1,5 @@
 <script setup>
+import DashBoard from './components/DashBoard.vue';
 import HelloWorld from './components/HelloWorld.vue'
 import Login from './components/Login.vue';
 import { useLoginStore } from './stores/login';
@@ -12,16 +13,12 @@ if (process.env.NODE_ENV === "development") {
   var baseURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/v1/"
   loginStore.setBase(baseURL)
 }
-
-/*const submit = () => {
-  loginStore.afterlogin("token", "refreshtoken")
-}*/
 </script>
 
 <template>
   <main>
     <Login v-if="!loginStore.isLoggedIn"></Login>
-    <HelloWorld v-if="loginStore.isLoggedIn" msg="Youre logged in"></HelloWorld>
+    <DashBoard v-if="loginStore.isLoggedIn"></DashBoard>
   </main>
 </template>
 
