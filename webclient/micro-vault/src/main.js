@@ -9,6 +9,7 @@ import "primevue/resources/primevue.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import Button from 'primevue/button';
+import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Splitter from 'primevue/splitter';
@@ -19,6 +20,7 @@ const app = createApp(App)
 app.use(PrimeVue);
 app.use(createPinia())
 app.component('Button', Button)
+app.component('Card', Card)
 app.component('InputText', InputText)
 app.component('Password', Password)
 app.component('Splitter', Splitter)

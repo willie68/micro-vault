@@ -9,11 +9,13 @@ defineProps({
 
 <template>
   <div class="greetings">
+    <div class="card">
+      <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="125" height="125" />
+      <h1>Micro Vault</h1>
+    </div>
     <h1 class="green">{{ msg }}</h1>
     <h3>
-      You’ve successfully created a project with
-      <a href="https://vitejs.dev/" target="_blank" rel="noopener">Vite</a> +
-      <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue 3</a>.
+      You’ve successfully logged into Micro Vault Admin Interface.
     </h3>
   </div>
 </template>
@@ -35,6 +37,7 @@ h3 {
 }
 
 @media (min-width: 1024px) {
+
   .greetings h1,
   .greetings h3 {
     text-align: left;

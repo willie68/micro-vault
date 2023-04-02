@@ -14,9 +14,12 @@ export const useLoginStore = defineStore('login', {
   },
   actions: {
     afterlogin(tk, rt) {
-      this.loggedIn = true
-      this.token = tk
-      this.refreshToken = rt
+      if ((tk) && (rt)) {
+        this.loggedIn = true
+        this.token = tk
+        this.refreshToken = rt
+        console.log("tk:", this.token, "rt:", this.refreshToken)
+      }
     },
     setBase(bu) {
       this.baseurl = bu
