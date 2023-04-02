@@ -26,3 +26,5 @@ testdata/private.pem
 *.bkp
 
 testdata/playbook_export.json
+
+pkg/web/client/

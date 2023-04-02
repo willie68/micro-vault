@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === "development") {
   var baseURL = "http://localhost:5173/api/v1/"
   loginStore.setBase(baseURL)
 } else {
-  var baseURL = window.location.protocol + window.location.hostname + ":" + window.location.port + "/api/v1/"
+  var baseURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api/v1/"
   loginStore.setBase(baseURL)
 }
 

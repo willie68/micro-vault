@@ -23,6 +23,7 @@ export const useLoginStore = defineStore('login', {
     },
     setBase(bu) {
       this.baseurl = bu
+      console.log("base:", bu)
     }
   },
 })

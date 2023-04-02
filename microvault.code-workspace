@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../ReCoS-Remote-Command-Service"
+		},
+		{
+			"path": "../go-micro"
 		}
 	]
 }
