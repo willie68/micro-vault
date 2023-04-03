@@ -193,32 +193,38 @@ Zum Validieren der Tokens steht der öffentliche Schlüssel (JWKS konform) unter
 
 
 
-## Admin
+## Login
 
-Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
+Für die Anmeldung, egal ob admin oder service client gibt es nur 2 Endpunkte. Einmal für den Login und einmal für den Tokenrefresh. Anhand der Parameter entscheidet sich dann, ob ein Admin Login oder ein Client Login ausgeführt wird.
+
+Beim Clientlogin müssen Accesskey (accesskey) und Secret (secret) übergeben werden. Für den Admin Login wird ein Username (user) und ein Passwort (pwd) erwartet. (Das Passwort ist ein mimekodierter String als Byte Array)
 
 Der übliche Kommunikationsablauf (im Basic Auth Betrieb) ist wie folgt:
 Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig und kann nur zum Tokenrefresh verwendet werden. Ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
 
 ### Login
 
-Anmeldung als Admin an MV. 
+Anmeldung als Admin/CLient an MV. 
 
 URL: POST /api/v1/admin/login
 
-In; Username/Password
+In; user/pwd oder accesskey/secret
 
 Out: Token, RefreshToken
 
 ### Refresh
 
-Refresh einer Anmeldung als Admin an MV. 
+Refresh einer Anmeldung an MV. 
 
 URL: GET /api/v1/admin/login/refresh
 
 In; Authorization mit dem Refreshtoken
 
 Out: Token, RefreshToken
+
+## Admin
+
+Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
 
 ### Client CRUD
 
@@ -270,11 +276,4 @@ Mit diesem Endpunkt kann ein Playbook hoch geladen und ausgeführt werden. Diese
 
 ## Client
 
-### Client Login
-
-POST: /api/v1/vault/login
-
-Body: {}
-
-Beim Clientlogin mit Accesskey und secret wird ein JWToken geniert, welches zur weiteren Identifizierung verwendet werden muss. 
 
