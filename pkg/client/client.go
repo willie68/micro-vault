@@ -74,7 +74,7 @@ func (c *Client) Login() error {
 		AccessKey: c.accessKey,
 		Secret:    c.secret,
 	}
-	res, err := c.PostJSON("vault/clients/login", up)
+	res, err := c.PostJSON("login", up)
 	if err != nil {
 		logging.Logger.Errorf("login request failed: %v", err)
 		return err
@@ -113,7 +113,7 @@ func (c *Client) Login() error {
 // Refresh refresh the tokens
 func (c *Client) Refresh() error {
 	c.token = c.refreshToken
-	res, err := c.Get("vault/clients/login/refresh")
+	res, err := c.Get("login/refresh")
 	if err != nil {
 		logging.Logger.Errorf("refresh request failed: %v", err)
 		return err

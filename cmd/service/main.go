@@ -88,6 +88,7 @@ func apiRoutes() (*chi.Mux, error) {
 
 	// building the routes
 	router.Route("/", func(r chi.Router) {
+		r.Mount(apiv1.NewLoginHandler().Routes())
 		r.Mount(apiv1.NewVaultHandler().Routes())
 		r.Mount(apiv1.NewAdminHandler().Routes())
 		r.Mount(apiv1.NewJWKSHandler().Routes())

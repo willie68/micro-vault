@@ -34,7 +34,7 @@ const (
 	tkRoleAdmin    = "mv-admin"
 	rtUsageKey     = "usage"
 	rtUsageRefresh = "mv-refresh"
-	jkAudience     = "microvault-admins"
+	JKAudience     = "microvault-admins"
 )
 
 // Admin admin service business logic
@@ -129,7 +129,7 @@ func (a *Admin) Refresh(rt string) (string, string, error) {
 func (a *Admin) generateToken(no time.Time) (string, error) {
 	id := utils.GenerateID()
 	t := jwt.New()
-	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.AudienceKey, JKAudience)
 	t.Set(jwt.IssuedAtKey, no)
 	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
 	t.Set(jwt.JwtIDKey, id)
@@ -147,7 +147,7 @@ func (a *Admin) generateToken(no time.Time) (string, error) {
 func (a *Admin) generateRefreshToken(no time.Time) (string, error) {
 	id := utils.GenerateID()
 	t := jwt.New()
-	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.AudienceKey, JKAudience)
 	t.Set(jwt.IssuedAtKey, no)
 	t.Set(jwt.ExpirationKey, no.Add(60*time.Minute))
 	t.Set(jwt.JwtIDKey, id)
@@ -335,7 +335,7 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 	if len(auds) != 1 {
 		return nil, services.ErrTokenNotValid
 	}
-	if auds[0] != jkAudience {
+	if auds[0] != JKAudience {
 		return nil, services.ErrTokenNotValid
 	}
 	et := token.Expiration()

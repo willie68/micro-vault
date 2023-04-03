@@ -10,7 +10,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
-	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services"
@@ -37,8 +36,6 @@ func NewAdminHandler() api.Handler {
 // Routes getting all routes for the endpoint
 func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
-	router.Post("/login", a.PostLogin)
-	router.Get("/login/refresh", a.GetRefresh)
 	router.Post("/playbook", a.PostPlaybook)
 	router.Get("/groups", a.GetGroups)
 	router.Post("/groups", a.PostGroup)
@@ -49,102 +46,6 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Delete("/clients/{name}", a.DeleteClient)
 	router.Get("/groupkeys", a.GetKeys)
 	return BaseURL + adminSubpath, router
-}
-
-// PostLogin login a client to the vault service
-// @Summary login a client to the vault service
-// @Tags configs
-// @Accept  json
-// @Produce  json
-// @Param Accesskey, Secret as strings for login
-// @Param payload body string true "Add store"
-// @Success 200 {object} token for further processing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/login [post]
-func (a *AdminHandler) PostLogin(response http.ResponseWriter, request *http.Request) {
-	up := struct {
-		Username string `json:"user"`
-		Password []byte `json:"pwd"`
-	}{}
-	err := json.NewDecoder(request.Body).Decode(&up)
-	if err != nil {
-		httputils.Err(response, request, serror.InternalServerError(err))
-		return
-	}
-	t, rt, err := a.adm.LoginUP(up.Username, []byte(up.Password))
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	jt, err := auth.DecodeJWT(t)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	e := jt.Payload["exp"]
-	exp := e.(float64)
-	i := jt.Payload["iat"]
-	iat := i.(float64)
-	tk := struct {
-		Token        string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		Type         string `json:"token_type"`
-		ExpiresIn    int    `json:"expires_in"`
-	}{
-		Token:        t,
-		RefreshToken: rt,
-		Type:         "Bearer",
-		ExpiresIn:    int(exp - iat),
-	}
-	render.Status(request, http.StatusOK)
-	render.JSON(response, request, tk)
-}
-
-// GetRefresh refresh a client to the vault service
-// @Summary refresh a client to the vault service
-// @Tags configs
-// @Accept  json
-// @Produce  json
-// @Param Accesskey, Secret as strings for login
-// @Param payload body string true "Add store"
-// @Success 200 {object} token for further processing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/login [post]
-func (a *AdminHandler) GetRefresh(response http.ResponseWriter, request *http.Request) {
-	rt, err := token(request)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	t, rt, err := a.adm.Refresh(rt)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	jt, err := auth.DecodeJWT(t)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	e := jt.Payload["exp"]
-	exp := e.(float64)
-	i := jt.Payload["iat"]
-	iat := i.(float64)
-	tk := struct {
-		Token        string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		Type         string `json:"token_type"`
-		ExpiresIn    int    `json:"expires_in"`
-	}{
-		Token:        t,
-		RefreshToken: rt,
-		Type:         "Bearer",
-		ExpiresIn:    int(exp - iat),
-	}
-	render.Status(request, http.StatusOK)
-	render.JSON(response, request, tk)
 }
 
 // PostPlaybook posting the public key of a client certificate for the client

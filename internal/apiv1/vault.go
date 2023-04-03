@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
-	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/clients"
@@ -32,8 +31,6 @@ func NewVaultHandler() api.Handler {
 // Routes getting all routes for the config endpoint
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
-	router.Post("/clients/login", v.PostLogin)
-	router.Get("/clients/login/refresh", v.GetRefresh)
 	router.Get("/clients/certificate/{name}", v.GetCert)
 	router.Post("/groups/keys", v.PostKeys)
 	router.Get("/groups/keys/{id}", v.GetKey)
@@ -41,112 +38,6 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router.Post("/signature/sign", v.PostSign)
 	router.Post("/signature/check", v.PostCheck)
 	return BaseURL + vaultSubpath, router
-}
-
-// PostLogin login a client to the vault service
-// @Summary login a client to the vault service
-// @Tags configs
-// @Accept  json
-// @Produce  json
-// @Param Accesskey, Secret as strings for login
-// @Param payload body string true "Add store"
-// @Success 200 {object} token for further processing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/login [post]
-func (v *VaultHandler) PostLogin(response http.ResponseWriter, request *http.Request) {
-	up := struct {
-		AccessKey string `json:"accesskey"`
-		Secret    string `json:"secret"`
-	}{}
-	err := json.NewDecoder(request.Body).Decode(&up)
-	if err != nil {
-		httputils.Err(response, request, serror.InternalServerError(err))
-		return
-	}
-	t, rt, k, err := v.cl.Login(up.AccessKey, up.Secret)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	jt, err := auth.DecodeJWT(t)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	n := jt.Payload["name"]
-	name := n.(string)
-	e := jt.Payload["exp"]
-	exp := e.(float64)
-	i := jt.Payload["iat"]
-	iat := i.(float64)
-	tk := struct {
-		Name         string `json:"name"`
-		Token        string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		Type         string `json:"token_type"`
-		ExpiresIn    int    `json:"expires_in"`
-		Key          string `json:"key"`
-	}{
-		Name:         name,
-		Token:        t,
-		RefreshToken: rt,
-		Type:         "Bearer",
-		ExpiresIn:    int(exp - iat),
-		Key:          k,
-	}
-	render.Status(request, http.StatusOK)
-	render.JSON(response, request, tk)
-}
-
-// GetRefresh refresh a client to the vault service
-// @Summary refresh a client to the vault service
-// @Tags configs
-// @Accept  json
-// @Produce  json
-// @Param Accesskey, Secret as strings for login
-// @Param payload body string true "Add store"
-// @Success 200 {object} token for further processing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/login [post]
-func (v *VaultHandler) GetRefresh(response http.ResponseWriter, request *http.Request) {
-	rt, err := token(request)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	t, rt, err := v.cl.Refresh(rt)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	jt, err := auth.DecodeJWT(t)
-	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
-		return
-	}
-	n := jt.Payload["name"]
-	name := n.(string)
-	e := jt.Payload["exp"]
-	exp := e.(float64)
-	i := jt.Payload["iat"]
-	iat := i.(float64)
-	tk := struct {
-		Name         string `json:"name"`
-		Token        string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		Type         string `json:"token_type"`
-		ExpiresIn    int    `json:"expires_in"`
-	}{
-		Name:         name,
-		Token:        t,
-		RefreshToken: rt,
-		Type:         "Bearer",
-		ExpiresIn:    int(exp - iat),
-	}
-	render.Status(request, http.StatusOK)
-	render.JSON(response, request, tk)
 }
 
 // GetCert getting the public key of a client certificate for the named client

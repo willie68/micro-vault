@@ -30,7 +30,7 @@ import (
 // DoClients constant for dependency injection
 const (
 	DoClients      = "clients"
-	jkAudience     = "microvault-client"
+	JKAudience     = "microvault-client"
 	rtUsageKey     = "usage"
 	rtUsageRefresh = "mv-refresh"
 )
@@ -155,7 +155,7 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 func (c *Clients) generateToken(no time.Time, n string, gr []string) (string, error) {
 	id := utils.GenerateID()
 	t := jwt.New()
-	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.AudienceKey, JKAudience)
 	t.Set(jwt.IssuedAtKey, no)
 	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
 	t.Set(jwt.JwtIDKey, id)
@@ -174,7 +174,7 @@ func (c *Clients) generateToken(no time.Time, n string, gr []string) (string, er
 func (c *Clients) generateRefreshToken(no time.Time, n string) (string, error) {
 	id := utils.GenerateID()
 	t := jwt.New()
-	t.Set(jwt.AudienceKey, jkAudience)
+	t.Set(jwt.AudienceKey, JKAudience)
 	t.Set(jwt.IssuedAtKey, no)
 	t.Set(jwt.ExpirationKey, no.Add(60*time.Minute))
 	t.Set(jwt.JwtIDKey, id)
@@ -444,7 +444,7 @@ func (c *Clients) checkTk(tk string) (jwt.Token, error) {
 	if len(auds) != 1 {
 		return nil, services.ErrTokenNotValid
 	}
-	if auds[0] != jkAudience {
+	if auds[0] != JKAudience {
 		return nil, services.ErrTokenNotValid
 	}
 	et := jt.Expiration()
@@ -463,7 +463,7 @@ func (c *Clients) checkRtk(tk string) (jwt.Token, error) {
 	if len(auds) != 1 {
 		return nil, services.ErrTokenNotValid
 	}
-	if auds[0] != jkAudience {
+	if auds[0] != JKAudience {
 		return nil, services.ErrTokenNotValid
 	}
 	et := jt.Expiration()

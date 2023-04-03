@@ -67,7 +67,7 @@ func (a *AdminCl) Login() error {
 		Username: a.username,
 		Password: a.password,
 	}
-	res, err := a.PostJSON("admin/login", up)
+	res, err := a.PostJSON("login", up)
 	if err != nil {
 		logging.Logger.Errorf("login request failed: %v", err)
 		return err
@@ -101,7 +101,7 @@ func (a *AdminCl) Login() error {
 func (a *AdminCl) Refresh() error {
 	//tk := a.token
 	a.token = a.refreshToken
-	res, err := a.Get("admin/login/refresh")
+	res, err := a.Get("login/refresh")
 	if err != nil {
 		logging.Logger.Errorf("refresh request failed: %v", err)
 		return err
