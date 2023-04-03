@@ -1,7 +1,7 @@
 <script setup>
 import DashBoard from './components/DashBoard.vue';
 import HelloWorld from './components/HelloWorld.vue'
-import Login from './components/Login.vue';
+import LoginPage from './components/LoginPage.vue';
 import { useLoginStore } from './stores/login';
 
 const loginStore = useLoginStore()
