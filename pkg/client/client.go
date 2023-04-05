@@ -238,6 +238,81 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 	return cs, err
 }
 
+// StoreDataSS stores a message for group or client (e.g. json data object)
+func (c *Client) StoreDataSS(n string, p string) (string, error) {
+	err := c.checkToken()
+	if err != nil {
+		return "", err
+	}
+	m := pmodel.Message{
+		Origin:    c.name,
+		Type:      "group",
+		Recipient: n,
+		Decrypt:   false,
+		Message:   p,
+	}
+	res, err := c.PostJSON("vault/msg", m)
+	if err != nil {
+		logging.Logger.Errorf("msg request failed: %v", err)
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		return "", ReadErr(res)
+	}
+	var id struct {
+		ID string `json:"id"`
+	}
+	err = ReadJSON(res, &id)
+	if err != nil {
+		logging.Logger.Errorf("json convert failed: %v", err)
+		return "", err
+	}
+	return id.ID, nil
+}
+
+// GetDataSS gets a message for group or client if fits (e.g. json data object)
+func (c *Client) GetDataSS(id string) (*pmodel.Message, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.Get(fmt.Sprintf("vault/msg/%s", id))
+	if err != nil {
+		logging.Logger.Errorf("msg request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var m pmodel.Message
+	err = ReadJSON(res, &m)
+	if err != nil {
+		logging.Logger.Errorf("json convert failed: %v", err)
+		return nil, err
+	}
+	return &m, nil
+}
+
+// DeleteDataSS gets a message for group or client if fits (e.g. json data object)
+func (c *Client) DeleteDataSS(id string) (bool, error) {
+	err := c.checkToken()
+	if err != nil {
+		return false, err
+	}
+	res, err := c.Delete(fmt.Sprintf("vault/msg/%s", id))
+	if err != nil {
+		logging.Logger.Errorf("msg request failed: %v", err)
+		return false, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		return false, ReadErr(res)
+	}
+	return true, nil
+}
+
 // Encrypt4Client encrypting data string for a special client
 func (c *Client) Encrypt4Client(n, dt string) (string, error) {
 	pub, err := c.GetPublicKey(n)

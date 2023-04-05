@@ -323,7 +323,27 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 	b := pem.EncodeToMemory(pemblock)
 	return string(b), err
 }
+func TestMsgStore(t *testing.T) {
+	ast := assert.New(t)
 
+	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	ast.Nil(err)
+	ast.NotEmpty(tk1)
+
+	tk2, _, _, err := cls.Login("87654321", "yxcvb")
+	ast.Nil(err)
+	ast.NotEmpty(tk2)
+
+	msg := pmodel.Message{
+		Type:      "group",
+		Origin:    tk1.Name,
+		Recipient: "group1",
+		Message:   "Dies ist eine Message",
+		Decrypt:   false,
+	}
+
+	tk1.
+}
 func TestSSSign(t *testing.T) {
 	ast := assert.New(t)
 

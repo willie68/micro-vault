@@ -110,8 +110,16 @@ func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Req
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
+	ngs := make([]model.Group, 0)
+	for _, g := range gs {
+		ng := model.Group{
+			Name:  g.Name,
+			Label: g.Label,
+		}
+		ngs = append(ngs, ng)
+	}
 	render.Status(request, http.StatusOK)
-	render.JSON(response, request, gs)
+	render.JSON(response, request, ngs)
 }
 
 // GetGroup delete a group

@@ -360,6 +360,23 @@ func (c *Clients) CryptSS(tk string, msg pmodel.Message) (*pmodel.Message, error
 	return &msg, nil
 }
 
+func (c *Clients) StoreData(tk string, msg pmodel.Message) (string, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return "", err
+	}
+	return "n.n.", services.ErrNotImplementedYet
+}
+
+func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, services.ErrNotImplementedYet
+}
+
 func (c *Clients) ssGroup(tk string, msg pmodel.Message) (*pmodel.Message, error) {
 	if msg.Decrypt {
 		if msg.ID == "" {

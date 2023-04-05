@@ -209,6 +209,12 @@ func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	kid, pem, err := generateRSAKey()
+	if err != nil {
+		return "", err
+	}
+	g.KID = kid
+	g.Key = pem
 	return a.grs.AddGroup(g)
 }
 
@@ -229,7 +235,13 @@ func (a *Admin) Clients(tk string) ([]model.Client, error) {
 	}
 	cl := make([]model.Client, 0)
 	err = a.stg.ListClients(func(c model.Client) bool {
-		cl = append(cl, c)
+		nc := model.Client{
+			Name:      c.Name,
+			AccessKey: c.AccessKey,
+			Secret:    "",
+			Groups:    c.Groups,
+		}
+		cl = append(cl, nc)
 		return true
 	})
 	return cl, err
@@ -288,6 +300,10 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 		return false, services.ErrNotExists
 	}
 	ok, err = a.stg.DeleteClient(ak)
+	if err != nil {
+		return false, err
+	}
+	ok, err = a.stg.DeleteGroup(n)
 	if err != nil {
 		return false, err
 	}
@@ -358,20 +374,12 @@ func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
 	if a.stg.HasClient(n) || a.stg.HasGroup(n) {
 		return nil, services.ErrAlreadyExists
 	}
-	token := make([]byte, 16)
-	_, err := rand.Read(token)
+	token, err := generateToken()
 	if err != nil {
 		return nil, err
 	}
-	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	pem, err := cry.Prv2Pem(rsk)
-	if err != nil {
-		return nil, err
-	}
-	kid, err := cry.GetKID(rsk)
+
+	kid, pem, err := generateRSAKey()
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +388,7 @@ func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
 		AccessKey: uuid.NewString(),
 		Secret:    hex.EncodeToString(token),
 		Groups:    g,
-		Key:       string(pem),
+		Key:       pem,
 		KID:       kid,
 	}
 	_, err = a.stg.AddClient(c)
@@ -432,4 +440,29 @@ func hash(p []byte) string {
 	hsh := sha256.Sum256(p)
 	h = hsh[:]
 	return base64.StdEncoding.EncodeToString(h)
+}
+
+func generateRSAKey() (string, string, error) {
+	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", err
+	}
+	pem, err := cry.Prv2Pem(rsk)
+	if err != nil {
+		return "", "", err
+	}
+	kid, err := cry.GetKID(rsk)
+	if err != nil {
+		return "", "", err
+	}
+	return kid, string(pem), nil
+}
+
+func generateToken() ([]byte, error) {
+	token := make([]byte, 16)
+	_, err := rand.Read(token)
+	if err != nil {
+		return token, err
+	}
+	return token, nil
 }

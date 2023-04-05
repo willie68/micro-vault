@@ -271,3 +271,43 @@ func TestNameToken(t *testing.T) {
 	ast.Equal("tester1", cli.Name())
 	ast.NotNil(cli.privatekey)
 }
+
+func TestSSStore(t *testing.T) {
+	ast := assert.New(t)
+	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+	defer cli.Logout()
+
+	payload := "Dies ist ein Test"
+
+	id, err := cli.StoreDataSS("group1", payload)
+	ast.Nil(err)
+	ast.NotEmpty(id)
+
+	p, err := cli.GetDataSS(id)
+	ast.Nil(err)
+	ast.Equal(payload, p)
+
+	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli2)
+	defer cli2.Logout()
+
+	p, err = cli2.GetDataSS(id)
+	ast.Nil(err)
+	ast.Equal(payload, p)
+
+	cli3, err := LoginService("345678", "yxcvb", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli3)
+	defer cli3.Logout()
+
+	p, err = cli3.GetDataSS(id)
+	ast.NotNil(err)
+	ast.Nil(p)
+
+	ok, err := cli.DeleteDataSS(id)
+	ast.Nil(err)
+	ast.True(ok)
+}
