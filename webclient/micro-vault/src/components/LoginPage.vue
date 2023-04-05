@@ -7,7 +7,7 @@ var username = ""
 var password = ""
 function submit() {
   console.info("submitted")
-  var actionPostUrl = loginStore.baseurl + "admin/login"
+  var actionPostUrl = loginStore.baseurl + "login"
   var options = {
     method: "POST",
     body: JSON.stringify({
@@ -35,11 +35,13 @@ console.log("service url:" + loginStore.baseurl);
   <Card style="width: 40em">
     <template #title>Micro Vault Login</template>
     <template #content>
-      <div class="grid center">
+      <div class="grid">
         <div class="col">
           <div class="card">
             <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="125" height="125" />
-            <h1>Micro Vault</h1>
+            <div class="center">
+              <h1 >Micro Vault</h1>
+            </div>
           </div>
         </div>
         <div class="col">
@@ -62,6 +64,13 @@ console.log("service url:" + loginStore.baseurl);
 
 <style scoped>
 .center {
+  display: block;
   align-content: center;
 }
+
+.logo {
+  display: block;
+  margin: 0 auto 2rem;
+}
+
 </style>
