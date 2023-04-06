@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"log"
 	"strings"
@@ -374,27 +375,79 @@ func (c *Clients) StoreData(tk string, msg pmodel.Message) (string, error) {
 		return "", services.ErrTokenNotValid
 	}
 	msg.Origin = n
-	return "n.n.", services.ErrNotImplementedYet
+
+	js, err := json.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	dt := model.Data{
+		ID:      msg.ID,
+		Created: time.Now(),
+		Group:   msg.Recipient,
+		Payload: string(js),
+	}
+	err = stg.StoreData(dt)
+	if err != nil {
+		return "", err
+	}
+	return dt.ID, nil
 }
 
 // GetData retrieving securly stored data, if allowed
 func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
-	_, err := c.checkTk(tk)
+	jt, err := c.checkTk(tk)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, services.ErrNotImplementedYet
+	gr, ok := jt.PrivateClaims()["groups"]
+	if !ok {
+		return nil, errors.New("token not valid, no groups")
+	}
+
+	dt, ok := c.stg.GetData(id)
+	if !ok {
+		return nil, services.ErrNotExists
+	}
+
+	n, ok := jt.PrivateClaims()["name"].(string)
+	f := search(gr, dt.Group)
+	if !f && (!ok || (dt.Group != n)) {
+		return nil, errors.New("access to key permitted")
+	}
+	var msg pmodel.Message
+	err = json.Unmarshal([]byte(dt.Payload), &msg)
+	if err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }
 
 // DeleteData deleting securly stored data
 func (c *Clients) DeleteData(tk, id string) (bool, error) {
-	_, err := c.checkTk(tk)
+	jt, err := c.checkTk(tk)
 	if err != nil {
 		return false, err
 	}
 
-	return false, services.ErrNotImplementedYet
+	gr, ok := jt.PrivateClaims()["groups"]
+	if !ok {
+		return false, errors.New("token not valid, no groups")
+	}
+
+	dt, ok := c.stg.GetData(id)
+	if !ok {
+		return false, services.ErrNotExists
+	}
+
+	n, ok := jt.PrivateClaims()["name"].(string)
+	f := search(gr, dt.Group)
+	if !f && (!ok || (dt.Group != n)) {
+		return false, errors.New("access to key permitted")
+	}
+
+	return c.stg.DeleteData(id)
 }
 
 func (c *Clients) ssGroup(tk string, msg pmodel.Message) (*pmodel.Message, error) {

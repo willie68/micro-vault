@@ -341,7 +341,7 @@ func TestMsgStore(t *testing.T) {
 
 	msg := pmodel.Message{
 		Type:      "group",
-		Recipient: "group1",
+		Recipient: "group2",
 		Message:   "Dies ist eine Message",
 		Decrypt:   false,
 	}
