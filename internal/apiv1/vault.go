@@ -265,8 +265,8 @@ func (v *VaultHandler) PostCheck(response http.ResponseWriter, request *http.Req
 	render.JSON(response, request, j)
 }
 
-// PostKeys posting data to generate a new key for group
-// @Summary posting data to generate a new key for group
+// PostMsg posting message to be stored securly for group/client
+// @Summary posting message to be stored securly for group/client
 // @Tags configs
 // @Accept  pem file
 // @Produce  n.n.

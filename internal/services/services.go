@@ -11,4 +11,5 @@ var (
 	ErrNotExists         = errors.New("object not exists")
 	ErrTokenExpired      = errors.New("token expired")
 	ErrTokenNotValid     = errors.New("token not valid")
+	ErrMissingID         = errors.New("missing id")
 )

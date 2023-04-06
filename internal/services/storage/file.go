@@ -13,6 +13,7 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/internal/services"
 )
 
 // FileStorage storage engine on file system
@@ -29,6 +30,7 @@ const (
 	clientKey     = "client"
 	nameKey       = "name"
 	encryptionKey = "encryption"
+	dataKey       = "data"
 )
 
 var _ interfaces.Storage = &FileStorage{}
@@ -309,6 +311,9 @@ func (f *FileStorage) AccessKey(n string) (string, bool) {
 
 // StoreEncryptKey stores the encrypt keys
 func (f *FileStorage) StoreEncryptKey(e model.EncryptKey) error {
+	if e.ID == "" {
+		return services.ErrMissingID
+	}
 	err := f.update(encryptionKey, e.ID, e)
 	if err != nil {
 		return err
@@ -344,6 +349,80 @@ func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) boo
 			if cnt > s && cnt < (s+l) {
 				item := it.Item()
 				var g model.EncryptKey
+				valCopy, err := item.ValueCopy(nil)
+				err = json.Unmarshal(valCopy, &g)
+				if err != nil {
+					return err
+				}
+				if !c(g) {
+					break
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteEncryptKey deletes the encrytion key
+func (f *FileStorage) DeleteEncryptKey(id string) (bool, error) {
+	err := f.delete(encryptionKey, id)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// StoreData stores the data
+func (f *FileStorage) StoreData(data model.Data) error {
+	if data.ID == "" {
+		return services.ErrMissingID
+	}
+	err := f.update(dataKey, data.ID, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetData retrieving the data model
+func (f *FileStorage) GetData(id string) (*model.Data, bool) {
+	var e model.Data
+	ok := f.get(dataKey, id, &e)
+	if !ok {
+		return nil, false
+	}
+	return &e, true
+}
+
+// DeleteData removes the data model from storage
+func (f *FileStorage) DeleteData(id string) (bool, error) {
+	if !f.has(dataKey, id) {
+		return false, nil
+	}
+	err := f.delete(dataKey, id)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// ListData list all datas via callback function
+func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
+	var cnt int64
+	cnt = 0
+	err := f.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte(dataKey)
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			cnt++
+			if cnt > s && cnt < (s+l) {
+				item := it.Item()
+				var g model.Data
 				valCopy, err := item.ValueCopy(nil)
 				err = json.Unmarshal(valCopy, &g)
 				if err != nil {

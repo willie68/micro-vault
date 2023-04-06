@@ -8,6 +8,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/internal/services"
 )
 
 // Memory a memory based storage
@@ -16,6 +17,7 @@ type Memory struct {
 	clients sync.Map
 	keys    sync.Map
 	revokes sync.Map
+	datas   sync.Map
 	ticker  *time.Ticker
 	tckDone chan bool
 }
@@ -39,6 +41,7 @@ func (m *Memory) Init() error {
 	m.clients = sync.Map{}
 	m.keys = sync.Map{}
 	m.revokes = sync.Map{}
+	m.datas = sync.Map{}
 	m.tckDone = make(chan bool)
 	m.ticker = time.NewTicker(1 * time.Minute)
 
@@ -234,6 +237,9 @@ func (m *Memory) AccessKey(n string) (string, bool) {
 
 // StoreEncryptKey stores the encrypt keys
 func (m *Memory) StoreEncryptKey(e model.EncryptKey) error {
+	if e.ID == "" {
+		return services.ErrMissingID
+	}
 	m.keys.Store(e.ID, e)
 	return nil
 }
@@ -263,6 +269,53 @@ func (m *Memory) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) er
 		n := true
 		if cnt > s && cnt < (s+l) {
 			cl := value.(model.EncryptKey)
+			n = c(cl)
+		}
+		return n
+	})
+	return nil
+}
+
+// DeleteEncryptKey deletes the encrytion key
+func (m *Memory) DeleteEncryptKey(id string) (bool, error) {
+	_, ok := m.keys.LoadAndDelete(id)
+	return ok, nil
+}
+
+// StoreData stores the data
+func (m *Memory) StoreData(data model.Data) error {
+	if data.ID == "" {
+		return services.ErrMissingID
+	}
+	m.datas.Store(data.ID, data)
+	return nil
+}
+
+// GetData retrieving the data model
+func (m *Memory) GetData(id string) (*model.Data, bool) {
+	k, ok := m.datas.Load(id)
+	if !ok {
+		return nil, false
+	}
+	d := k.(model.Data)
+	return &d, true
+}
+
+// DeleteData removes the data model from storage
+func (m *Memory) DeleteData(id string) (bool, error) {
+	_, ok := m.datas.LoadAndDelete(id)
+	return ok, nil
+}
+
+// ListData list all datas via callback function
+func (m *Memory) ListData(s, l int64, c func(c model.Data) bool) error {
+	var cnt int64
+	cnt = 0
+	m.datas.Range(func(key, value any) bool {
+		cnt++
+		n := true
+		if cnt > s && cnt < (s+l) {
+			cl := value.(model.Data)
 			n = c(cl)
 		}
 		return n

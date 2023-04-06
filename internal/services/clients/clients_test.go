@@ -323,6 +323,7 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 	b := pem.EncodeToMemory(pemblock)
 	return string(b), err
 }
+
 func TestMsgStore(t *testing.T) {
 	ast := assert.New(t)
 
@@ -334,16 +335,47 @@ func TestMsgStore(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(tk2)
 
+	tk3, _, _, err := cls.Login("345678", "yxcvb")
+	ast.Nil(err)
+	ast.NotEmpty(tk3)
+
 	msg := pmodel.Message{
 		Type:      "group",
-		Origin:    tk1.Name,
 		Recipient: "group1",
 		Message:   "Dies ist eine Message",
 		Decrypt:   false,
 	}
 
-	tk1.
+	id, err := cls.StoreData(tk1, msg)
+	ast.Nil(err)
+	ast.NotEmpty(id)
+
+	msg1, err := cls.GetData(tk2, id)
+	ast.Nil(err)
+	ast.NotNil(msg1)
+	ast.Equal(msg.Message, msg1.Message)
+
+	msg1, err = cls.GetData(tk3, id)
+	ast.NotNil(err)
+	ast.Nil(msg1)
+
+	ok, err := cls.DeleteData(tk2, id)
+	ast.Nil(err)
+	ast.True(ok)
+
+	msg1, err = cls.GetData(tk2, id)
+	ast.NotNil(err)
+	ast.Nil(msg1)
+
+	ok, err = cls.DeleteData(tk1, id)
+	ast.Nil(err)
+	ast.False(ok)
+
+	ok, err = cls.DeleteData(tk3, id)
+	ast.Nil(err)
+	ast.False(ok)
 }
+
 func TestSSSign(t *testing.T) {
 	ast := assert.New(t)
 

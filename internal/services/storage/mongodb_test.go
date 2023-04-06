@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/xid"
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/config"
@@ -37,8 +38,8 @@ func mongoInit() {
 	mem, err := prepareMongoClient(
 		MongoDBConfig{
 			Hosts:        []string{"127.0.0.1:27017"},
-			Database:     "microvault",
-			AuthDatabase: "microvault",
+			Database:     "microvault_test",
+			AuthDatabase: "microvault_test",
 			Username:     "microvault",
 			Password:     "yxcvb",
 		},
@@ -277,4 +278,89 @@ func TestStoreEncryptKeyMgo(t *testing.T) {
 	ast.Equal(e.Key, e1.Key)
 	//ast.Equal(e.Created, e1.Created)
 	ast.Equal(e.Group, e1.Group)
+
+	ok, err = mgo.DeleteEncryptKey(e.ID)
+	ast.Nil(err)
+	ast.True(ok)
+
+	e1, ok = mgo.GetEncryptKey(e.ID)
+	ast.False(ok)
+	ast.Nil(e1)
+}
+
+func TestStoreDataCRUDMgo(t *testing.T) {
+	ast := assert.New(t)
+
+	mongoInit()
+
+	id := xid.New().String()
+	dm := model.Data{
+		ID:      id,
+		Created: time.Now(),
+		Group:   "group1",
+		Payload: "dies ist eine Payload",
+	}
+
+	err := mgo.StoreData(dm)
+	ast.Nil(err)
+
+	keys := make([]model.Data, 0)
+	err = mgo.ListData(0, 10, func(c model.Data) bool {
+		keys = append(keys, c)
+		return true
+	})
+	ast.Nil(err)
+	ast.Equal(1, len(keys))
+
+	dm2, ok := mgo.GetData(dm.ID)
+	ast.True(ok)
+	ast.NotNil(dm2)
+	ast.True(dmEqualMgo(dm, *dm2))
+
+	ok, err = mgo.DeleteData(dm.ID)
+	ast.True(ok)
+	ast.Nil(err)
+
+	dm2, ok = mgo.GetData(dm.ID)
+	ast.False(ok)
+	ast.Nil(dm2)
+
+	ok, err = mgo.DeleteData(dm.ID)
+	ast.False(ok)
+	ast.Nil(err)
+}
+
+func TestStoreDataErrorsMgo(t *testing.T) {
+	ast := assert.New(t)
+
+	mongoInit()
+
+	dm := model.Data{
+		Created: time.Now(),
+		Group:   "group1",
+		Payload: "dies ist eine Payload",
+	}
+
+	err := mgo.StoreData(dm)
+	ast.NotNil(err)
+
+}
+
+func dmEqualMgo(src, dst model.Data) bool {
+	if src.ID != dst.ID {
+		return false
+	}
+	if src.Group != dst.Group {
+		return false
+	}
+	if src.Payload != dst.Payload {
+		return false
+	}
+	if !src.Created.Equal(dst.Created) {
+		return false
+	}
+	if !src.Expires.Equal(dst.Expires) {
+		return false
+	}
+	return true
 }

@@ -76,6 +76,7 @@ const (
 	cCClientA  = "clientA"
 	cCClientK  = "clientK"
 	cCCrypt    = "crypt"
+	cCData     = "data"
 
 	cCMasterCrypt     = "master"
 	cMasterKeyMessage = "micro-vault-master-key"
@@ -584,6 +585,9 @@ func (m *MongoStorage) AccessKey(n string) (string, bool) {
 
 // StoreEncryptKey stores the encrypt keys
 func (m *MongoStorage) StoreEncryptKey(e model.EncryptKey) error {
+	if e.ID == "" {
+		return services.ErrMissingID
+	}
 	err := m.upsert(cCCrypt, e.ID, nil, e)
 	if err != nil {
 		return err
@@ -632,6 +636,83 @@ func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bo
 			continue
 		}
 		var g model.EncryptKey
+		res, ok := result.Map()["object"].(string)
+		if ok {
+			err = m.decrypt(res, &g)
+			if err != nil {
+				log.Logger.Errorf("lkeys: error: %v", err)
+				continue
+			}
+			ok := c(g)
+			if !ok {
+				break
+			}
+		}
+	}
+	return cur.Err()
+}
+
+// DeleteEncryptKey deletes the encrytion key
+func (m *MongoStorage) DeleteEncryptKey(id string) (bool, error) {
+	ok, err := m.delete(cCCrypt, id)
+	if err != nil || !ok {
+		return false, err
+	}
+	return true, nil
+}
+
+// StoreData stores the data
+func (m *MongoStorage) StoreData(data model.Data) error {
+	if data.ID == "" {
+		return services.ErrMissingID
+	}
+	err := m.upsert(cCData, data.ID, nil, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetData retrieving the data model
+func (m *MongoStorage) GetData(id string) (*model.Data, bool) {
+	var d model.Data
+	ok, err := m.one(cCData, id, &d)
+	if err != nil || !ok {
+		return nil, false
+	}
+	return &d, true
+}
+
+// DeleteData removes the data model from storage
+func (m *MongoStorage) DeleteData(id string) (bool, error) {
+	ok, err := m.delete(cCData, id)
+	if err != nil || !ok {
+		return false, err
+	}
+	return true, nil
+}
+
+// ListData list all data entries via callback function
+func (m *MongoStorage) ListData(s, l int64, c func(c model.Data) bool) error {
+	opts := options.Find().SetSort(bson.D{{"identifier", 1}}).SetSkip(s).SetLimit(l)
+	obj := bson.D{
+		{"class", cCData},
+		{"identifier", bson.D{{"$ne", cCMasterCrypt}}},
+	}
+	cur, err := m.colObj.Find(m.ctx, obj, opts)
+	if err != nil {
+		return err
+	}
+	defer cur.Close(m.ctx)
+
+	for cur.Next(m.ctx) {
+		var result bson.D
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Logger.Errorf("lkeys: error: %v", err)
+			continue
+		}
+		var g model.Data
 		res, ok := result.Map()["object"].(string)
 		if ok {
 			err = m.decrypt(res, &g)

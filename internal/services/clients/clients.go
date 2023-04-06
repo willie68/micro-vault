@@ -360,14 +360,24 @@ func (c *Clients) CryptSS(tk string, msg pmodel.Message) (*pmodel.Message, error
 	return &msg, nil
 }
 
+// StoreData stores data secruly for a client/group, returning the id
 func (c *Clients) StoreData(tk string, msg pmodel.Message) (string, error) {
-	_, err := c.checkTk(tk)
+	jt, err := c.checkTk(tk)
 	if err != nil {
 		return "", err
 	}
+	// prepare the model for storing...
+	msg.ID = xid.New().String()
+	msg.Decrypt = false
+	n, ok := jt.PrivateClaims()["name"].(string)
+	if !ok {
+		return "", services.ErrTokenNotValid
+	}
+	msg.Origin = n
 	return "n.n.", services.ErrNotImplementedYet
 }
 
+// GetData retrieving securly stored data, if allowed
 func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
 	_, err := c.checkTk(tk)
 	if err != nil {
@@ -375,6 +385,16 @@ func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
 	}
 
 	return nil, services.ErrNotImplementedYet
+}
+
+// DeleteData deleting securly stored data
+func (c *Clients) DeleteData(tk, id string) (bool, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return false, err
+	}
+
+	return false, services.ErrNotImplementedYet
 }
 
 func (c *Clients) ssGroup(tk string, msg pmodel.Message) (*pmodel.Message, error) {

@@ -255,4 +255,92 @@ func TestStoreEncryptKey(t *testing.T) {
 	ast.Equal(e.Key, e1.Key)
 	ast.Equal(e.Created, e1.Created)
 	ast.Equal(e.Group, e1.Group)
+
+	ok, err = mem.DeleteEncryptKey(e.ID)
+	ast.Nil(err)
+	ast.True(ok)
+
+	e1, ok = mem.GetEncryptKey(e.ID)
+	ast.False(ok)
+	ast.Nil(e1)
+}
+
+func TestStoreDataCRUD(t *testing.T) {
+	ast := assert.New(t)
+
+	mem := &Memory{}
+	err := mem.Init()
+	ast.Nil(err)
+
+	dm := model.Data{
+		ID:      "12345678",
+		Created: time.Now(),
+		Group:   "group1",
+		Payload: "dies ist eine Payload",
+	}
+
+	err = mem.StoreData(dm)
+	ast.Nil(err)
+
+	keys := make([]model.Data, 0)
+	err = mem.ListData(0, 10, func(c model.Data) bool {
+		keys = append(keys, c)
+		return true
+	})
+	ast.Nil(err)
+	ast.Equal(1, len(keys))
+
+	dm2, ok := mem.GetData(dm.ID)
+	ast.True(ok)
+	ast.NotNil(dm2)
+	ast.True(dmEqual(dm, *dm2))
+
+	ok, err = mem.DeleteData(dm.ID)
+	ast.True(ok)
+	ast.Nil(err)
+
+	dm2, ok = mem.GetData(dm.ID)
+	ast.False(ok)
+	ast.Nil(dm2)
+
+	ok, err = mem.DeleteData(dm.ID)
+	ast.False(ok)
+	ast.Nil(err)
+}
+
+func TestStoreDataErrors(t *testing.T) {
+	ast := assert.New(t)
+
+	mem := &Memory{}
+	err := mem.Init()
+	ast.Nil(err)
+
+	dm := model.Data{
+		Created: time.Now(),
+		Group:   "group1",
+		Payload: "dies ist eine Payload",
+	}
+
+	err = mem.StoreData(dm)
+	ast.NotNil(err)
+
+}
+
+func dmEqual(src, dst model.Data) bool {
+	if src.ID != dst.ID {
+		return false
+	}
+	if src.Group != dst.Group {
+		return false
+	}
+	if src.Payload != dst.Payload {
+		return false
+	}
+	if !src.Created.Equal(dst.Created) {
+		return false
+	}
+	if !src.Expires.Equal(dst.Expires) {
+		return false
+	}
+	return true
 }
