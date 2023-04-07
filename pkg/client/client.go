@@ -176,7 +176,7 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 		logging.Logger.Errorf("key request failed: %v", err)
 		return "", "", err
 	}
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusCreated {
 		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
 		return "", "", ReadErr(res)
 	}
@@ -256,7 +256,7 @@ func (c *Client) StoreDataSS(n string, p string) (string, error) {
 		logging.Logger.Errorf("msg request failed: %v", err)
 		return "", err
 	}
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusCreated {
 		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
 		return "", ReadErr(res)
 	}
@@ -272,27 +272,27 @@ func (c *Client) StoreDataSS(n string, p string) (string, error) {
 }
 
 // GetDataSS gets a message for group or client if fits (e.g. json data object)
-func (c *Client) GetDataSS(id string) (*pmodel.Message, error) {
+func (c *Client) GetDataSS(id string) (string, error) {
 	err := c.checkToken()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	res, err := c.Get(fmt.Sprintf("vault/msg/%s", id))
 	if err != nil {
 		logging.Logger.Errorf("msg request failed: %v", err)
-		return nil, err
+		return "", err
 	}
 	if res.StatusCode != http.StatusOK {
 		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
-		return nil, ReadErr(res)
+		return "", ReadErr(res)
 	}
 	var m pmodel.Message
 	err = ReadJSON(res, &m)
 	if err != nil {
 		logging.Logger.Errorf("json convert failed: %v", err)
-		return nil, err
+		return "", err
 	}
-	return &m, nil
+	return m.Message, nil
 }
 
 // DeleteDataSS gets a message for group or client if fits (e.g. json data object)

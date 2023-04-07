@@ -12,7 +12,7 @@ service:
   rootpwd: yxcvb
   privatekey: ./configs/private.pem
   storage:
-    type: mongodb
+    type: memory
     properties:
       hosts:
         - 127.0.0.1:27017

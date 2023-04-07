@@ -387,7 +387,7 @@ func (c *Clients) StoreData(tk string, msg pmodel.Message) (string, error) {
 		Group:   msg.Recipient,
 		Payload: string(js),
 	}
-	err = stg.StoreData(dt)
+	err = c.stg.StoreData(dt)
 	if err != nil {
 		return "", err
 	}
@@ -438,7 +438,7 @@ func (c *Clients) DeleteData(tk, id string) (bool, error) {
 
 	dt, ok := c.stg.GetData(id)
 	if !ok {
-		return false, services.ErrNotExists
+		return false, nil
 	}
 
 	n, ok := jt.PrivateClaims()["name"].(string)

@@ -281,7 +281,7 @@ func TestSSStore(t *testing.T) {
 
 	payload := "Dies ist ein Test"
 
-	id, err := cli.StoreDataSS("group1", payload)
+	id, err := cli.StoreDataSS("group2", payload)
 	ast.Nil(err)
 	ast.NotEmpty(id)
 
@@ -305,9 +305,13 @@ func TestSSStore(t *testing.T) {
 
 	p, err = cli3.GetDataSS(id)
 	ast.NotNil(err)
-	ast.Nil(p)
+	ast.Empty(p)
 
 	ok, err := cli.DeleteDataSS(id)
 	ast.Nil(err)
 	ast.True(ok)
+
+	p, err = cli2.GetDataSS(id)
+	ast.NotNil(err)
+	ast.Empty(p)
 }

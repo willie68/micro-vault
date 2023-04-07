@@ -120,7 +120,7 @@ func (v *VaultHandler) PostKeys(response http.ResponseWriter, request *http.Requ
 		Alg: ek.Alg,
 		Key: ek.Key,
 	}
-	render.Status(request, http.StatusOK)
+	render.Status(request, http.StatusCreated)
 	render.JSON(response, request, jk)
 }
 
@@ -282,30 +282,24 @@ func (v *VaultHandler) PostMsg(response http.ResponseWriter, request *http.Reque
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	jd := struct {
-		Group string `json:"group"`
-	}{}
-	err = json.NewDecoder(request.Body).Decode(&jd)
+	var msg pmodel.Message
+	err = json.NewDecoder(request.Body).Decode(&msg)
 	if err != nil {
 		httputils.Err(response, request, serror.InternalServerError(err))
 		return
 	}
 
-	ek, err := v.cl.CreateEncryptKey(tk, jd.Group)
+	id, err := v.cl.StoreData(tk, msg)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
 	jk := struct {
-		ID  string `json:"id"`
-		Alg string `json:"alg"`
-		Key string `json:"key"`
+		ID string `json:"id"`
 	}{
-		ID:  ek.ID,
-		Alg: ek.Alg,
-		Key: ek.Key,
+		ID: id,
 	}
-	render.Status(request, http.StatusOK)
+	render.Status(request, http.StatusCreated)
 	render.JSON(response, request, jk)
 }
 
@@ -326,22 +320,13 @@ func (v *VaultHandler) GetMsg(response http.ResponseWriter, request *http.Reques
 		return
 	}
 	id := chi.URLParam(request, "id")
-	ek, err := v.cl.GetEncryptKey(tk, id)
+	msg, err := v.cl.GetData(tk, id)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	jk := struct {
-		ID  string `json:"id"`
-		Alg string `json:"alg"`
-		Key string `json:"key"`
-	}{
-		ID:  ek.ID,
-		Alg: ek.Alg,
-		Key: ek.Key,
-	}
 	render.Status(request, http.StatusOK)
-	render.JSON(response, request, jk)
+	render.JSON(response, request, msg)
 }
 
 // DeleteMsg getting a single message, if allowed
@@ -361,20 +346,14 @@ func (v *VaultHandler) DeleteMsg(response http.ResponseWriter, request *http.Req
 		return
 	}
 	id := chi.URLParam(request, "id")
-	ek, err := v.cl.GetEncryptKey(tk, id)
+	ok, err := v.cl.DeleteData(tk, id)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	jk := struct {
-		ID  string `json:"id"`
-		Alg string `json:"alg"`
-		Key string `json:"key"`
-	}{
-		ID:  ek.ID,
-		Alg: ek.Alg,
-		Key: ek.Key,
+	if !ok {
+		render.Status(request, http.StatusBadRequest)
+		return
 	}
 	render.Status(request, http.StatusOK)
-	render.JSON(response, request, jk)
 }
