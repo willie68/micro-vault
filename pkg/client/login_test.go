@@ -28,7 +28,7 @@ func TestAdminRelogin(t *testing.T) {
 
 func TestClientLogin(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 

@@ -137,14 +137,14 @@ playbook.json
     "clients": [{
             "name": "tester1",
             "accesskey": "12345678",
-            "secret": "yxcvb",
+            "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": ["group1", "group4"],
             "key": "{PEM file content} -----BEGIN PRIVATE KEY-----  \nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKc...\n-----END PRIVATE KEY-----",
             "kid": "h_oL_duFx67WHB9fd5-VKXnCHNvHj33ZDIokD_dEhyQ"
 <        }, {
             "name": "tester2",
             "accesskey": "87654321",
-            "secret": "yxcvb",
+            "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": ["group2", "group4"],
             "key": "{PEM file content} -----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwgg...\n-----END PRIVATE KEY-----",
             "kid": "M5pQtcH5y2zxBtdhs-eAS7iJWiQzFsrsYMorkCMRi3s"

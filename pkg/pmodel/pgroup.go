@@ -14,6 +14,8 @@ type Client struct {
 	AccessKey string   `json:"accesskey"`
 	Secret    string   `json:"secret"`
 	Groups    []string `json:"groups"`
+	KID       string   `json:"kid,omitempty"`
+	Key       string   `json:"key,omitempty"`
 }
 
 // Message this is a message for a en/decrypting request

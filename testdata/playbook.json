@@ -29,7 +29,7 @@
         {
             "name": "tester1",
             "accesskey": "12345678",
-            "secret": "yxcvb",
+            "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": [
                 "group1",
                 "group2",
@@ -40,7 +40,7 @@
         {
             "name": "tester2",
             "accesskey": "87654321",
-            "secret": "yxcvb",
+            "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": [
                 "group2",
                 "group4"
@@ -50,7 +50,7 @@
         {
             "name": "tester3",
             "accesskey": "345678",
-            "secret": "yxcvb",
+            "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": [
                 "group3"
             ],

@@ -61,7 +61,7 @@ func init() {
 
 func TestClientLogin(t *testing.T) {
 	ast := assert.New(t)
-	tk, rt, k, err := cls.Login("12345678", "yxcvb")
+	tk, rt, k, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(k)
 	ast.NotEmpty(rt)
@@ -73,7 +73,7 @@ func TestClientLogin(t *testing.T) {
 
 func TestRefresh(t *testing.T) {
 	ast := assert.New(t)
-	tk, rt, k, err := cls.Login("12345678", "yxcvb")
+	tk, rt, k, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(k)
 	ast.NotEmpty(rt)
@@ -102,7 +102,7 @@ func TestRefresh(t *testing.T) {
 
 func TestGeneratePrivateAES(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "tester1")
@@ -121,7 +121,7 @@ func TestGeneratePrivateAES(t *testing.T) {
 
 func TestGenerateAES(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group1")
@@ -140,7 +140,7 @@ func TestGenerateAES(t *testing.T) {
 
 func TestGenAESWrGroup(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	e, err := cls.CreateEncryptKey(tk, "group3")
@@ -151,7 +151,7 @@ func TestGenAESWrGroup(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(e)
 
-	tk2, _, _, err := cls.Login("345678", "yxcvb")
+	tk2, _, _, err := cls.Login("345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	e1, err := cls.GetEncryptKey(tk2, e.ID)
@@ -161,7 +161,7 @@ func TestGenAESWrGroup(t *testing.T) {
 
 func TestClientCertificate(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, _, err := cls.Login("12345678", "yxcvb")
+	tk, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	pub, err := cls.GetCertificate(tk, "tester1")
@@ -176,10 +176,10 @@ func TestClientCertificate(t *testing.T) {
 func TestSSGroup(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
-	tk2, _, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group2")
@@ -209,10 +209,10 @@ func TestSSGroupWG(t *testing.T) {
 	// testing server side crypt with wrong group
 	ast := assert.New(t)
 
-	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
-	tk2, _, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
 	msg, err := buildGroupMessage("group1")
@@ -257,10 +257,10 @@ func buildGroupMessage(g string) (pmodel.Message, error) {
 func TestSSClient(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
-	_, _, prvpem, err := cls.Login("87654321", "yxcvb")
+	_, _, prvpem, err := cls.Login("87654321", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(prvpem)
 
@@ -327,15 +327,15 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 func TestMsgStore(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(tk1)
 
-	tk2, _, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(tk2)
 
-	tk3, _, _, err := cls.Login("345678", "yxcvb")
+	tk3, _, _, err := cls.Login("345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(tk3)
 
@@ -379,11 +379,11 @@ func TestMsgStore(t *testing.T) {
 func TestSSSign(t *testing.T) {
 	ast := assert.New(t)
 
-	tk1, _, _, err := cls.Login("12345678", "yxcvb")
+	tk1, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(tk1)
 
-	tk2, _, _, err := cls.Login("87654321", "yxcvb")
+	tk2, _, _, err := cls.Login("87654321", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 	ast.NotEmpty(tk2)
 

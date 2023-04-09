@@ -3,6 +3,7 @@ package playbook
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -103,7 +104,26 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 			return err
 		}
 	}
-	_, err = p.stg.AddClient(c)
+
+	salt, err := cry.GenerateSalt()
+	if err != nil {
+		return err
+	}
+	secret, err := hex.DecodeString(c.Secret)
+	if err != nil {
+		return err
+	}
+	hash := cry.HashSecret(secret, salt)
+	cl := model.Client{
+		Name:      c.Name,
+		Salt:      hex.EncodeToString(salt),
+		AccessKey: c.AccessKey,
+		Hash:      hash,
+		Groups:    c.Groups,
+		Key:       c.Key,
+		KID:       c.KID,
+	}
+	_, err = p.stg.AddClient(cl)
 	if err != nil {
 		log.Logger.Errorf("error adding client %s: %v", c.Name, err)
 		return err
@@ -167,8 +187,8 @@ func (p *Playbook) Export(pf string) error {
 		Clients: make([]model.Client, 0),
 		Keys:    make([]model.EncryptKey, 0),
 	}
-	err := p.stg.ListClients(func(g model.Client) bool {
-		pb.Clients = append(pb.Clients, g)
+	err := p.stg.ListClients(func(c model.Client) bool {
+		pb.Clients = append(pb.Clients, c)
 		return true
 	})
 	if err != nil {

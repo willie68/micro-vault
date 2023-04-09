@@ -118,7 +118,7 @@ func TestClientStorage(t *testing.T) {
 	c := model.Client{
 		Name:      "tester1",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1", "group2"},
 		Key:       "PEMFILE",
 	}
@@ -154,7 +154,7 @@ func TestCrudClient(t *testing.T) {
 	cl := model.Client{
 		Name:      "myname",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1"},
 		KID:       "kid87654321",
 	}
@@ -205,7 +205,7 @@ func TestClientKID(t *testing.T) {
 	cl := model.Client{
 		Name:      "myname",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1"},
 		KID:       "kid87654321",
 	}

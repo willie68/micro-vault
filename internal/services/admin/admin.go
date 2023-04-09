@@ -25,6 +25,7 @@ import (
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/utils"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
+	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 // DoAdmin injection name
@@ -248,7 +249,7 @@ func (a *Admin) Clients(tk string) ([]model.Client, error) {
 }
 
 // NewClient creating a new client for the system
-func (a *Admin) NewClient(tk, n string, gs []string) (*model.Client, error) {
+func (a *Admin) NewClient(tk, n string, gs []string) (*pmodel.Client, error) {
 	err := a.checkTk(tk)
 	if err != nil {
 		return nil, err
@@ -370,23 +371,28 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 }
 
 // CreateClient creates a new client with defined groups
-func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
+func (a *Admin) createClient(n string, g []string) (*pmodel.Client, error) {
 	if a.stg.HasClient(n) || a.stg.HasGroup(n) {
 		return nil, services.ErrAlreadyExists
 	}
-	token, err := generateToken()
+	secret, err := generateToken()
 	if err != nil {
 		return nil, err
 	}
-
+	salt, err := cry.GenerateSalt()
+	if err != nil {
+		return nil, err
+	}
 	kid, pem, err := generateRSAKey()
 	if err != nil {
 		return nil, err
 	}
+	hash := cry.HashSecret(secret, salt)
 	c := model.Client{
 		Name:      n,
+		Salt:      hex.EncodeToString(salt),
 		AccessKey: uuid.NewString(),
-		Secret:    hex.EncodeToString(token),
+		Hash:      hash,
 		Groups:    g,
 		Key:       pem,
 		KID:       kid,
@@ -410,7 +416,15 @@ func (a *Admin) createClient(n string, g []string) (*model.Client, error) {
 		}
 		return nil, err
 	}
-	return &c, nil
+	co := pmodel.Client{
+		Name:      c.Name,
+		AccessKey: c.AccessKey,
+		Secret:    hex.EncodeToString(secret),
+		Groups:    c.Groups,
+		KID:       c.KID,
+		Key:       c.Key,
+	}
+	return &co, nil
 }
 
 func search(ss any, s string) bool {

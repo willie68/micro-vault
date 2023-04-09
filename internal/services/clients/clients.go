@@ -83,7 +83,18 @@ func (c *Clients) Login(a, s string) (string, string, string, error) {
 		return "", "", "", services.ErrLoginFailed
 	}
 	cl, ok := c.stg.GetClient(a)
-	if !ok || (ok && cl.Secret != s) {
+	salt, err := hex.DecodeString(cl.Salt)
+	if err != nil {
+		log.Printf("failed to generate salt: %s", err)
+		return "", "", "", err
+	}
+	secret, err := hex.DecodeString(s)
+	if err != nil {
+		log.Printf("failed to decode secret: %s", err)
+		return "", "", "", err
+	}
+	hash := cry.HashSecret(secret, salt)
+	if !ok || (ok && cl.Hash != hash) {
 		return "", "", "", services.ErrLoginFailed
 	}
 

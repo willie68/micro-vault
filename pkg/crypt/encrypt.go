@@ -7,8 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -264,4 +266,24 @@ func GetKIDOfPEM(p string) (string, error) {
 		return "", err
 	}
 	return kid, nil
+}
+
+// HashSecret hashes the secret together with a salt.
+func HashSecret(secret, salt []byte) string {
+	b := make([]byte, 0)
+	b = append(b, secret...)
+	b = append(b, salt...)
+	mySHA512 := sha512.New()
+	mySHA512.Write(b)
+	sha := mySHA512.Sum(nil)
+	return hex.EncodeToString(sha)
+}
+
+func GenerateSalt() ([]byte, error) {
+	token := make([]byte, 64)
+	_, err := rand.Read(token)
+	if err != nil {
+		return token, err
+	}
+	return token, nil
 }

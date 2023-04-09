@@ -131,7 +131,7 @@ func TestClientStorageFS(t *testing.T) {
 	c := model.Client{
 		Name:      "tester1",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1", "group2"},
 		Key:       "PEMFILE",
 	}
@@ -167,7 +167,7 @@ func TestAddClientFS(t *testing.T) {
 	cl := model.Client{
 		Name:      "myname",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1"},
 	}
 	n, err := stg.AddClient(cl)
@@ -196,7 +196,7 @@ func TestClientKIDFS(t *testing.T) {
 	cl := model.Client{
 		Name:      "myname",
 		AccessKey: "12345678",
-		Secret:    "yxcvb",
+		Secret:    "e7d767cd1432145820669be6a60a912e",
 		Groups:    []string{"group1"},
 		KID:       "kid87654321",
 	}

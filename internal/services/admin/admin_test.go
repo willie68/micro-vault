@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,6 +54,20 @@ func init() {
 	adm = am
 
 	installPlaybook()
+}
+
+func TestNewPlaybook(t *testing.T) {
+	ast := assert.New(t)
+	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+	ast.NotEmpty(rt)
+
+	cl, err := adm.NewClient(tk, "tester7", []string{"group2", "group4"})
+	ast.Nil(err)
+	js, err := json.Marshal(cl)
+	ast.Nil(err)
+	fmt.Println(string(js))
 }
 
 func installPlaybook() {

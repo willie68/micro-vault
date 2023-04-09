@@ -29,7 +29,7 @@ func init() {
 
 func TestRefreshClient(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 
@@ -55,7 +55,7 @@ func TestRefreshClient(t *testing.T) {
 
 func TestEncryptSameUser(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 
@@ -89,12 +89,12 @@ func TestEncryptSameUser(t *testing.T) {
 
 func TestEncryptGroup4(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	cli2, err := LoginService("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -127,12 +127,12 @@ func TestEncryptGroup4(t *testing.T) {
 
 func TestEncryptClient(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	cli2, err := LoginService("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -164,12 +164,12 @@ func TestEncryptClient(t *testing.T) {
 
 func TestSigning(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	cli2, err := LoginService("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -228,12 +228,12 @@ func TestServerSideCryptGroup(t *testing.T) {
 		Message:   string(b),
 	}
 
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	cli2, err := LoginService("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -262,7 +262,7 @@ func TestServerSideCryptGroup(t *testing.T) {
 
 func TestNameToken(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
@@ -274,7 +274,7 @@ func TestNameToken(t *testing.T) {
 
 func TestSSStore(t *testing.T) {
 	ast := assert.New(t)
-	cli, err := LoginService("12345678", "yxcvb", "https://127.0.0.1:9543")
+	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
@@ -289,7 +289,7 @@ func TestSSStore(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(payload, p)
 
-	cli2, err := LoginService("87654321", "yxcvb", "https://127.0.0.1:9543")
+	cli2, err := LoginService("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -298,7 +298,7 @@ func TestSSStore(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(payload, p)
 
-	cli3, err := LoginService("345678", "yxcvb", "https://127.0.0.1:9543")
+	cli3, err := LoginService("345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(cli3)
 	defer cli3.Logout()

@@ -45,6 +45,11 @@ func TestPlaybook(t *testing.T) {
 	ast.True(stg.HasGroup("group1"))
 	ast.True(stg.HasClient("tester1"))
 	ast.True(stg.HasGroup("tester1"))
+	cl, ok := stg.GetClient("12345678")
+	ast.True(ok)
+	js, err := json.Marshal(cl)
+	ast.Nil(err)
+	fmt.Println(string(js))
 }
 
 func TestPlaybookMissingFile(t *testing.T) {
