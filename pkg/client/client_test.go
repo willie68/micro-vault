@@ -11,23 +11,26 @@ import (
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
-func init() {
-	ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
-	if err != nil {
-		panic(err)
-	}
-	adm = ad
-	pb, err := os.ReadFile("../../testdata/playbook.json")
-	if err != nil {
-		panic(err)
-	}
-	err = adm.SendPlaybook(string(pb))
-	if err != nil {
-		log.Printf("error in playbook: %v", err)
+func initCl() {
+	if adm == nil {
+		ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
+		if err != nil {
+			panic(err)
+		}
+		adm = ad
+		pb, err := os.ReadFile("../../testdata/playbook.json")
+		if err != nil {
+			panic(err)
+		}
+		err = adm.SendPlaybook(string(pb))
+		if err != nil {
+			log.Printf("error in playbook: %v", err)
+		}
 	}
 }
 
 func TestRefreshClient(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -54,6 +57,7 @@ func TestRefreshClient(t *testing.T) {
 }
 
 func TestEncryptSameUser(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -88,6 +92,7 @@ func TestEncryptSameUser(t *testing.T) {
 }
 
 func TestEncryptGroup4(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -126,6 +131,7 @@ func TestEncryptGroup4(t *testing.T) {
 }
 
 func TestEncryptClient(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -163,6 +169,7 @@ func TestEncryptClient(t *testing.T) {
 }
 
 func TestSigning(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -208,6 +215,7 @@ func TestSigning(t *testing.T) {
 }
 
 func TestServerSideCryptGroup(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	adr := struct {
 		Lastname  string `json:"lastname"`
@@ -261,6 +269,7 @@ func TestServerSideCryptGroup(t *testing.T) {
 }
 
 func TestNameToken(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)
@@ -273,6 +282,7 @@ func TestNameToken(t *testing.T) {
 }
 
 func TestSSStore(t *testing.T) {
+	initCl()
 	ast := assert.New(t)
 	cli, err := LoginService("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
 	ast.Nil(err)

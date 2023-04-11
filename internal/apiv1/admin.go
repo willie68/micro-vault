@@ -12,7 +12,6 @@ import (
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
-	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -350,7 +349,7 @@ func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.
 	n := chi.URLParam(request, "name")
 	_, err = a.adm.DeleteClient(tk, n)
 	if err != nil {
-		if errors.Is(err, services.ErrNotExists) {
+		if errors.Is(err, serror.ErrNotExists) {
 			httputils.Err(response, request, serror.NotFound("client", n))
 			return
 		}

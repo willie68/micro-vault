@@ -6,12 +6,14 @@ import (
 
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
+	log "github.com/willie68/micro-vault/internal/logging"
 )
 
 // NewStorage creates a new storage based on the configuration
 func NewStorage(s config.Storage) (interfaces.Storage, error) {
 	var stg interfaces.Storage
 	var err error
+	log.Logger.Infof("config: storage: %s", s.Type)
 	switch s.Type {
 	case "memory":
 		stg, err = NewMemory()

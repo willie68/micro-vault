@@ -13,15 +13,18 @@ var (
 	adm *AdminCl
 )
 
-func init() {
-	ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
-	if err != nil {
-		panic(err)
+func initAdm() {
+	if adm == nil {
+		ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
+		if err != nil {
+			panic(err)
+		}
+		adm = ad
 	}
-	adm = ad
 }
 
 func TestRefresh(t *testing.T) {
+	initAdm()
 	ast := assert.New(t)
 	ast.NotNil(adm)
 
@@ -44,6 +47,7 @@ func TestRefresh(t *testing.T) {
 }
 
 func TestAdmPlaybook(t *testing.T) {
+	initAdm()
 	ast := assert.New(t)
 	ast.NotNil(adm)
 	err := adm.DeleteGroup("group4")
@@ -101,6 +105,7 @@ func TestAdmPlaybook(t *testing.T) {
 }
 
 func TestAdmNewClient(t *testing.T) {
+	initAdm()
 	ast := assert.New(t)
 	ast.NotNil(adm)
 	// Prepare
@@ -124,6 +129,7 @@ func TestAdmNewClient(t *testing.T) {
 }
 
 func TestAdmCRUDGroup(t *testing.T) {
+	initAdm()
 	ast := assert.New(t)
 	ast.NotNil(adm)
 	err := adm.DeleteGroup("group5")

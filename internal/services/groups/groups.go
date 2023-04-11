@@ -4,7 +4,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 )
 
 // DoGroups dependency injection key name for groups
@@ -33,7 +33,7 @@ func (g *Groups) Init(s interfaces.Storage) error {
 // AddGroup adding a new group to the service
 func (g *Groups) AddGroup(group model.Group) (id string, err error) {
 	if g.stg.HasGroup(group.Name) {
-		return "", services.ErrAlreadyExists
+		return "", serror.ErrAlreadyExists
 	}
 	id, err = g.stg.AddGroup(group)
 	return

@@ -8,7 +8,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 )
 
 // Memory a memory based storage
@@ -238,7 +238,7 @@ func (m *Memory) AccessKey(n string) (string, bool) {
 // StoreEncryptKey stores the encrypt keys
 func (m *Memory) StoreEncryptKey(e model.EncryptKey) error {
 	if e.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	m.keys.Store(e.ID, e)
 	return nil
@@ -285,7 +285,7 @@ func (m *Memory) DeleteEncryptKey(id string) (bool, error) {
 // StoreData stores the data
 func (m *Memory) StoreData(data model.Data) error {
 	if data.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	m.datas.Store(data.ID, data)
 	return nil

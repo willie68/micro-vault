@@ -8,6 +8,7 @@ import (
 
 	"github.com/drone/envsubst"
 	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 	"github.com/samber/do"
 	"gopkg.in/yaml.v3"
 )
@@ -115,6 +116,20 @@ func GetDefaultConfigFolder() (string, error) {
 		return "", err
 	}
 	return configFolder, nil
+}
+
+// GetDefaultConfigfile getting the default config file
+func GetDefaultConfigfile() (string, error) {
+	configFolder, err := GetDefaultConfigFolder()
+	if err != nil {
+		return "", errors.Wrap(err, "can't load config file")
+	}
+	configFolder = filepath.Join(configFolder, "service")
+	err = os.MkdirAll(configFolder, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "can't load config file")
+	}
+	return filepath.Join(configFolder, "service.yaml"), nil
 }
 
 // ReplaceConfigdir replace the configdir macro

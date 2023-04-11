@@ -18,7 +18,7 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/keyman"
@@ -75,7 +75,7 @@ func (a *Admin) Init() error {
 // LoginUP logging in an admin account
 func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 	if !strings.EqualFold(u, a.rootusr) || hash(p) != a.pwdhash {
-		return "", "", services.ErrLoginFailed
+		return "", "", serror.ErrLoginFailed
 	}
 
 	no := time.Now()
@@ -199,7 +199,7 @@ func (a *Admin) Group(tk string, n string) (model.Group, error) {
 	}
 	g, ok := a.stg.GetGroup(n)
 	if !ok {
-		return model.Group{}, services.ErrNotExists
+		return model.Group{}, serror.ErrNotExists
 	}
 	return *g, nil
 }
@@ -268,15 +268,15 @@ func (a *Admin) Client(tk, n string) (*model.Client, error) {
 		return nil, err
 	}
 	if !a.stg.HasClient(n) {
-		return nil, services.ErrNotExists
+		return nil, serror.ErrNotExists
 	}
 	ak, ok := a.stg.AccessKey(n)
 	if !ok {
-		return nil, services.ErrNotExists
+		return nil, serror.ErrNotExists
 	}
 	cl, ok := a.stg.GetClient(ak)
 	if !ok {
-		return nil, services.ErrNotExists
+		return nil, serror.ErrNotExists
 	}
 	c := model.Client{
 		Name:      cl.Name,
@@ -294,11 +294,11 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 		return false, err
 	}
 	if !a.stg.HasClient(n) {
-		return false, services.ErrNotExists
+		return false, serror.ErrNotExists
 	}
 	ak, ok := a.stg.AccessKey(n)
 	if !ok {
-		return false, services.ErrNotExists
+		return false, serror.ErrNotExists
 	}
 	ok, err = a.stg.DeleteClient(ak)
 	if err != nil {
@@ -333,11 +333,11 @@ func (a *Admin) checkTk(tk string) error {
 	et := token.Expiration()
 	no := time.Now()
 	if no.After(et) {
-		return services.ErrTokenExpired
+		return serror.ErrTokenExpired
 	}
 	roles := token.PrivateClaims()[tkRolesKey]
 	if !search(roles, tkRoleAdmin) {
-		return services.ErrTokenNotValid
+		return serror.ErrTokenNotValid
 	}
 	return nil
 }
@@ -350,22 +350,22 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 	}
 	auds := token.Audience()
 	if len(auds) != 1 {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	if auds[0] != JKAudience {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	et := token.Expiration()
 	if time.Now().After(et) {
-		return nil, services.ErrTokenExpired
+		return nil, serror.ErrTokenExpired
 	}
 	id := token.JwtID()
 	if a.stg.IsRevoked(id) {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	usage := token.PrivateClaims()[rtUsageKey]
 	if usage != rtUsageRefresh {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	return token, nil
 }
@@ -373,7 +373,7 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 // CreateClient creates a new client with defined groups
 func (a *Admin) createClient(n string, g []string) (*pmodel.Client, error) {
 	if a.stg.HasClient(n) || a.stg.HasGroup(n) {
-		return nil, services.ErrAlreadyExists
+		return nil, serror.ErrAlreadyExists
 	}
 	secret, err := generateToken()
 	if err != nil {

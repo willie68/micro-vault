@@ -21,7 +21,7 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/utils"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
@@ -80,7 +80,7 @@ func (c *Clients) Init() error {
 // return token, refreshtoken, key, error
 func (c *Clients) Login(a, s string) (string, string, string, error) {
 	if !c.stg.HasClient(a) {
-		return "", "", "", services.ErrLoginFailed
+		return "", "", "", serror.ErrLoginFailed
 	}
 	cl, ok := c.stg.GetClient(a)
 	salt, err := hex.DecodeString(cl.Salt)
@@ -95,7 +95,7 @@ func (c *Clients) Login(a, s string) (string, string, string, error) {
 	}
 	hash := cry.HashSecret(secret, salt)
 	if !ok || (ok && cl.Hash != hash) {
-		return "", "", "", services.ErrLoginFailed
+		return "", "", "", serror.ErrLoginFailed
 	}
 
 	no := time.Now()
@@ -126,18 +126,18 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 	n, ok := tk.PrivateClaims()["name"].(string)
 	if !ok {
 		logging.Logger.Error("failed to refresh, token not valid")
-		return "", "", services.ErrTokenNotValid
+		return "", "", serror.ErrTokenNotValid
 	}
 
 	a, ok := c.stg.AccessKey(n)
 	if !ok {
 		logging.Logger.Error("failed to refresh, token not valid")
-		return "", "", services.ErrTokenNotValid
+		return "", "", serror.ErrTokenNotValid
 	}
 	cl, ok := c.stg.GetClient(a)
 	if !ok {
 		logging.Logger.Error("failed to refresh, token not valid")
-		return "", "", services.ErrTokenNotValid
+		return "", "", serror.ErrTokenNotValid
 	}
 
 	no := time.Now()
@@ -251,7 +251,7 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 
 	e, ok := c.stg.GetEncryptKey(id)
 	if !ok {
-		return nil, services.ErrNotExists
+		return nil, serror.ErrNotExists
 	}
 
 	n, ok := jt.PrivateClaims()["name"].(string)
@@ -277,7 +277,7 @@ func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
 		return true
 	})
 	if dc == nil {
-		return "", services.ErrUnknowError
+		return "", serror.ErrUnknowError
 	}
 	k, err := cry.Pem2Prv(dc.Key)
 	if err != nil {
@@ -335,7 +335,7 @@ func (c *Clients) CheckSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessa
 	if !ok {
 		cl, ok = c.stg.ClientByKID(msg.KeyInfo.KID)
 		if !ok {
-			return nil, services.ErrNotExists
+			return nil, serror.ErrNotExists
 		}
 		c.kids[cl.KID] = cl.AccessKey
 		a = cl.AccessKey
@@ -383,7 +383,7 @@ func (c *Clients) StoreData(tk string, msg pmodel.Message) (string, error) {
 	msg.Decrypt = false
 	n, ok := jt.PrivateClaims()["name"].(string)
 	if !ok {
-		return "", services.ErrTokenNotValid
+		return "", serror.ErrTokenNotValid
 	}
 	msg.Origin = n
 
@@ -419,7 +419,7 @@ func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
 
 	dt, ok := c.stg.GetData(id)
 	if !ok {
-		return nil, services.ErrNotExists
+		return nil, serror.ErrNotExists
 	}
 
 	n, ok := jt.PrivateClaims()["name"].(string)
@@ -543,14 +543,14 @@ func (c *Clients) checkTk(tk string) (jwt.Token, error) {
 	}
 	auds := jt.Audience()
 	if len(auds) != 1 {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	if auds[0] != JKAudience {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	et := jt.Expiration()
 	if time.Now().After(et) {
-		return nil, services.ErrTokenExpired
+		return nil, serror.ErrTokenExpired
 	}
 	return jt, nil
 }
@@ -562,22 +562,22 @@ func (c *Clients) checkRtk(tk string) (jwt.Token, error) {
 	}
 	auds := jt.Audience()
 	if len(auds) != 1 {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	if auds[0] != JKAudience {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	et := jt.Expiration()
 	if time.Now().After(et) {
-		return nil, services.ErrTokenExpired
+		return nil, serror.ErrTokenExpired
 	}
 	id := jt.JwtID()
 	if c.stg.IsRevoked(id) {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	usage := jt.PrivateClaims()[rtUsageKey]
 	if usage != rtUsageRefresh {
-		return nil, services.ErrTokenNotValid
+		return nil, serror.ErrTokenNotValid
 	}
 	return jt, nil
 }

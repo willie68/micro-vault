@@ -18,7 +18,7 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -226,7 +226,7 @@ func (m *MongoStorage) ensureEncryption() error {
 		}
 		return nil
 	}
-	return services.ErrUnknowError
+	return serror.ErrUnknowError
 }
 
 func (m *MongoStorage) ensureDatabase(mp primitive.M) error {
@@ -586,7 +586,7 @@ func (m *MongoStorage) AccessKey(n string) (string, bool) {
 // StoreEncryptKey stores the encrypt keys
 func (m *MongoStorage) StoreEncryptKey(e model.EncryptKey) error {
 	if e.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	err := m.upsert(cCCrypt, e.ID, nil, e)
 	if err != nil {
@@ -664,7 +664,7 @@ func (m *MongoStorage) DeleteEncryptKey(id string) (bool, error) {
 // StoreData stores the data
 func (m *MongoStorage) StoreData(data model.Data) error {
 	if data.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	err := m.upsert(cCData, data.ID, nil, data)
 	if err != nil {
@@ -783,7 +783,7 @@ func (m *MongoStorage) exists(c, i string) (bool, error) {
 		}
 		return true, nil
 	}
-	return false, services.ErrUnknowError
+	return false, serror.ErrUnknowError
 }
 
 func (m *MongoStorage) one(c, i string, obj any) (bool, error) {

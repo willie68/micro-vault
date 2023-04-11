@@ -13,7 +13,7 @@ import (
 	"github.com/willie68/micro-vault/internal/interfaces"
 	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
-	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/serror"
 )
 
 // FileStorage storage engine on file system
@@ -312,7 +312,7 @@ func (f *FileStorage) AccessKey(n string) (string, bool) {
 // StoreEncryptKey stores the encrypt keys
 func (f *FileStorage) StoreEncryptKey(e model.EncryptKey) error {
 	if e.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	err := f.update(encryptionKey, e.ID, e)
 	if err != nil {
@@ -379,7 +379,7 @@ func (f *FileStorage) DeleteEncryptKey(id string) (bool, error) {
 // StoreData stores the data
 func (f *FileStorage) StoreData(data model.Data) error {
 	if data.ID == "" {
-		return services.ErrMissingID
+		return serror.ErrMissingID
 	}
 	err := f.update(dataKey, data.ID, data)
 	if err != nil {
