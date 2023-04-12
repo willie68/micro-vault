@@ -14,6 +14,7 @@ var (
 )
 
 func initAdm() {
+	StartServer()
 	if adm == nil {
 		ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
 		if err != nil {

@@ -10,7 +10,7 @@ secretfile:
 service:
   rootuser: root
   rootpwd: yxcvb
-  privatekey: ./configs/private.pem
+  privatekey: 
   storage:
     type: memory
     properties:
