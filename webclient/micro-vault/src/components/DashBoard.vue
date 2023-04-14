@@ -1,11 +1,9 @@
 <script setup>
 import GroupPage from './GroupPage.vue';
-
-
 </script>
 
 <template>
-  <Panel header="You’ve successfully logged into Micro Vault Admin Interface.">
+  <Panel>
     <TabView>
       <TabPanel header="Groups">
        <GroupPage></GroupPage>

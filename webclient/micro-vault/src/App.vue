@@ -1,7 +1,7 @@
 <script setup>
 import DashBoard from './components/DashBoard.vue';
-import HelloWorld from './components/HelloWorld.vue'
 import LoginPage from './components/LoginPage.vue';
+import Footer from './components/Footer.vue';
 import { useLoginStore } from './stores/login';
 
 const loginStore = useLoginStore()
@@ -17,9 +17,10 @@ if (process.env.NODE_ENV === "development") {
 
 <template>
   <div class="fullsize">
-
     <LoginPage v-if="!loginStore.isLoggedIn"></LoginPage>
     <DashBoard v-if="loginStore.isLoggedIn"></DashBoard>
+    <Toast />
+    <Footer style="align: bottom"/>
   </div>
 </template>
 

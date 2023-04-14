@@ -18,12 +18,10 @@ export const useLoginStore = defineStore('login', {
         this.loggedIn = true
         this.token = tk
         this.refreshToken = rt
-        console.log("tk:", this.token, "rt:", this.refreshToken)
       }
     },
     setBase(bu) {
       this.baseurl = bu
-      console.log("base:", bu)
     }
   },
 })

@@ -2,8 +2,10 @@ package client
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/samber/do"
+	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/health"
@@ -51,4 +53,13 @@ func StartServer() {
 		healthRouter := apiv1.HealthRoutes(cfg, nil)
 		sh.StartServers(router, healthRouter)
 	}
+}
+
+func TestStartServer(t *testing.T) {
+	ast := assert.New(t)
+
+	StartServer()
+
+	ast.NotNil(sh)
+	ast.True(sh.Started)
 }

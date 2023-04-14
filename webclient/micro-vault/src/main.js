@@ -8,6 +8,8 @@ import "primevue/resources/themes/vela-blue/theme.css";
 import "primevue/resources/primevue.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
+import ToastService from 'primevue/toastservice';
+
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
@@ -17,10 +19,14 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Toast from 'primevue/toast';
+import api from './api'
 
 const app = createApp(App)
-app.use(PrimeVue);
+app.provide('$api', api)
+app.use(PrimeVue)
 app.use(createPinia())
+app.use(ToastService)
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('InputText', InputText)
@@ -30,4 +36,5 @@ app.component('Splitter', Splitter)
 app.component('SplitterPanel', SplitterPanel)
 app.component('TabView', TabView)
 app.component('TabPanel', TabPanel)
+app.component('Toast', Toast)
 app.mount('#app')
