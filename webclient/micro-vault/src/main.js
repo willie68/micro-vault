@@ -13,6 +13,7 @@ import ToastService from 'primevue/toastservice';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
+import Listbox from 'primevue/listbox';
 import Panel from 'primevue/panel';
 import Password from 'primevue/password';
 import Splitter from 'primevue/splitter';
@@ -30,6 +31,7 @@ app.use(ToastService)
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('InputText', InputText)
+app.component('Listbox', Listbox)
 app.component('Panel', Panel)
 app.component('Password', Password)
 app.component('Splitter', Splitter)
