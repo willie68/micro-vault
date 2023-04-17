@@ -5,9 +5,11 @@ import sapi from '../api'
 
 const toast = useToast();
 const selectedGroup = ref();
-var groups = []
+const groups = ref([])
+const selectedLabel = ref();
+const labels = ref([])
 
-groups.push({"name": "unknown"})
+groups.value.push({ "name": "unknown" })
 
 async function getGroups() {
     let pgroups = sapi.sgroup.list()
@@ -15,20 +17,32 @@ async function getGroups() {
         toast.add({ severity: "success", summary: 'groups', detail: data, life: 3000 });
         console.log(data)
         data.forEach((g) => {
-            groups.push(g)
+            groups.value.push(g)
         })
-        console.log(groups)
-    }   
-    )
+        selectedGroup.value = groups.value[0]
+    })
 }
 
 getGroups()
+
 </script>
 
 <template>
-    <h3>Groups</h3>
-    <div class="card flex justify-content-left">
-        <Listbox v-model="selectedGroup" :options="groups" optionLabel="name" class="w-full md:w-14rem" listStyle="max-height:250px; min-height:60vh" />
+    <div class="grid">
+        <div class="col-2 justify-content-left">
+            <h3>Groups</h3>
+            <Listbox v-model="selectedGroup" :options="groups" optionLabel="name" class="w-full md:w-14rem"
+                listStyle="max-height:250px; min-height:60vh" />
+        </div>
+        <div class="col-10 justify-content-left" v-if="selectedGroup">
+            <h3>Group properties</h3>
+            <table>
+                <tr v-for="(value, key) in selectedGroup.label">
+                    <td>{{ key }}</td>
+                    <td><InputText v-model="selectedGroup.label[key]" ></InputText></td>
+                </tr>
+            </table>
+        </div>
     </div>
 </template>
 
