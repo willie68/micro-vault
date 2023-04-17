@@ -11,4 +11,8 @@ export default  {
     const { data } = await sapi.client.get(`${clientsEndpoint}`)
     return data
   },
+  async client4group(gr){
+    const { data } = await sapi.client.get(`${clientsEndpoint}?group=${gr}`)
+    return data
+  },
 }

@@ -262,7 +262,14 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	cs, err := a.adm.Clients(tk)
+	g := request.URL.Query().Get("group")
+
+	var cs []model.Client
+	if g != "" {
+		cs, err = a.adm.Client4Group(tk, g)
+	} else {
+		cs, err = a.adm.Clients(tk)
+	}
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -377,8 +384,13 @@ func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Reque
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-
-	cs, err := a.adm.Keys(tk, 0, 100)
+	var cs []model.EncryptKey
+	g := request.URL.Query().Get("group")
+	if g != "" {
+		cs, err = a.adm.Keys4Group(tk, g, 0, 100)
+	} else {
+		cs, err = a.adm.Keys(tk, 0, 100)
+	}
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return

@@ -248,6 +248,29 @@ func (a *Admin) Clients(tk string) ([]model.Client, error) {
 	return cl, err
 }
 
+// Client4Group get defined clients for group
+func (a *Admin) Client4Group(tk, g string) ([]model.Client, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return []model.Client{}, err
+	}
+	cl := make([]model.Client, 0)
+	g = strings.Trim(g, "\"")
+	err = a.stg.ListClients(func(c model.Client) bool {
+		if search(c.Groups, g) || g == c.Name {
+			nc := model.Client{
+				Name:      c.Name,
+				AccessKey: c.AccessKey,
+				Secret:    "",
+				Groups:    c.Groups,
+			}
+			cl = append(cl, nc)
+		}
+		return true
+	})
+	return cl, err
+}
+
 // NewClient creating a new client for the system
 func (a *Admin) NewClient(tk, n string, gs []string) (*pmodel.Client, error) {
 	err := a.checkTk(tk)
@@ -320,6 +343,23 @@ func (a *Admin) Keys(tk string, s, l int64) ([]model.EncryptKey, error) {
 	cl := make([]model.EncryptKey, 0)
 	err = a.stg.ListEncryptKeys(s, l, func(c model.EncryptKey) bool {
 		cl = append(cl, c)
+		return true
+	})
+	return cl, err
+}
+
+// Keys4Group get all defined clients
+func (a *Admin) Keys4Group(tk, g string, s, l int64) ([]model.EncryptKey, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return []model.EncryptKey{}, err
+	}
+	cl := make([]model.EncryptKey, 0)
+	g = strings.Trim(g, "\"")
+	err = a.stg.ListEncryptKeys(s, l, func(c model.EncryptKey) bool {
+		if c.Group == g {
+			cl = append(cl, c)
+		}
 		return true
 	})
 	return cl, err
@@ -443,6 +483,12 @@ func search(ss any, s string) bool {
 				if v == s {
 					return true
 				}
+			}
+		}
+	case []string:
+		for _, v := range vs {
+			if v == s {
+				return true
 			}
 		}
 	}

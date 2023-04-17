@@ -265,12 +265,12 @@ func (m *Memory) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) er
 	var cnt int64
 	cnt = 0
 	m.keys.Range(func(key, value any) bool {
-		cnt++
 		n := true
-		if cnt > s && cnt < (s+l) {
+		if cnt >= s && cnt < (s+l) {
 			cl := value.(model.EncryptKey)
 			n = c(cl)
 		}
+		cnt++
 		return n
 	})
 	return nil

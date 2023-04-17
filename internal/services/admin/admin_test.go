@@ -1,10 +1,14 @@
 package admin
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
+	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
@@ -313,4 +317,73 @@ func TestClientCRUD(t *testing.T) {
 	ok, err = adm.DeleteClient(tk, "client1")
 	ast.NotNil(err)
 	ast.False(ok)
+}
+
+func TestClient4Group(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cs, err := adm.Client4Group(tk, "group1")
+	ast.Nil(err)
+	ast.NotNil(cs)
+	ast.Equal(1, len(cs))
+	ast.Equal("tester1", cs[0].Name)
+	ast.Equal("group1", cs[0].Groups[0])
+}
+
+func TestKeys(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cs, err := adm.Keys(tk, 0, 99)
+	ast.Nil(err)
+	ast.NotNil(cs)
+	ast.Equal(1, len(cs))
+	ast.Equal("cghve2g11fjp746madig", cs[0].ID)
+	ast.Equal("group1", cs[0].Group)
+}
+
+func TestKeys4Group(t *testing.T) {
+	ast := assert.New(t)
+	stg.Init()
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cnt := 0
+	for i := 0; i < 100; i++ {
+		idx := rand.Intn(4)
+		idx++
+		if idx == 1 {
+			cnt++
+		}
+		id := xid.New().String()
+		buf := make([]byte, 32)
+		_, err = rand.Read(buf)
+		ast.Nil(err)
+
+		e := model.EncryptKey{
+			ID:      id,
+			Alg:     "AES-256",
+			Key:     hex.EncodeToString(buf),
+			Created: time.Now(),
+			Group:   fmt.Sprintf("group%d", idx),
+		}
+		err = stg.StoreEncryptKey(e)
+		ast.Nil(err)
+	}
+
+	cs, err := adm.Keys(tk, 0, 100)
+	ast.Nil(err)
+	ast.NotNil(cs)
+	ast.Equal(100, len(cs))
+
+	cs, err = adm.Keys4Group(tk, "group1", 0, 100)
+	ast.Nil(err)
+	ast.NotNil(cs)
+	ast.Equal(cnt, len(cs))
 }
