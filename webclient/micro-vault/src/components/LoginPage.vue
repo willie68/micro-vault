@@ -36,10 +36,10 @@ console.log("service url:" + loginStore.baseurl);
 
 <template>
   <center>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    <br />
+    <br />
+    <br />
+    <br />
     <Card style="width: 40em">
       <template #title>Micro Vault Login</template>
       <template #content>
@@ -48,20 +48,30 @@ console.log("service url:" + loginStore.baseurl);
             <div class="card">
               <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="125" height="125" />
               <div class="center">
-                <h1 >Micro Vault</h1>
+                <h1>Micro Vault</h1>
               </div>
             </div>
           </div>
           <div class="col">
-            <div class="card">
-              <form class="flex flex-column gap-2">
-                <h2>Please login</h2>
-                <label for="username">Username</label>
-                <InputText id="username" v-model="username" />
-                <label for="password">Password</label>
-                <Password v-model="password" inputId="password" :feedback="false"/>
-                <Button icon="pi pi-check" label="submit" @click="submit()" />
-              </form>
+            <h2>Please login</h2>
+            <div class="card" style="width: 400px">
+              <div class="field grid">
+                <label for="username" class="col-fixed">Username</label>
+                <div class="col">
+                  <InputText id="username" v-model="username" />
+                </div>
+              </div>
+              <div class="field grid">
+                <label for="password" class="col-fixed">Password</label>
+                <div class="col">
+                  <Password v-model="password" inputId="password" :feedback="false" />
+                </div>
+              </div>
+              <div class="field grid">
+                <div class="col">
+                  <Button icon="pi pi-check" label="submit" @click="submit()" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -81,5 +91,4 @@ console.log("service url:" + loginStore.baseurl);
   display: block;
   margin: 0 auto 2rem;
 }
-
 </style>
