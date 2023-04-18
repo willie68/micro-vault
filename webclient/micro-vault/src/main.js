@@ -12,10 +12,12 @@ import ToastService from 'primevue/toastservice';
 
 import Button from 'primevue/button';
 import Card from 'primevue/card';
+import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
 import Panel from 'primevue/panel';
 import Password from 'primevue/password';
+import SelectButton from 'primevue/selectbutton';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TabView from 'primevue/tabview';
@@ -31,10 +33,12 @@ app.use(createPinia())
 app.use(ToastService)
 app.component('Button', Button)
 app.component('Card', Card)
+app.component('Checkbox', Checkbox)
 app.component('InputText', InputText)
 app.component('Listbox', Listbox)
 app.component('Panel', Panel)
 app.component('Password', Password)
+app.component('SelectButton', SelectButton)
 app.component('Splitter', Splitter)
 app.component('SplitterPanel', SplitterPanel)
 app.component('TabView', TabView)

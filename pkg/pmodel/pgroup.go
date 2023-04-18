@@ -4,8 +4,9 @@ import "time"
 
 // Group the public group model
 type Group struct {
-	Name  string            `json:"name"`
-	Label map[string]string `json:"label"`
+	Name     string            `json:"name"`
+	Label    map[string]string `json:"label"`
+	IsClient bool              `json:"isclient"`
 }
 
 // Client the public client model

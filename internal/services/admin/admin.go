@@ -443,7 +443,8 @@ func (a *Admin) createClient(n string, g []string) (*pmodel.Client, error) {
 	}
 
 	cg := model.Group{
-		Name: c.Name,
+		Name:     c.Name,
+		IsClient: true,
 	}
 	_, err = a.stg.AddGroup(cg)
 	if err != nil {

@@ -112,8 +112,9 @@ func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Req
 	ngs := make([]model.Group, 0)
 	for _, g := range gs {
 		ng := model.Group{
-			Name:  g.Name,
-			Label: g.Label,
+			Name:     g.Name,
+			Label:    g.Label,
+			IsClient: g.IsClient,
 		}
 		ngs = append(ngs, ng)
 	}
@@ -156,8 +157,9 @@ func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Requ
 		return
 	}
 	gs := pmodel.Group{
-		Name:  g.Name,
-		Label: g.Label,
+		Name:     g.Name,
+		Label:    g.Label,
+		IsClient: g.IsClient,
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, gs)
@@ -195,8 +197,9 @@ func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Req
 		return
 	}
 	g := model.Group{
-		Name:  pg.Name,
-		Label: pg.Label,
+		Name:     pg.Name,
+		Label:    pg.Label,
+		IsClient: false,
 	}
 	_, err = a.adm.AddGroup(tk, g)
 	if err != nil {
