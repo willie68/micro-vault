@@ -216,9 +216,13 @@ func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, 
 	if !f && (!ok || (group != n)) {
 		return nil, errors.New("group not valid, can't create a key for this group")
 	}
+	return c.CreateKey(group)
+}
+
+func (c *Clients) CreateKey(group string) (*model.EncryptKey, error) {
 	id := xid.New().String()
 	buf := make([]byte, 32)
-	_, err = rand.Read(buf)
+	_, err := rand.Read(buf)
 	if err != nil {
 		return nil, err
 	}

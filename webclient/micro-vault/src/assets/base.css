@@ -72,3 +72,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.p-panel-content {
+  padding: 0rem !important;
+}
+
+.p-pad-8 {
+  padding: 1rem !important;
+}

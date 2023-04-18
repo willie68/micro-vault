@@ -21,7 +21,9 @@ async function getGroups() {
     pgroups.then((data) => {
         groups.value = []
         data.forEach((g) => {
-            groups.value.push(g)
+            if (!g.isclient) {
+                groups.value.push(g)
+            }
         })
         selectedGroup.value = groups.value[0]
         lgroups.value = false
@@ -84,6 +86,14 @@ const deleteGroup = () => {
         }
     });
 }
+
+const createKey = () => {
+    let pgkeys  = sapi.skey.createKey(selectedGroup.value.name)
+    pgkeys.then((data) => {
+        toast.add({ severity: "success", summary: 'key created', detail: "id:" + data.kid, life: 3000 });
+        console.log(data)
+    })
+}
 </script>
 
 <template>
@@ -93,10 +103,10 @@ const deleteGroup = () => {
             <Panel header="Groups">
                 <template #icons>
                     <Button icon="pi pi-plus" aria-label="Add Group" text @click="addGroup" />
-                    <Button icon="pi pi-refresh" aria-label="Refresh" :loading="lgroups" text @click="getGroups()" />
+                    <Button icon="pi pi-refresh" aria-label="Refresh" :loading="lgroups" text @click="getGroups" />
                 </template>
                 <Listbox v-model="selectedGroup" :options="groups" optionLabel="name" class="m-0"
-                    listStyle="max-height:60vh; min-height:60vh" />
+                    listStyle="max-height:60vh; min-height:60vh" emptyMessage="no groups available"/>
             </Panel>
         </div>
         <div class="col-8 justify-content-left" v-if="selectedGroup">
@@ -106,37 +116,43 @@ const deleteGroup = () => {
                     <Button icon="pi pi-save" aria-label="Save" text @click="saveGroup" :disabled="!ledit"></Button>
                     <Button icon="pi pi-times" aria-label="Cancel" text @click="cancelGroup" :disabled="!ledit"></Button>
                 </template>
-                <div class="field grid">
-                    <label for="name" class="col-fixed" style="width: 100px">Name</label>
-                    <div class="col">
-                        <InputText id="name" style="width:100vh" v-model="selectedGroup.name" :disabled="!ledit" />
+                <div class="p-pad-8">
+                    <div class="field grid">
+                        <label for="name" class="col-fixed" style="width: 100px">Name</label>
+                        <div class="col">
+                            <InputText id="name" style="width:100vh" v-model="selectedGroup.name" :disabled="!ledit" />
+                        </div>
                     </div>
-                </div>
-                <div class="field grid">
-                    <label for="isclient" class="col-fixed" style="width: 100px">is Client</label>
-                    <div class="col">
-                        <Checkbox v-model="selectedGroup.isclient" :binary="true" disabled />
+                    <div class="field grid">
+                        <label for="isclient" class="col-fixed" style="width: 100px">is Client</label>
+                        <div class="col">
+                            <Checkbox v-model="selectedGroup.isclient" :binary="true" disabled />
+                        </div>
                     </div>
-                </div>
 
-                <div class="field grid" style="align-content: top;">
-                    <label for="labels" class="col-fixed" style="width: 100px;">Labels</label><br />
-                    <table id="labels">
-                        <tr v-for="(value, key) in selectedGroup.label">
-                            <td>{{ key }}</td>
-                            <td>
-                                <InputText v-model="selectedGroup.label[key]"></InputText>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="field grid">
+                    <div class="field grid" style="align-content: top;">
+                        <label for="labels" class="col-fixed" style="width: 100px;">Labels</label><br />
+                        <table id="labels">
+                            <tr v-for="(value, key) in selectedGroup.label">
+                                <td>{{ key }}</td>
+                                <td>
+                                    <InputText :id="key" v-model="selectedGroup.label[key]" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
             </Panel>
+            <Toolbar>
+                <template #start>
+                    <Button icon="pi pi-plus" aria-label="Add Client" @click="createKey" label="Create new group key"/>
+                </template>
+            </Toolbar>
         </div>
         <div class="col-2 justify-content-left" v-if="selectedGroup">
             <Panel header="Clients in this group">
-                <Listbox :options="clgroups" optionLabel="name" class="m-0" listStyle="max-height:60vh; min-height:60vh" />
+                <Listbox :options="clgroups" optionLabel="name" class="m-0" 
+                listStyle="max-height:60vh; min-height:60vh" emptyMessage="no clients available"/>
             </Panel>
         </div>
     </div>

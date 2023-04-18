@@ -365,6 +365,20 @@ func (a *Admin) Keys4Group(tk, g string, s, l int64) ([]model.EncryptKey, error)
 	return cl, err
 }
 
+// CreateGroupKey creates a new group key from the administrator endpoint
+func (a *Admin) CreateGroupKey(tk, g string) (*model.EncryptKey, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+
+	ek, err := a.cls.CreateKey(g)
+	if err != nil {
+		return nil, err
+	}
+	return ek, nil
+}
+
 func (a *Admin) checkTk(tk string) error {
 	token, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, a.kmn.PublicKey()))
 	if err != nil {

@@ -15,4 +15,8 @@ export default  {
     const { data } = await sapi.client.get(`${groupkeysEndpoint}?group=${g}`)
     return data
   },
+  async createKey(g) {
+    const { data } = await sapi.client.post(`${groupkeysEndpoint}`, {group:g})
+    return data
+  },
 }

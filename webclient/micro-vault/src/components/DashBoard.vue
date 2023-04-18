@@ -26,22 +26,26 @@ const logout = () => {
 </script>
 
 <template>
-  <Panel header="Micro Vault Simple Admin Client">
-    <template #icons>
+  <Toolbar>
+    <template #start>
+      <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="50" />
+      <Button text>Micro Vault Simple Admin Client</Button>
+    </template>
+    <template #end>
       <Button icon="pi pi-power-off" aria-label="Add Group" text @click="logout" />
     </template>
-    <TabView>
-      <TabPanel header="Groups">
-        <GroupPage></GroupPage>
-      </TabPanel>
-      <TabPanel header="Clients">
-        <ClientPage></ClientPage>
-      </TabPanel>
-      <TabPanel header="Data">
-        <KeysPage></KeysPage>
-      </TabPanel>
-    </TabView>
-  </Panel>
+  </Toolbar>
+  <TabView>
+    <TabPanel header="Groups">
+      <GroupPage></GroupPage>
+    </TabPanel>
+    <TabPanel header="Clients">
+      <ClientPage></ClientPage>
+    </TabPanel>
+    <TabPanel header="Data">
+      <KeysPage></KeysPage>
+    </TabPanel>
+  </TabView>
 </template>
 
 <style scoped>

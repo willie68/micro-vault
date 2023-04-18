@@ -1,14 +1,11 @@
 package admin
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"testing"
-	"time"
 
-	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
@@ -361,19 +358,7 @@ func TestKeys4Group(t *testing.T) {
 		if idx == 1 {
 			cnt++
 		}
-		id := xid.New().String()
-		buf := make([]byte, 32)
-		_, err = rand.Read(buf)
-		ast.Nil(err)
-
-		e := model.EncryptKey{
-			ID:      id,
-			Alg:     "AES-256",
-			Key:     hex.EncodeToString(buf),
-			Created: time.Now(),
-			Group:   fmt.Sprintf("group%d", idx),
-		}
-		err = stg.StoreEncryptKey(e)
+		_, err := adm.CreateGroupKey(tk, fmt.Sprintf("group%d", idx))
 		ast.Nil(err)
 	}
 

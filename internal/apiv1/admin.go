@@ -44,6 +44,7 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Post("/clients", a.PostClient)
 	router.Delete("/clients/{name}", a.DeleteClient)
 	router.Get("/groupkeys", a.GetKeys)
+	router.Post("/groupkeys", a.PostKey)
 	return BaseURL + adminSubpath, router
 }
 
@@ -410,4 +411,53 @@ func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Reque
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, cls)
+}
+
+// PostKey creating a new group key
+// @Summary creating a new group key
+// @Tags configs
+// @Accept  string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) PostKey(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	pg := struct {
+		Group string `json:"group"`
+	}{}
+
+	err = json.Unmarshal(b, &pg)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	c, err := a.adm.CreateGroupKey(tk, pg.Group)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cl := pmodel.EncryptKeyInfo{
+		Alg:     c.Alg,
+		ID:      c.ID,
+		Group:   c.Group,
+		Key:     c.Key,
+		Created: c.Created,
+	}
+	render.Status(request, http.StatusCreated)
+	render.JSON(response, request, cl)
 }

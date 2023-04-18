@@ -28,6 +28,7 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
+import Toolbar from 'primevue/toolbar';
 import api from './api'
 
 const app = createApp(App)
@@ -53,4 +54,5 @@ app.component('TabView', TabView)
 app.component('TabPanel', TabPanel)
 app.component('Textarea', Textarea)
 app.component('Toast', Toast)
+app.component('Toolbar', Toolbar)
 app.mount('#app')
