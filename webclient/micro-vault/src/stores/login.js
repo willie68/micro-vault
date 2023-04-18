@@ -22,6 +22,11 @@ export const useLoginStore = defineStore('login', {
     },
     setBase(bu) {
       this.baseurl = bu
+    },
+    logout() {
+      this.loggedIn = false
+      this.token = ""
+      this.refreshToken = ""
     }
   },
 })

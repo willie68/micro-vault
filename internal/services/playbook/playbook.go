@@ -129,7 +129,8 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 		return err
 	}
 	g := model.Group{
-		Name: c.Name,
+		Name:     c.Name,
+		IsClient: true,
 	}
 	_, err = p.stg.AddGroup(g)
 	if err != nil {

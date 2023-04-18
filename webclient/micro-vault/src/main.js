@@ -9,10 +9,14 @@ import "primevue/resources/primevue.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import ToastService from 'primevue/toastservice';
+import DialogService from 'primevue/dialogservice';
+import ConfirmationService from 'primevue/confirmationservice';
 
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
+import ConfirmDialog from 'primevue/confirmdialog';
+import DynamicDialog from 'primevue/dynamicdialog';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
 import Panel from 'primevue/panel';
@@ -31,9 +35,13 @@ app.provide('$api', api)
 app.use(PrimeVue)
 app.use(createPinia())
 app.use(ToastService)
+app.use(DialogService)
+app.use(ConfirmationService)
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('Checkbox', Checkbox)
+app.component('ConfirmDialog', ConfirmDialog)
+app.component('DynamicDialog', DynamicDialog)
 app.component('InputText', InputText)
 app.component('Listbox', Listbox)
 app.component('Panel', Panel)
