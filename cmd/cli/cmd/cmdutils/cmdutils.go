@@ -93,8 +93,24 @@ func AdminLogin(username, password, url string) (*Conf, error) {
 		Admin:    true,
 		URL:      url,
 	}
-	writeCLConf(d)
+	err = writeCLConf(d)
+	if err != nil {
+		return nil, err
+	}
 	return &d, nil
+}
+
+// AdminLogout invalidates an admin session
+func AdminLogout() error {
+	d := Conf{
+		Username: "",
+		Token:    "",
+		Expired:  int64(0),
+		Refresh:  "",
+		Admin:    false,
+		URL:      "",
+	}
+	return writeCLConf(d)
 }
 
 // AdminClient creates a new ad,min client with the specifig stored configuration
@@ -151,23 +167,24 @@ func clientLogin() *Conf {
 	return &d
 }
 
-func writeCLConf(d Conf) {
+func writeCLConf(d Conf) error {
 	js, err := json.Marshal(d)
 	if err != nil {
 		logging.Logger.Errorf("error serialize token object: %v", err)
-		return
+		return err
 	}
 	cfg, err := config.GetDefaultConfigFolder()
 	if err != nil {
 		logging.Logger.Errorf("error getting user config dir: %v", err)
-		return
+		return err
 	}
 	cfg = filepath.Join(cfg, "mv_client.json")
 	err = os.WriteFile(cfg, js, os.ModePerm)
 	if err != nil {
 		logging.Logger.Errorf("error writing token object: %v", err)
-		return
+		return err
 	}
+	return nil
 }
 
 // ReadCLConf reading the cl config file, if present
