@@ -1,1 +1,1 @@
-microvault-service.exe -c ./config/service_local.yaml
+microvault-service.exe -c ./configs/service_local.yaml

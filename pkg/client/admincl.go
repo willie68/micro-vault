@@ -17,17 +17,20 @@ import (
 	"golang.org/x/net/context"
 )
 
+type Refreshcallback func(tk, rt string)
+
 // AdminCl this is the admin client
 type AdminCl struct {
-	url          string
-	username     string
-	password     []byte
-	token        string
-	refreshToken string
-	expired      time.Time
-	clt          http.Client
-	ctx          context.Context
-	insecure     bool
+	url             string
+	username        string
+	password        []byte
+	token           string
+	refreshToken    string
+	expired         time.Time
+	clt             http.Client
+	ctx             context.Context
+	insecure        bool
+	refreshcallback Refreshcallback
 }
 
 func (a *AdminCl) init(u string) error {
@@ -127,6 +130,9 @@ func (a *AdminCl) Refresh() error {
 	}
 	a.token = ds.Token
 	a.refreshToken = ds.RefreshToken
+	if a.refreshcallback != nil {
+		a.refreshcallback(a.token, a.refreshToken)
+	}
 	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
 }
@@ -134,6 +140,11 @@ func (a *AdminCl) Refresh() error {
 // Token returning the token if present
 func (a *AdminCl) Token() string {
 	return a.token
+}
+
+// RefreshToken returning the token if present
+func (a *AdminCl) RefreshToken() string {
+	return a.refreshToken
 }
 
 // SendPlaybook sending a playbook to the server to initialize the service

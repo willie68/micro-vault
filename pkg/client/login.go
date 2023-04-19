@@ -1,7 +1,6 @@
 package client
 
 import (
-	"errors"
 	"time"
 
 	"github.com/willie68/micro-vault/internal/auth"
@@ -26,17 +25,16 @@ func LoginAdminUP(u string, p []byte, url string) (*AdminCl, error) {
 	return acl, nil
 }
 
-// LoginAdminToken login an admin via username password
-func LoginAdminToken(t string, url string) (*AdminCl, error) {
+// LoginAdminCli login an admin via username password
+func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error) {
 	logging.Logger.Info("login as admin with token")
 	exp := expires(t)
-	if exp == 0 {
-		return nil, errors.New("token expire read error")
-	}
 	acl := &AdminCl{
-		token:   t,
-		url:     url,
-		expired: time.Unix(exp, 0),
+		token:           t,
+		refreshToken:    rt,
+		url:             url,
+		expired:         time.Unix(exp, 0),
+		refreshcallback: f,
 	}
 	err := acl.init(url)
 	if err != nil {

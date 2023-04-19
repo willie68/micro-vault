@@ -23,7 +23,7 @@ func TestAdminRelogin(t *testing.T) {
 
 	tk := adm.Token()
 
-	adm2, err := LoginAdminToken(tk, "https://127.0.0.1:9543")
+	adm2, err := LoginAdminCli(tk, "https://127.0.0.1:9543")
 	ast.Nil(err)
 	ast.NotNil(adm2)
 }
