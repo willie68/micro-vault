@@ -316,6 +316,33 @@ func TestClientCRUD(t *testing.T) {
 	ast.False(ok)
 }
 
+func TestClientGroups(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cl, err := adm.NewClient(tk, "client1", []string{"group1"})
+	ast.Nil(err)
+	ast.NotNil(cl)
+
+	cls, err := adm.Clients(tk)
+	ast.Nil(err)
+	ast.True(len(cls) > 0)
+
+	ast.True(adm.HasGroup(tk, "client1"))
+
+	cl, err = adm.AddGroups2Client(tk, "client1", []string{"group2", "group3"})
+	ast.Nil(err)
+	ast.NotNil(cl)
+
+	pcl, err := adm.Client(tk, cl.Name)
+	ast.Nil(err)
+	ast.NotNil(pcl)
+	ast.Equal(cl.Name, pcl.Name)
+	ast.Equal(cl.AccessKey, pcl.AccessKey)
+	ast.Equal(cl.Groups, pcl.Groups)
+}
 func TestClient4Group(t *testing.T) {
 	ast := assert.New(t)
 	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))

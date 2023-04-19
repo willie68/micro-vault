@@ -97,13 +97,12 @@ const createKey = () => {
 </script>
 
 <template>
-    <ConfirmDialog></ConfirmDialog>
     <div class="grid">
         <div class="col-fixed justify-content-left" style="width: 240px">
             <Panel header="Groups">
                 <template #icons>
                     <Button icon="pi pi-plus" aria-label="Add Group" text @click="addGroup" />
-                    <Button icon="pi pi-refresh" aria-label="Refresh" :loading="lgroups" text @click="getGroups" />
+                    <Button icon="pi pi-refresh" aria-label="Refresh Groups" :loading="lgroups" text @click="getGroups" />
                 </template>
                 <Listbox v-model="selectedGroup" :options="groups" optionLabel="name" class="m-0"
                     listStyle="max-height:60vh; min-height:60vh" emptyMessage="no groups available"/>
@@ -112,9 +111,9 @@ const createKey = () => {
         <div class="col-8 justify-content-left" v-if="selectedGroup">
             <Panel header="Group properties">
                 <template #icons>
-                    <Button icon="pi pi-trash" aria-label="Save" text @click="deleteGroup" :disabled="ledit"></Button>
-                    <Button icon="pi pi-save" aria-label="Save" text @click="saveGroup" :disabled="!ledit"></Button>
-                    <Button icon="pi pi-times" aria-label="Cancel" text @click="cancelGroup" :disabled="!ledit"></Button>
+                    <Button icon="pi pi-trash" aria-label="Delete Group" text @click="deleteGroup" :disabled="ledit"></Button>
+                    <Button icon="pi pi-save" aria-label="Save Group" text @click="saveGroup" :disabled="!ledit"></Button>
+                    <Button icon="pi pi-times" aria-label="Cancel Group" text @click="cancelGroup" :disabled="!ledit"></Button>
                 </template>
                 <div class="p-pad-8">
                     <div class="field grid">
@@ -145,7 +144,7 @@ const createKey = () => {
             </Panel>
             <Toolbar>
                 <template #start>
-                    <Button icon="pi pi-plus" aria-label="Add Client" @click="createKey" label="Create new group key"/>
+                    <Button icon="pi pi-plus" aria-label="new group key" @click="createKey" label="Create new group key"/>
                 </template>
             </Toolbar>
         </div>

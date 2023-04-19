@@ -284,6 +284,39 @@ func (a *Admin) NewClient(tk, n string, gs []string) (*pmodel.Client, error) {
 	return cl, nil
 }
 
+// AddGroups2Client creating a new client for the system
+func (a *Admin) AddGroups2Client(tk, n string, gs []string) (*pmodel.Client, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	if !a.stg.HasClient(n) {
+		return nil, serror.ErrNotExists
+	}
+	ak, ok := a.stg.AccessKey(n)
+	if !ok {
+		return nil, serror.ErrNotExists
+	}
+	c, ok := a.stg.GetClient(ak)
+	if !ok {
+		return nil, serror.ErrNotExists
+	}
+	c.Groups = gs
+	err = a.stg.UpdateClient(*c)
+	if err != nil {
+		return nil, err
+	}
+	co := pmodel.Client{
+		Name:      c.Name,
+		AccessKey: c.AccessKey,
+		Secret:    "*****",
+		Groups:    c.Groups,
+		KID:       c.KID,
+		Key:       c.Key,
+	}
+	return &co, nil
+}
+
 // Client getting a single client based on the name
 func (a *Admin) Client(tk, n string) (*model.Client, error) {
 	err := a.checkTk(tk)

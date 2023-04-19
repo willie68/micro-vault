@@ -46,6 +46,7 @@ const logout = () => {
       <KeysPage></KeysPage>
     </TabPanel>
   </TabView>
+  <ConfirmDialog />
 </template>
 
 <style scoped>

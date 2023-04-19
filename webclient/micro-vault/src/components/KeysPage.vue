@@ -51,7 +51,6 @@ watch(group, (group, prevGroup) => {
         <div class="col-fixed justify-content-left" style="width: 240px">
             <Panel header="Keys">
                 <template #icons>
-                    <Button icon="pi pi-plus" aria-label="Add Group" text @click="addKey" />
                     <Button icon="pi pi-refresh" aria-label="Refresh" :loading="lkeys" text @click="getKeys" />
                 </template>
                 <span class="p-input-icon-left">

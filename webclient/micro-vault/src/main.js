@@ -16,7 +16,6 @@ import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
 import ConfirmDialog from 'primevue/confirmdialog';
-import DynamicDialog from 'primevue/dynamicdialog';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
 import Panel from 'primevue/panel';
@@ -29,6 +28,7 @@ import TabPanel from 'primevue/tabpanel';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
 import Toolbar from 'primevue/toolbar';
+import Tooltip from 'primevue/tooltip';
 import api from './api'
 
 const app = createApp(App)
@@ -38,11 +38,11 @@ app.use(createPinia())
 app.use(ToastService)
 app.use(DialogService)
 app.use(ConfirmationService)
+app.directive('tooltip', Tooltip);
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('Checkbox', Checkbox)
 app.component('ConfirmDialog', ConfirmDialog)
-app.component('DynamicDialog', DynamicDialog)
 app.component('InputText', InputText)
 app.component('Listbox', Listbox)
 app.component('Panel', Panel)

@@ -15,4 +15,13 @@ export default  {
     const { data } = await sapi.client.get(`${clientsEndpoint}?group=${gr}`)
     return data
   },
+  async delete(name) {
+    const { data } = await sapi.client.delete(`${clientsEndpoint}/${name}`)
+    return data
+  },
+  async new(c) {
+    const { data } = await sapi.client.post(`${clientsEndpoint}`, c)
+    return data
+  },
+
 }

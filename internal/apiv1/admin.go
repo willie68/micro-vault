@@ -41,8 +41,9 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Get("/groups/{name}", a.GetGroup)
 	router.Delete("/groups/{name}", a.DeleteGroup)
 	router.Get("/clients", a.GetClients)
-	router.Post("/clients", a.PostClient)
+	router.Post("/clients", a.PostNewClient)
 	router.Delete("/clients/{name}", a.DeleteClient)
+	router.Post("/clients/{name}", a.PostClient)
 	router.Get("/groupkeys", a.GetKeys)
 	router.Post("/groupkeys", a.PostKey)
 	return BaseURL + adminSubpath, router
@@ -290,7 +291,7 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 	render.JSON(response, request, cls)
 }
 
-// PostClient creating a new client
+// PostNewClient creating a new client
 // @Summary creating a new client
 // @Tags configs
 // @Accept  pem file
@@ -301,7 +302,7 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 // @Failure 400 {object} serror.Serr "client error information as json"
 // @Failure 500 {object} serror.Serr "server error information as json"
 // @Router /admin/clients [post]
-func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Request) {
+func (a *AdminHandler) PostNewClient(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
 	tk, err := token(request)
@@ -368,6 +369,55 @@ func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.
 		return
 	}
 	render.Status(request, http.StatusOK)
+}
+
+// PostClient posting changes to a client
+// @Summary posting changes to a client
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/clients [post]
+func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	du := struct {
+		Name   string   `json:"name"`
+		Groups []string `json:"groups"`
+	}{}
+
+	err = json.Unmarshal(b, &du)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cl, err := a.adm.AddGroups2Client(tk, du.Name, du.Groups)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	ccl := pmodel.Client{
+		Name:      cl.Name,
+		AccessKey: cl.AccessKey,
+		Secret:    "*****",
+		Groups:    cl.Groups,
+	}
+	render.Status(request, http.StatusCreated)
+	render.JSON(response, request, ccl)
 }
 
 // GetKeys getting a list of groupkeys
