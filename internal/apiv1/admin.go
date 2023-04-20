@@ -37,13 +37,15 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/playbook", a.PostPlaybook)
 	router.Get("/groups", a.GetGroups)
-	router.Post("/groups", a.PostGroup)
+	router.Post("/groups", a.PostGroups)
 	router.Get("/groups/{name}", a.GetGroup)
+	router.Post("/groups/{name}", a.PostGroup)
 	router.Delete("/groups/{name}", a.DeleteGroup)
 	router.Get("/clients", a.GetClients)
 	router.Post("/clients", a.PostNewClient)
 	router.Delete("/clients/{name}", a.DeleteClient)
 	router.Post("/clients/{name}", a.PostClient)
+	router.Get("/clients/{name}", a.GetClient)
 	router.Get("/groupkeys", a.GetKeys)
 	router.Post("/groupkeys", a.PostKey)
 	return BaseURL + adminSubpath, router
@@ -167,7 +169,65 @@ func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Requ
 	render.JSON(response, request, gs)
 }
 
-// PostGroup creating a new group
+// PostGroup updates a group
+// @Summary updates a group
+// @Tags configs
+// @Accept  name string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	n := chi.URLParam(request, "name")
+	ok := a.adm.HasGroup(tk, n)
+	if !ok {
+		httputils.Err(response, request, serror.NotFound("group", n))
+		return
+	}
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	du := pmodel.Group{}
+	err = json.Unmarshal(b, &du)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	g := model.Group{
+		Name:  du.Name,
+		Label: du.Label,
+	}
+	n, err = a.adm.UpdateGroup(tk, g)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	g, err = a.adm.Group(tk, n)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	gs := pmodel.Group{
+		Name:     g.Name,
+		Label:    g.Label,
+		IsClient: g.IsClient,
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, gs)
+}
+
+// PostGroups creating a new group
 // @Summary creating a new group
 // @Tags configs
 // @Accept  pmodel.Group
@@ -178,7 +238,7 @@ func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Requ
 // @Failure 400 {object} serror.Serr "client error information as json"
 // @Failure 500 {object} serror.Serr "server error information as json"
 // @Router /admin/groups [post]
-func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Request) {
+func (a *AdminHandler) PostGroups(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
 	tk, err := token(request)
@@ -296,6 +356,48 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, cls)
+}
+
+// GetClient get a client
+// @Summary gets a client
+// @Tags configs
+// @Accept  name string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/client/{name} [post]
+func (a *AdminHandler) GetClient(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	n := chi.URLParam(request, "name")
+	ok := a.adm.HasClient(tk, n)
+	if !ok {
+		httputils.Err(response, request, serror.NotFound("client", n))
+		return
+	}
+	c, err := a.adm.Client(tk, n)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cs := pmodel.Client{
+		Name:      c.Name,
+		AccessKey: c.AccessKey,
+		Secret:    "",
+		Groups:    c.Groups,
+		KID:       c.KID,
+		Key:       c.Key,
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, cs)
 }
 
 // PostNewClient creating a new client

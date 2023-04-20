@@ -60,3 +60,42 @@ func TestGroupBusiness(t *testing.T) {
 	ok = stg.HasGroup(id)
 	ast.False(ok)
 }
+
+func TestGroupUpdate(t *testing.T) {
+	ast := assert.New(t)
+
+	g := Groups{
+		stg: stg,
+	}
+
+	ast.NotNil(g)
+
+	gr := model.Group{
+		Name:  ids,
+		Label: map[string]string{"de": "Gruppe 1", "en": "group 1"},
+	}
+
+	id, err := g.AddGroup(gr)
+	ast.Nil(err)
+	ast.Equal(ids, id)
+
+	ok := stg.HasGroup(id)
+	ast.True(ok)
+
+	gr.Label["gr"] = "greek"
+
+	id, err = g.UpdateGroup(gr)
+	ast.Nil(err)
+	ast.Equal(ids, id)
+
+	gs, ok := stg.GetGroup(id)
+	ast.True(ok)
+	ast.NotNil(gs)
+	ast.Equal("greek", gs.Label["gr"])
+
+	ok = g.DeleteGroup(id)
+	ast.True(ok)
+
+	ok = stg.HasGroup(id)
+	ast.False(ok)
+}

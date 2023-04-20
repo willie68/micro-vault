@@ -39,6 +39,21 @@ func (g *Groups) AddGroup(group model.Group) (id string, err error) {
 	return
 }
 
+// UpdateGroup adding a new group to the service
+func (g *Groups) UpdateGroup(group model.Group) (id string, err error) {
+	if !g.stg.HasGroup(group.Name) {
+		return "", serror.ErrNotExists
+	}
+	gr, ok := g.stg.GetGroup(group.Name)
+	if !ok {
+		return "", serror.ErrNotExists
+	}
+	// only the labels can be updated
+	gr.Label = group.Label
+	id, err = g.stg.AddGroup(*gr)
+	return
+}
+
 // DeleteGroup deleting a group
 func (g *Groups) DeleteGroup(name string) bool {
 	if !g.stg.HasGroup(name) {

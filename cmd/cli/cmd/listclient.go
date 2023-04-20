@@ -30,9 +30,9 @@ var listClientCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%-32s %-36s %v\r\n", "NAME", "ACCESSKEY", "GROUPS")
+		fmt.Printf("%-32s %-36s %s\r\n", "NAME", "ACCESSKEY", "GROUPS")
 		for _, c := range cs {
-			fmt.Printf("%-32s %-36s %v\r\n", c.Name, c.AccessKey, c.Groups)
+			fmt.Printf("%-32s %-36s %s\r\n", c.Name, c.AccessKey, cmdutils.Slice2String(c.Groups))
 		}
 		return nil
 	},

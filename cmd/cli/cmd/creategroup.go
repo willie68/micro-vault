@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/willie68/micro-vault/cmd/cli/cmd/cmdutils"
@@ -30,9 +29,8 @@ or you can optionally add some labels to it.`,
 		}
 		ls, err := cmd.Flags().GetStringSlice("labels")
 		fmt.Println("Name: ", n)
-		fmt.Println("Labels: ", ls)
-		lm := slice2map(ls)
-		fmt.Println("Labels: ", lm)
+		fmt.Println("Labels: ", cmdutils.Slice2String(ls))
+		lm := cmdutils.Slice2Map(ls)
 		g := pmodel.Group{
 			Name:     n,
 			Label:    lm,
@@ -52,17 +50,4 @@ func init() {
 	createGroupCmd.Flags().StringP("name", "n", "", "Name of the group")
 	createGroupCmd.MarkFlagRequired("name")
 	createGroupCmd.Flags().StringSliceP("labels", "l", []string{}, "Labels of the group, each label must be formatted as <lgn>:<Label> e.g. en:Group")
-}
-
-func slice2map(ls []string) map[string]string {
-	m := make(map[string]string)
-	for _, l := range ls {
-		ss := strings.SplitN(l, ":", 2)
-		if len(ss) == 2 {
-			lng := ss[0]
-			lbl := ss[1]
-			m[lng] = lbl
-		}
-	}
-	return m
 }

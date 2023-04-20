@@ -219,6 +219,15 @@ func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
 	return a.grs.AddGroup(g)
 }
 
+// Update updating a group to the service
+func (a *Admin) UpdateGroup(tk string, g model.Group) (string, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return "", err
+	}
+	return a.grs.UpdateGroup(g)
+}
+
 // DeleteGroup adding a new group to the service
 func (a *Admin) DeleteGroup(tk string, n string) (bool, error) {
 	err := a.checkTk(tk)
@@ -315,6 +324,15 @@ func (a *Admin) AddGroups2Client(tk, n string, gs []string) (*pmodel.Client, err
 		Key:       c.Key,
 	}
 	return &co, nil
+}
+
+// HasClient looking of the present of a single client based on the name
+func (a *Admin) HasClient(tk, n string) bool {
+	err := a.checkTk(tk)
+	if err != nil {
+		return false
+	}
+	return a.stg.HasClient(n)
 }
 
 // Client getting a single client based on the name

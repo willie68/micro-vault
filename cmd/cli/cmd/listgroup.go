@@ -27,14 +27,7 @@ var listgroupCmd = &cobra.Command{
 		}
 		fmt.Printf("%-32s %-7s %s\r\n", "NAME", "CLIENT", "LABELS")
 		for _, g := range gs {
-			s := ""
-			for k, v := range g.Label {
-				if s != "" {
-					s = s + ", "
-				}
-				s = fmt.Sprintf("%s%s:%s", s, k, v)
-			}
-			fmt.Printf("%-32s %-7t %s\r\n", g.Name, g.IsClient, s)
+			fmt.Printf("%-32s %-7t %s\r\n", g.Name, g.IsClient, cmdutils.Labels2String(g.Label))
 		}
 		return nil
 	},
@@ -42,14 +35,4 @@ var listgroupCmd = &cobra.Command{
 
 func init() {
 	listCmd.AddCommand(listgroupCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// groupCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// groupCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

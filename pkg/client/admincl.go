@@ -221,7 +221,7 @@ func (a *AdminCl) Group(n string) (*pmodel.Group, error) {
 	return &gs, nil
 }
 
-// AddGroup getting a list of groups
+// AddGroup adding a new group
 func (a *AdminCl) AddGroup(g pmodel.Group) error {
 	err := a.checkToken()
 	if err != nil {
@@ -241,7 +241,27 @@ func (a *AdminCl) AddGroup(g pmodel.Group) error {
 	return nil
 }
 
-// DeleteGroup getting a list of groups
+// UpdateGroup adding a new group
+func (a *AdminCl) UpdateGroup(g pmodel.Group) error {
+	err := a.checkToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := a.PostJSON("admin/groups/"+g.Name, g)
+	if err != nil {
+		logging.Logger.Errorf("update group request failed: %v", err)
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("update group bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	return nil
+}
+
+// DeleteGroup deleting a group
 func (a *AdminCl) DeleteGroup(n string) error {
 	err := a.checkToken()
 	if err != nil {
@@ -314,6 +334,33 @@ func (a *AdminCl) Clients(opts ...ClientsOption) ([]pmodel.Client, error) {
 	}
 
 	return cs, nil
+}
+
+// Client getting a single client
+func (a *AdminCl) Client(n string) (*pmodel.Client, error) {
+	err := a.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	page := "admin/clients/" + n
+	res, err := a.Get(page)
+	if err != nil {
+		logging.Logger.Errorf("client request failed: %v", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("client bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var cs pmodel.Client
+	err = ReadJSON(res, &cs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return nil, err
+	}
+
+	return &cs, nil
 }
 
 // NewClient getting a list of groups

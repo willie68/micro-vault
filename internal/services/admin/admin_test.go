@@ -301,13 +301,19 @@ func TestClientCRUD(t *testing.T) {
 	_, err = adm.AddGroup(tk, model.Group{Name: "client1"})
 	ast.NotNil(err)
 
+	ok := adm.HasClient(tk, "client1")
+	ast.True(ok)
+
+	ok = adm.HasClient(tk, "client23143214")
+	ast.False(ok)
+
 	cl2, err := adm.Client(tk, "client1")
 	ast.Nil(err)
 	ast.Equal(cl.Name, cl2.Name)
 	ast.Equal(cl.AccessKey, cl2.AccessKey)
 	ast.Empty(cl2.Secret)
 
-	ok, err := adm.DeleteClient(tk, "client1")
+	ok, err = adm.DeleteClient(tk, "client1")
 	ast.Nil(err)
 	ast.True(ok)
 

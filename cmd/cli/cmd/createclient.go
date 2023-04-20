@@ -27,8 +27,6 @@ Attention: The secret will never be shown again and nowhere stored on the mv ins
 			return err
 		}
 		gs, err := cmd.Flags().GetStringSlice("groups")
-		fmt.Println("Name: ", n)
-		fmt.Println("Groups: ", gs)
 		cl, err := adm.NewClient(n, gs)
 		if err != nil {
 			return err
@@ -36,7 +34,7 @@ Attention: The secret will never be shown again and nowhere stored on the mv ins
 		fmt.Println("Name      :", cl.Name)
 		fmt.Println("AccessKey :", cl.AccessKey)
 		fmt.Println("Secret    :", cl.Secret)
-		fmt.Println("Groups    :", cl.Groups)
+		fmt.Println("Groups    :", cmdutils.Slice2String(cl.Groups))
 		fmt.Println("KID       :", cl.KID)
 		return nil
 	},
