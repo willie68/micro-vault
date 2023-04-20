@@ -160,7 +160,7 @@ func (a *AdminCl) SendPlaybook(pb string) error {
 		return err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusNoContent {
 		logging.Logger.Errorf("playbook bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}

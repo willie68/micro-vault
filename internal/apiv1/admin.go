@@ -86,7 +86,7 @@ func (a *AdminHandler) PostPlaybook(response http.ResponseWriter, request *http.
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	render.Status(request, http.StatusCreated)
+	render.NoContent(response, request)
 }
 
 // GetGroups getting a list of groups
