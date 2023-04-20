@@ -525,7 +525,7 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 		Secret:    "*****",
 		Groups:    cl.Groups,
 	}
-	render.Status(request, http.StatusCreated)
+	render.Status(request, http.StatusOK)
 	render.JSON(response, request, ccl)
 }
 

@@ -396,6 +396,39 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 	return &cs, nil
 }
 
+// UpdateClient getting a list of groups
+func (a *AdminCl) UpdateClient(n string, g []string) (*pmodel.Client, error) {
+	err := a.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	du := struct {
+		Name   string   `json:"name"`
+		Groups []string `json:"groups"`
+	}{
+		Name:   n,
+		Groups: g,
+	}
+	res, err := a.PostJSON("admin/clients/"+du.Name, du)
+	if err != nil {
+		logging.Logger.Errorf("update client request failed: %v", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("update client bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var cs pmodel.Client
+	err = ReadJSON(res, &cs)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return nil, err
+	}
+
+	return &cs, nil
+}
+
 // DeleteClient getting a list of groups
 func (a *AdminCl) DeleteClient(n string) error {
 	err := a.checkToken()
