@@ -16,6 +16,7 @@ import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
 import ConfirmDialog from 'primevue/confirmdialog';
+import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
 import Listbox from 'primevue/listbox';
 import Panel from 'primevue/panel';
@@ -43,6 +44,7 @@ app.component('Button', Button)
 app.component('Card', Card)
 app.component('Checkbox', Checkbox)
 app.component('ConfirmDialog', ConfirmDialog)
+app.component('FileUpload', FileUpload)
 app.component('InputText', InputText)
 app.component('Listbox', Listbox)
 app.component('Panel', Panel)
