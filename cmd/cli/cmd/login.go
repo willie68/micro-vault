@@ -4,8 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/willie68/micro-vault/cmd/cli/cmd/cmdutils"
 )
@@ -18,12 +16,11 @@ var loginCmd = &cobra.Command{
 Please enter the URL for the service, 
 as well as the root user name and password.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("login called")
 		url, err := cmd.Flags().GetString("url")
 		if err != nil {
 			return err
 		}
-		u, err := cmd.Flags().GetString("user")
+		u, err := cmd.Flags().GetString("username")
 		if err != nil {
 			return err
 		}
@@ -52,7 +49,10 @@ func init() {
 	// is called directly, e.g.:
 	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	loginCmd.Flags().String("url", "https://localhost:8443", "insert the url to the mv service")
-	loginCmd.Flags().StringP("user", "u", "root", "insert the admin account name")
+	loginCmd.MarkFlagRequired("url")
+	loginCmd.Flags().StringP("username", "u", "root", "insert the admin account name")
+	loginCmd.MarkFlagRequired("username")
 	loginCmd.Flags().StringP("password", "p", "", "insert the password of the admin account")
 	loginCmd.MarkFlagRequired("password")
+	loginCmd.MarkFlagsRequiredTogether("username", "password")
 }

@@ -4,7 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -13,20 +12,12 @@ import (
 
 // listgroupCmd represents the group command
 var listgroupCmd = &cobra.Command{
-	Use:   "group",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:     "group",
+	Short:   "list all registered groups",
+	Long:    `list all registered groups of this mv instance`,
+	Aliases: []string{"groups"},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cl, ok := cmdutils.ReadCLConf()
-		if !ok {
-			return errors.New("you're not logged in, please use login command")
-		}
-		adm, err := cmdutils.AdminClient(*cl)
+		adm, err := cmdutils.AdminClient()
 		if err != nil {
 			return err
 		}
@@ -34,10 +25,16 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			return err
 		}
-		fmt.Println("list of groups")
-		fmt.Printf("%-32s, %-7s\r\n", "NAME", "CLIENT")
+		fmt.Printf("%-32s %-7s %s\r\n", "NAME", "CLIENT", "LABELS")
 		for _, g := range gs {
-			fmt.Printf("%-32s, %-7t\r\n", g.Name, g.IsClient)
+			s := ""
+			for k, v := range g.Label {
+				if s != "" {
+					s = s + ", "
+				}
+				s = fmt.Sprintf("%s%s:%s", s, k, v)
+			}
+			fmt.Printf("%-32s %-7t %s\r\n", g.Name, g.IsClient, s)
 		}
 		return nil
 	},

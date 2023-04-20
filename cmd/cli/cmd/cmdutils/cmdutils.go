@@ -2,6 +2,8 @@ package cmdutils
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -82,9 +84,8 @@ func AdminLogin(username, password, url string) (*Conf, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("logged in, token: %s", adm.Token())
 	exp := expires(adm.Token())
-	log.Printf("expires: %v", time.Unix(exp, 0))
+	fmt.Printf("login successful, expires: %v\r\n", time.Unix(exp, 0))
 	d := Conf{
 		Username: username,
 		Token:    adm.Token(),
@@ -102,19 +103,28 @@ func AdminLogin(username, password, url string) (*Conf, error) {
 
 // AdminLogout invalidates an admin session
 func AdminLogout() error {
-	d := Conf{
-		Username: "",
-		Token:    "",
-		Expired:  int64(0),
-		Refresh:  "",
-		Admin:    false,
-		URL:      "",
+	cl, ok := ReadCLConf()
+	if !ok {
+		cl = &Conf{
+			Username: "",
+			Token:    "",
+			Expired:  int64(0),
+			Refresh:  "",
+			Admin:    true,
+			URL:      "https://localhost:8443",
+		}
 	}
-	return writeCLConf(d)
+	cl.Token = ""
+	cl.Refresh = ""
+	return writeCLConf(*cl)
 }
 
 // AdminClient creates a new ad,min client with the specifig stored configuration
-func AdminClient(cfg Conf) (*client.AdminCl, error) {
+func AdminClient() (*client.AdminCl, error) {
+	cfg, ok := ReadCLConf()
+	if !ok {
+		return nil, errors.New("you're not logged in, please use login command")
+	}
 	adm, err := client.LoginAdminCli(cfg.Token, cfg.Refresh, cfg.URL, func(tk, rt string) {
 		cf := Conf{
 			Username:  cfg.Username,
@@ -125,8 +135,11 @@ func AdminClient(cfg Conf) (*client.AdminCl, error) {
 			Admin:     cfg.Admin,
 			URL:       cfg.URL,
 		}
-		logging.Logger.Info("token refreshed")
-		writeCLConf(cf)
+		fmt.Println("token refreshed")
+		err := writeCLConf(cf)
+		if err != nil {
+			fmt.Printf("error writing config: %v\r\n", err)
+		}
 	})
 	return adm, err
 }

@@ -203,12 +203,19 @@ func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Req
 		Label:    pg.Label,
 		IsClient: false,
 	}
-	_, err = a.adm.AddGroup(tk, g)
+	n, err := a.adm.AddGroup(tk, g)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
+	g, err = a.adm.Group(tk, n)
+	gs := pmodel.Group{
+		Name:     g.Name,
+		Label:    g.Label,
+		IsClient: g.IsClient,
+	}
 	render.Status(request, http.StatusCreated)
+	render.JSON(response, request, gs)
 }
 
 // DeleteGroup delete a group

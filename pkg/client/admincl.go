@@ -261,14 +261,42 @@ func (a *AdminCl) DeleteGroup(n string) error {
 	return nil
 }
 
+// ClientsOption options for the clients methode
+type ClientsOption func(c *ClientsOptionContext)
+
+// WithGroupFilter filter the clients with a group
+func WithGroupFilter(g string) ClientsOption {
+	// this is the ClientOption function type
+	return func(c *ClientsOptionContext) {
+		c.groupFilter = g
+	}
+}
+
+// ClientsOptionContext holding the options for the clients methode
+type ClientsOptionContext struct {
+	groupFilter string
+}
+
 // Clients getting a list of groups
-func (a *AdminCl) Clients() ([]pmodel.Client, error) {
+func (a *AdminCl) Clients(opts ...ClientsOption) ([]pmodel.Client, error) {
 	err := a.checkToken()
 	if err != nil {
 		return []pmodel.Client{}, err
 	}
-
-	res, err := a.Get("admin/clients")
+	cOpt := &ClientsOptionContext{}
+	for _, opt := range opts {
+		opt(cOpt)
+	}
+	q := url.Values{}
+	if cOpt.groupFilter != "" {
+		q.Add("group", cOpt.groupFilter)
+	}
+	qs := q.Encode()
+	page := "admin/clients"
+	if qs != "" {
+		page = page + "?" + qs
+	}
+	res, err := a.Get(page)
 	if err != nil {
 		logging.Logger.Errorf("clients request failed: %v", err)
 		return []pmodel.Client{}, err
