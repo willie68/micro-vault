@@ -7,3 +7,9 @@ cd webclient\micro-vault
 call build.cmd
 cd ..
 cd ..
+
+echo build mvcli
+call .\deployments\buildcli.cmd
+
+echo build mv-service
+call .\deployments\build.cmd
