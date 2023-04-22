@@ -43,7 +43,6 @@ func token(r *http.Request) (string, error) {
 
 // APIRoutes configuring the api routes for the main REST API
 func APIRoutes(cfn config.Config, trc opentracing.Tracer) (*chi.Mux, error) {
-
 	log.Logger.Infof("baseurl : %s", BaseURL)
 	router := chi.NewRouter()
 	setDefaultHandler(router, cfn, trc)
@@ -87,6 +86,7 @@ func setJWTHandler(router *chi.Mux, cfn config.Config) error {
 	if err != nil {
 		return err
 	}
+	jwtConfig.IgnorePages = append(jwtConfig.IgnorePages, "/api/v1/login", "/client")
 	log.Logger.Infof("jwt config: %v", jwtConfig)
 	jwtAuth := auth.JWTAuth{
 		Config: jwtConfig,

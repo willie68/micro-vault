@@ -329,8 +329,8 @@ func (v *VaultHandler) GetMsg(response http.ResponseWriter, request *http.Reques
 	render.JSON(response, request, msg)
 }
 
-// DeleteMsg getting a single message, if allowed
-// @Summary getting a single message, if allowed
+// DeleteMsg deleting a single message, if allowed
+// @Summary deleting a single message, if allowed
 // @Tags configs
 // @Produce  n.n.
 // @Param token as authentication header

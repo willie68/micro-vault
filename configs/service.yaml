@@ -27,7 +27,7 @@ logging:
   filename: ""
   gelf-url:
   gelf-port:
-# managing authentication and authorisation
+# managing authentication and authorization
 auth:
   type:
   properties: 

@@ -7,7 +7,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/config"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 )
 
 // JWTAuthConfig authentication/Authorisation configuration for JWT authentification
@@ -16,6 +20,7 @@ type JWTAuthConfig struct {
 	Validate    bool
 	TenantClaim string
 	Strict      bool
+	IgnorePages []string
 }
 
 // JWT struct for the decoded jwt token
@@ -30,6 +35,7 @@ type JWT struct {
 // JWTAuth the jwt authentication struct
 type JWTAuth struct {
 	Config JWTAuthConfig
+	kmn    keyman.Keyman
 }
 
 // JWTConfig for the service
@@ -37,18 +43,20 @@ var JWTConfig = JWTAuthConfig{
 	Active: false,
 }
 
-// InitJWT initialise the JWT for this service
+// InitJWT initialize the JWT for this service
 func InitJWT(cnfg JWTAuthConfig) JWTAuth {
 	JWTConfig = cnfg
 	return JWTAuth{
 		Config: cnfg,
+		kmn:    do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
 	}
 }
 
 // ParseJWTConfig building up the dynamical configuration for this
 func ParseJWTConfig(cfg config.Authentication) (JWTAuthConfig, error) {
 	jwtcfg := JWTAuthConfig{
-		Active: true,
+		Active:      true,
+		IgnorePages: make([]string, 0),
 	}
 	var err error
 	jwtcfg.Validate, err = config.GetConfigValueAsBool(cfg.Properties, "validate")
@@ -115,7 +123,11 @@ func jwtDecodePart(payload string) (map[string]any, error) {
 }
 
 // Validate validation of the token is not implemented
-func (j *JWT) Validate(_ JWTAuthConfig) error {
+func (j *JWT) Validate(ja *JWTAuth) error {
 	//TODO here should be the implementation of the validation of the token
+	_, err := jwt.Parse([]byte(j.Token), jwt.WithKey(jwa.RS256, ja.kmn.PublicKey()))
+	if err != nil {
+		return err
+	}
 	return nil
 }

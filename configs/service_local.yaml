@@ -34,3 +34,18 @@ opentracing:
 
 metrics:
   enable: true
+
+# managing authentication and authorization
+auth:
+  type: jwt
+  properties: 
+    validate: true
+    strict: true
+    tenantClaim: Tenant
+    roleClaim: Roles
+    rolemapping: 
+        object-reader:
+        object-creator:
+        object-admin:
+        tenant-admin:
+        admin:
