@@ -88,9 +88,7 @@ func setJWTHandler(router *chi.Mux, cfn config.Config) error {
 	}
 	jwtConfig.IgnorePages = append(jwtConfig.IgnorePages, "/api/v1/login", "/client")
 	log.Logger.Infof("jwt config: %v", jwtConfig)
-	jwtAuth := auth.JWTAuth{
-		Config: jwtConfig,
-	}
+	jwtAuth := auth.InitJWT(jwtConfig)
 	router.Use(
 		auth.Verifier(&jwtAuth),
 		auth.Authenticator,
