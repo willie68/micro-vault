@@ -11,6 +11,18 @@ service:
   rootuser: root
   rootpwd: yxcvb
   privatekey: ./configs/private.pem
+  cacert:
+    privatekey: ./configs/cert/private.pem
+    certificate:  ./configs/cert/certificate.pem
+    subject:
+      Country: de
+      Organization: MCS
+      OrganizationalUnit: dev
+      Locality: Hattigen
+      Province: NRW
+      StreetAddress: Welperstraße 65
+      PostalCode: 45525
+      CommonName: mcs
   storage:
     type: memory
     properties:

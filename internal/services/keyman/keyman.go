@@ -20,11 +20,13 @@ const DoKeyman = "keyman"
 
 // Keyman the key manager service
 type Keyman struct {
-	cfg     config.Config
-	rsk     *rsa.PrivateKey
-	kid     string
-	jwks    jwk.Set
-	signKey jwk.Key
+	cfg           config.Config
+	rsk           *rsa.PrivateKey
+	kid           string
+	jwks          jwk.Set
+	signKey       jwk.Key
+	caPrivate     string
+	caCertificate string
 }
 
 // NewKeyman creates a new Keyman service

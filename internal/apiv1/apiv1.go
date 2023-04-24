@@ -34,6 +34,7 @@ const vaultSubpath = "/vault"
 const adminSubpath = "/admin"
 const loginSubpath = "/login"
 const jwksSubpath = "/.well-known"
+const caSubpath = "/ca"
 
 func token(r *http.Request) (string, error) {
 	tk := r.Header.Get("Authorization")
@@ -61,6 +62,7 @@ func APIRoutes(cfn config.Config, trc opentracing.Tracer) (*chi.Mux, error) {
 		r.Mount(NewVaultHandler().Routes())
 		r.Mount(NewAdminHandler().Routes())
 		r.Mount(NewJWKSHandler().Routes())
+		r.Mount(NewCACertHandler().Routes())
 		r.Mount("/", health.Routes())
 		if cfn.Metrics.Enable {
 			r.Mount("/metrics", promhttp.Handler())
@@ -86,7 +88,7 @@ func setJWTHandler(router *chi.Mux, cfn config.Config) error {
 	if err != nil {
 		return err
 	}
-	jwtConfig.IgnorePages = append(jwtConfig.IgnorePages, "/api/v1/login", "/client")
+	jwtConfig.IgnorePages = append(jwtConfig.IgnorePages, "/api/v1/login", "/client", caSubpath, jwksSubpath)
 	log.Logger.Infof("jwt config: %v", jwtConfig)
 	jwtAuth := auth.InitJWT(jwtConfig)
 	router.Use(

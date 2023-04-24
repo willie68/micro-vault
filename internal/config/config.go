@@ -49,7 +49,15 @@ type Service struct {
 	Rootuser   string  `yaml:"rootuser"`
 	Rootpwd    string  `yaml:"rootpwd"`
 	PrivateKey string  `yaml:"privatekey"`
+	CACert     CACert  `yaml:"cacert"`
 	Storage    Storage `yaml:"storage"`
+}
+
+// CACert configuration of the ca cert service
+type CACert struct {
+	PrivateKey  string            `yaml:"privatekey"`
+	Certificate string            `yaml:"certificate"`
+	Subject     map[string]string `yaml:"subject"`
 }
 
 // Storage the type and properties of the storage

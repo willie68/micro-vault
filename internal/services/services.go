@@ -14,7 +14,13 @@ import (
 // InitServices initialise the service system
 func InitServices(cfg config.Config) error {
 	c := cfg.Service
+
 	_, err := keyman.NewKeyman()
+	if err != nil {
+		return err
+	}
+
+	_, err = keyman.NewCAService()
 	if err != nil {
 		return err
 	}
