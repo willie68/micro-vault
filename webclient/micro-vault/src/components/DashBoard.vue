@@ -3,6 +3,7 @@ import ClientPage from './ClientPage.vue';
 import GroupPage from './GroupPage.vue';
 import KeysPage from './KeysPage.vue';
 import PlaybookPage from './PlaybookPage.vue';
+import InformationPage from './InformationPage.vue';
 import { useLoginStore } from '../stores/login';
 import { useConfirm } from "primevue/useconfirm";
 
@@ -48,6 +49,9 @@ const logout = () => {
     </TabPanel>
     <TabPanel header="Playbook">
       <PlaybookPage></PlaybookPage>
+    </TabPanel>
+    <TabPanel header="Information">
+      <InformationPage></InformationPage>
     </TabPanel>
   </TabView>
   <ConfirmDialog />
