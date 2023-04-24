@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,6 +22,7 @@ type Refreshcallback func(tk, rt string)
 
 // AdminCl this is the admin client
 type AdminCl struct {
+	base            string
 	url             string
 	username        string
 	password        []byte
@@ -44,6 +46,7 @@ func (a *AdminCl) init(u string) error {
 		a.insecure = true
 		timeout = time.Second * 360
 	}
+	a.base = u
 	a.url = fmt.Sprintf("%s/api/v1", u)
 	a.ctx = context.Background()
 
@@ -59,6 +62,26 @@ func (a *AdminCl) init(u string) error {
 		Transport: tns,
 	}
 	return nil
+}
+
+// GetCACert getting the root certificate of the CA
+func (a *AdminCl) GetCACert() (string, error) {
+	res, err := a.clt.Get(fmt.Sprintf("%s/%s", a.base, "ca/cacert"))
+	if err != nil {
+		logging.Logger.Errorf("get cacert request failed: %v", err)
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("get cacert bad response: %d", res.StatusCode)
+		return "", ReadErr(res)
+	}
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logging.Logger.Errorf("get cacert request body: %v", err)
+		return "", err
+	}
+	return string(b), nil
 }
 
 // Login logging this client in, getting a token for further requests
