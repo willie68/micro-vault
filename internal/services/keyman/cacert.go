@@ -210,8 +210,8 @@ func (c *CAService) createCert() error {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          hashKeyId(caPrivKey.N),
-		AuthorityKeyId:        hashKeyId(caPrivKey.N),
+		SubjectKeyId:          hashKeyID(caPrivKey.N),
+		AuthorityKeyId:        hashKeyID(caPrivKey.N),
 	}
 
 	// generate the certificate
@@ -231,11 +231,13 @@ func (c *CAService) createCert() error {
 	return nil
 }
 
-func (c *CAService) CertRequest(template x509.Certificate, pub any) ([]byte, error) {
-	template.AuthorityKeyId = hashKeyId(c.caPrv.N)
+// CertSignRequest signing the certificate
+func (c *CAService) CertSignRequest(template x509.Certificate, pub any) ([]byte, error) {
+	template.AuthorityKeyId = hashKeyID(c.caPrv.N)
 	return x509.CreateCertificate(rand.Reader, &template, &c.caX509, pub, &c.caPrv)
 }
 
+// CreateCertificate create a usual simple certificate
 func (c *CAService) CreateCertificate() (*Cert, error) {
 	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -254,8 +256,8 @@ func (c *CAService) CreateCertificate() (*Cert, error) {
 			CommonName:         c.cfg.Subject["CommonName"],
 			OrganizationalUnit: []string{c.cfg.Subject["OrganizationalUnit"]},
 		},
-		SubjectKeyId:   hashKeyId(certPrivKey.N),
-		AuthorityKeyId: hashKeyId(c.caPrv.N),
+		SubjectKeyId:   hashKeyID(certPrivKey.N),
+		AuthorityKeyId: hashKeyID(c.caPrv.N),
 		IPAddresses:    []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
 		NotBefore:      time.Now(),
 		NotAfter:       time.Now().AddDate(10, 0, 0),
@@ -296,7 +298,7 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func hashKeyId(n *big.Int) []byte {
+func hashKeyID(n *big.Int) []byte {
 	h := sha1.New()
 	h.Write(n.Bytes())
 	return h.Sum(nil)

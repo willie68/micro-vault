@@ -1,9 +1,3 @@
-// Package crypt
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-// Generate a self-signed X.509 certificate for a TLS server. Outputs to
-// 'cert.pem' and 'key.pem' and will overwrite existing files.
 package crypt
 
 import (
@@ -129,7 +123,7 @@ func (gc *GenerateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 	}
 	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
 
-	derBytes, err := ca.CertRequest(template, gc.publicKey(priv))
+	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv))
 	if err != nil {
 		log.Logger.Fatalf("Failed to create certificate: %v", err)
 		return nil, err
