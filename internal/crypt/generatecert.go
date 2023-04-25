@@ -21,11 +21,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/do"
 	log "github.com/willie68/micro-vault/internal/logging"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 )
 
 // GenerateCertificate model
 type GenerateCertificate struct {
+	ServiceName  string
 	Organization string
 	Host         string
 	ValidFrom    string
@@ -101,6 +104,7 @@ func (gc *GenerateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{gc.Organization},
+			CommonName:   gc.ServiceName,
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
@@ -123,8 +127,9 @@ func (gc *GenerateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
+	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, gc.publicKey(priv), priv)
+	derBytes, err := ca.CertRequest(template, gc.publicKey(priv))
 	if err != nil {
 		log.Logger.Fatalf("Failed to create certificate: %v", err)
 		return nil, err

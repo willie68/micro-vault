@@ -32,7 +32,7 @@ func (c *CACert) Routes() (string, *chi.Mux) {
 
 // GetCACert returning all possible public certificates of this service
 func (c *CACert) GetCACert(response http.ResponseWriter, request *http.Request) {
-	crt, err := c.cas.X509Cert()
+	crt, err := c.cas.X509CertPEM()
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusInternalServerError))
 		return

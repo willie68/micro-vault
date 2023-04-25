@@ -74,6 +74,7 @@ func (s *SHttp) ShutdownServers() {
 
 func (s *SHttp) startHTTPSServer(router *chi.Mux) {
 	gc := crypt.GenerateCertificate{
+		ServiceName:  config.Servicename,
 		Organization: "MCS",
 		Host:         "127.0.0.1",
 		ValidFor:     10 * 365 * 24 * time.Hour,
