@@ -132,7 +132,7 @@ func (a *Admin) generateToken(no time.Time) (string, error) {
 	t := jwt.New()
 	t.Set(jwt.AudienceKey, JKAudience)
 	t.Set(jwt.IssuedAtKey, no)
-	t.Set(jwt.ExpirationKey, no.Add(5*time.Minute))
+	t.Set(jwt.ExpirationKey, no.Add(15*time.Minute))
 	t.Set(jwt.JwtIDKey, id)
 	t.Set(tkRolesKey, []string{tkRoleAdmin})
 

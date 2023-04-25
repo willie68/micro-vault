@@ -31,9 +31,9 @@ async function getGroups() {
 }
 
 async function getClients() {
+    clgroups.value = []
     let pgroups = sapi.sclient.client4group(selectedGroup.value.name)
     pgroups.then((data) => {
-        clgroups.value = []
         data.forEach((g) => {
             clgroups.value.push(g)
         })

@@ -2,6 +2,8 @@ import axios from 'axios'
 import { useLoginStore } from '../stores/login';
 import { useToast } from "primevue/usetoast";
 
+const HEADER_AUTH = 'Authorization';
+
 /**
  * Service API
  * @see https://github.com/axios/axios
@@ -41,6 +43,7 @@ function setAxiosDefaults() {
  * @returns {object} axios instance
  */
 function create() {
+  
   const loginStore = useLoginStore()
   const config = {
     baseURL: loginStore.baseurl + "admin",
@@ -70,15 +73,45 @@ function create() {
     },
     err => {
       if (!err.config || !err.config.omitError) {
-        sapi.error(err)
+        if (getStatus(err) !== 401) {
+          sapi.error(err)
+          return Promise.reject(err)
+        }
+        loginStore.loggedIn = false
+        // refresh the token
+        const originalRequestConfig = err.config;
+        delete originalRequestConfig.headers[HEADER_AUTH]; // use from defaults
+
+        return refreshToken().then(
+          () => {
+            const loginStore = useLoginStore()
+            console.log("refresh done")           
+            originalRequestConfig.headers[HEADER_AUTH] = `Bearer ${loginStore.tk}`
+            return axios.request(originalRequestConfig)
+          }
+        )      
       }
-      return Promise.reject(err)
     },
     {
       synchronous: true,
     }
   )
   return srv
+}
+
+function refreshToken () {
+  const loginStore = useLoginStore()
+  let headers = {}
+  if (loginStore.rt) {
+    headers.Authorization = `Bearer ${loginStore.rt}`
+  }
+  return axios.get(loginStore.baseurl + 'login/refresh', {
+    headers: headers
+  })
+    .then(function (response) {
+      console.log("response:" , response)
+      loginStore.afterlogin(response.data.access_token, response.data.refresh_token)
+    });
 }
 
 /**
@@ -108,9 +141,6 @@ function warning(msg) {
 function error(err) {
   const loginStore = useLoginStore()
   const msg = message(getStatus(err), getErrKey(err))
-  if (getStatus(err) === 401) {
-    loginStore.loggedIn = false
-  }
   console.log("error:", msg)
   const toast = useToast();
   toast.add({ severity: "error", summary: 'service error', detail: msg, life: 3000 });
