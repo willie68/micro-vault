@@ -4,6 +4,9 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -20,7 +23,66 @@ var getCertificateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		p, err := cli.Certificate(template x509.CertificateRequest)
+		uem, err := cmd.Flags().GetString("uem")
+		if err != nil {
+			return err
+		}
+		ucn, err := cmd.Flags().GetString("ucn")
+		if err != nil {
+			return err
+		}
+		uco, err := cmd.Flags().GetString("uco")
+		if err != nil {
+			return err
+		}
+		upr, err := cmd.Flags().GetString("upr")
+		if err != nil {
+			return err
+		}
+		ulo, err := cmd.Flags().GetString("ulo")
+		if err != nil {
+			return err
+		}
+		uor, err := cmd.Flags().GetString("uor")
+		if err != nil {
+			return err
+		}
+		uou, err := cmd.Flags().GetString("uou")
+		if err != nil {
+			return err
+		}
+		usa, err := cmd.Flags().GetString("usa")
+		if err != nil {
+			return err
+		}
+		upc, err := cmd.Flags().GetString("upc")
+		if err != nil {
+			return err
+		}
+
+		emailAddress := uem
+		subj := pkix.Name{
+			CommonName:         ucn,
+			Country:            []string{uco},
+			Province:           []string{upr},
+			Locality:           []string{ulo},
+			Organization:       []string{uor},
+			OrganizationalUnit: []string{uou},
+			StreetAddress:      []string{usa},
+			PostalCode:         []string{upc},
+		}
+		rawSubj := subj.ToRDNSequence()
+
+		asn1Subj, err := asn1.Marshal(rawSubj)
+		if err != nil {
+			return err
+		}
+		template := x509.CertificateRequest{
+			RawSubject:     asn1Subj,
+			EmailAddresses: []string{emailAddress},
+		}
+
+		p, err := cli.Certificate(template)
 		if err != nil {
 			return err
 		}
@@ -32,13 +94,13 @@ var getCertificateCmd = &cobra.Command{
 func init() {
 	getCmd.AddCommand(getCertificateCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// certificateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// certificateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	getCertificateCmd.Flags().String("ucn", "", "insert the common name")
+	getCertificateCmd.Flags().String("uco", "", "insert the country")
+	getCertificateCmd.Flags().String("upr", "", "insert the province")
+	getCertificateCmd.Flags().String("ulo", "", "insert the locality")
+	getCertificateCmd.Flags().String("uor", "", "insert the organisation")
+	getCertificateCmd.Flags().String("uou", "", "insert the organisation unit")
+	getCertificateCmd.Flags().String("usa", "", "insert the street address")
+	getCertificateCmd.Flags().String("upc", "", "insert the postal code")
+	getCertificateCmd.Flags().String("uem", "", "insert the email")
 }
