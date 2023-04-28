@@ -2,15 +2,19 @@ package client
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/willie68/micro-vault/internal/logging"
@@ -24,17 +28,18 @@ const tokenHeader = "Authorization"
 
 // Client the main client for the service calls
 type Client struct {
-	url          string
-	accessKey    string
-	secret       string
-	name         string
-	token        string
-	refreshToken string
-	expired      time.Time
-	clt          http.Client
-	ctx          context.Context
-	insecure     bool
-	privatekey   *rsa.PrivateKey
+	url             string
+	accessKey       string
+	secret          string
+	name            string
+	token           string
+	refreshToken    string
+	expired         time.Time
+	clt             http.Client
+	ctx             context.Context
+	insecure        bool
+	privatekey      *rsa.PrivateKey
+	refreshcallback Refreshcallback
 }
 
 func (c *Client) init(u string) error {
@@ -140,12 +145,20 @@ func (c *Client) Refresh() error {
 	c.token = ds.Token
 	c.refreshToken = ds.RefreshToken
 	c.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
+	if c.refreshcallback != nil {
+		c.refreshcallback(c.token, c.refreshToken)
+	}
 	return nil
 }
 
 // Token returning the token if present
 func (c *Client) Token() string {
 	return c.token
+}
+
+// RefreshToken returning the refresh token if present
+func (c *Client) RefreshToken() string {
+	return c.refreshToken
 }
 
 // Name returning the name if present
@@ -157,6 +170,52 @@ func (c *Client) Name() string {
 func (c *Client) Logout() {
 	c.token = ""
 	c.refreshToken = ""
+}
+
+// Certificate create and sign a new certificate for this client
+func (c *Client) Certificate(template x509.CertificateRequest) (*x509.Certificate, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &template, c.privatekey)
+	if err != nil {
+		return nil, err
+	}
+	caPEM := new(bytes.Buffer)
+	err = pem.Encode(caPEM, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.Post("vault/clients/certificate", "application/x-pem-file", strings.NewReader(caPEM.String()))
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return nil, err
+	}
+
+	p, _ := pem.Decode(b)
+	if p == nil {
+		return nil, errors.New("no pem block found")
+	}
+	if p.Type != "CERTIFICATE" {
+		return nil, errors.New("wrong pem block found")
+	}
+	xc, err := x509.ParseCertificate(p.Bytes)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return nil, err
+	}
+	return xc, nil
 }
 
 // Encrypt4Group encrypting data string for a group

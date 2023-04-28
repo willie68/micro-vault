@@ -28,9 +28,24 @@ as well as the root user name and password.`,
 		if err != nil {
 			return err
 		}
-		_, err = cmdutils.AdminLogin(u, p, url)
+		a, err := cmd.Flags().GetString("accesskey")
 		if err != nil {
 			return err
+		}
+		s, err := cmd.Flags().GetString("secret")
+		if err != nil {
+			return err
+		}
+		if u != "" && p != "" {
+			_, err = cmdutils.AdminLogin(u, p, url)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = cmdutils.ClientLogin(a, s, url)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	},
@@ -51,8 +66,10 @@ func init() {
 	loginCmd.Flags().String("url", "https://localhost:8443", "insert the url to the mv service")
 	loginCmd.MarkFlagRequired("url")
 	loginCmd.Flags().StringP("username", "u", "root", "insert the admin account name")
-	loginCmd.MarkFlagRequired("username")
 	loginCmd.Flags().StringP("password", "p", "", "insert the password of the admin account")
-	loginCmd.MarkFlagRequired("password")
 	loginCmd.MarkFlagsRequiredTogether("username", "password")
+
+	loginCmd.Flags().StringP("accesskey", "a", "", "insert the client acceskey")
+	loginCmd.Flags().StringP("secret", "s", "", "insert the secret of the client")
+	loginCmd.MarkFlagsRequiredTogether("accesskey", "secret")
 }

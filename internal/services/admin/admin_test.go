@@ -33,10 +33,28 @@ func init() {
 			Rootuser:   "root",
 			Rootpwd:    "yxcvb",
 			PrivateKey: "../../../testdata/private.pem",
+			CACert: config.CACert{
+				PrivateKey:  "../../../testdata/pk.pem",
+				Certificate: "../../../testdata/crt.pem",
+				Subject: map[string]string{
+					"Country":            "de",
+					"Organization":       "MCS",
+					"OrganizationalUnit": "dev",
+					"Locality":           "Hattigen",
+					"Province":           "NRW",
+					"StreetAddress":      "Welperstraße 65",
+					"PostalCode":         "45525",
+					"CommonName":         "mcs",
+				},
+			},
 		},
 	}
 	c.Provide()
 	_, err = keyman.NewKeyman()
+	if err != nil {
+		panic(1)
+	}
+	_, err = keyman.NewCAService()
 	if err != nil {
 		panic(1)
 	}
@@ -48,6 +66,7 @@ func init() {
 	if err != nil {
 		panic(1)
 	}
+
 	am, err := NewAdmin()
 	if err != nil {
 		panic(1)

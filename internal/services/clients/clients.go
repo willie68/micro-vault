@@ -1,13 +1,16 @@
 package clients
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"log"
 	"strings"
@@ -41,6 +44,7 @@ type Clients struct {
 	stg  interfaces.Storage
 	cfg  config.Config
 	kmn  keyman.Keyman
+	crt  keyman.CAService
 	kids map[string]string // map key is the kid, value is the access key of the client
 }
 
@@ -50,6 +54,7 @@ func NewClients() (Clients, error) {
 		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
 		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
 		kmn: do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
+		crt: do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService),
 	}
 	err := c.Init()
 	if err != nil {
@@ -201,6 +206,49 @@ func (c *Clients) generateRefreshToken(no time.Time, n string) (string, error) {
 	return string(tsig), nil
 }
 
+// Certificate generate a new certificate for the client, signed with the CA cert
+func (c *Clients) Certificate(tk string, certTemplate string) (string, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return "", err
+	}
+	cl, err := c.client(tk)
+	if err != nil {
+		return "", err
+	}
+	pk, err := cry.Pem2Prv(cl.Key)
+	if err != nil {
+		return "", err
+	}
+
+	p, _ := pem.Decode([]byte(certTemplate))
+	if p == nil {
+		return "", errors.New("no pem block found")
+	}
+	if p.Type != "CERTIFICATE REQUEST" {
+		return "", errors.New("wrong pem block found, must be \"CERTIFICATE REQUEST\"")
+	}
+	tmp, err := x509.ParseCertificateRequest(p.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	b, err := c.crt.CertSignRequest(*tmp, &pk.PublicKey)
+	if err != nil {
+		return "", err
+	}
+
+	caPEM := new(bytes.Buffer)
+	err = pem.Encode(caPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: b,
+	})
+	if err != nil {
+		return "", err
+	}
+	return string(caPEM.Bytes()), nil
+}
+
 // CreateEncryptKey creates a new encryption key, stores it into the storage with id
 func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, error) {
 	jt, err := c.checkTk(tk)
@@ -219,6 +267,7 @@ func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, 
 	return c.CreateKey(group)
 }
 
+// CreateKey creates a new encryption key for a specifig group
 func (c *Clients) CreateKey(group string) (*model.EncryptKey, error) {
 	id := xid.New().String()
 	buf := make([]byte, 32)

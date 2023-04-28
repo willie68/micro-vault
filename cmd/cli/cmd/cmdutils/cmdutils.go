@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -101,6 +100,74 @@ func AdminLogin(username, password, url string) (*Conf, error) {
 	return &d, nil
 }
 
+// ClientLogin login into the admin account
+func ClientLogin(accesskey, secret, url string) (*Conf, error) {
+	admin = false
+	cli, err := client.LoginClient(accesskey, secret, url)
+	if err != nil {
+		return nil, err
+	}
+	exp := expires(cli.Token())
+	fmt.Printf("login successful, expires: %v\r\n", time.Unix(exp, 0))
+	d := Conf{
+		Username:  cli.Name(),
+		AccessKey: accesskey,
+		Token:     cli.Token(),
+		Expired:   exp,
+		Refresh:   cli.RefreshToken(),
+		Admin:     false,
+		URL:       url,
+	}
+	err = writeCLConf(d)
+	if err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+// ClientLogout invalidates an admin session
+func ClientLogout() error {
+	cl, ok := ReadCLConf()
+	if !ok {
+		cl = &Conf{
+			Username: "",
+			Token:    "",
+			Expired:  int64(0),
+			Refresh:  "",
+			Admin:    false,
+			URL:      "https://localhost:8443",
+		}
+	}
+	cl.Token = ""
+	cl.Refresh = ""
+	return writeCLConf(*cl)
+}
+
+// Client creates a new client with the specifig stored configuration
+func Client() (*client.Client, error) {
+	cfg, ok := ReadCLConf()
+	if !ok {
+		return nil, errors.New("you're not logged in, please use login command")
+	}
+	cli, err := client.LoginClientCli(cfg.Token, cfg.Refresh, cfg.URL, func(tk, rt string) {
+		cf := Conf{
+			Username:  cfg.Username,
+			AccessKey: cfg.AccessKey,
+			Token:     tk,
+			Refresh:   rt,
+			Expired:   expires(tk),
+			Admin:     cfg.Admin,
+			URL:       cfg.URL,
+		}
+		fmt.Println("token refreshed")
+		err := writeCLConf(cf)
+		if err != nil {
+			fmt.Printf("error writing config: %v\r\n", err)
+		}
+	})
+	return cli, err
+}
+
 // AdminLogout invalidates an admin session
 func AdminLogout() error {
 	cl, ok := ReadCLConf()
@@ -119,7 +186,7 @@ func AdminLogout() error {
 	return writeCLConf(*cl)
 }
 
-// AdminClient creates a new ad,min client with the specifig stored configuration
+// AdminClient creates a new admin client with the specifig stored configuration
 func AdminClient() (*client.AdminCl, error) {
 	cfg, ok := ReadCLConf()
 	if !ok {
@@ -142,42 +209,6 @@ func AdminClient() (*client.AdminCl, error) {
 		}
 	})
 	return adm, err
-}
-
-func clientLogin() *Conf {
-	admin = true
-	cl, err := client.LoginService(accesskey, secret, url)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("logged in, token: %s", cl.Token())
-	at, err := auth.DecodeJWT(cl.Token())
-	if err != nil {
-		logging.Logger.Errorf("error decoding token: %v", err)
-		return nil
-	}
-	expd, ok := at.Payload["exp"]
-	if !ok {
-		logging.Logger.Errorf("can't find expiration date")
-		return nil
-	}
-	expf, ok := expd.(float64)
-	if !ok {
-		logging.Logger.Errorf("expiration date wrong format")
-		return nil
-	}
-	exp := int64(expf)
-	log.Printf("expires: %v", time.Unix(exp, 0))
-	d := Conf{
-		Username:  cl.Name(),
-		AccessKey: accesskey,
-		Token:     cl.Token(),
-		Expired:   exp,
-		Admin:     false,
-		URL:       url,
-	}
-	writeCLConf(d)
-	return &d
 }
 
 func writeCLConf(d Conf) error {

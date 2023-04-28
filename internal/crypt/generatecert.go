@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"math/big"
 	"net"
 	"strings"
 	"time"
@@ -74,38 +73,11 @@ func (gc *GenerateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		return nil, err
 	}
 
-	var notBefore time.Time
-	if len(gc.ValidFrom) == 0 {
-		notBefore = time.Now()
-	} else {
-		notBefore, err = time.Parse("Jan 2 15:04:05 2006", gc.ValidFrom)
-		if err != nil {
-			log.Logger.Fatalf("Failed to parse creation date: %v", err)
-			return nil, err
-		}
-	}
-
-	notAfter := notBefore.Add(gc.ValidFor)
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		log.Logger.Fatalf("Failed to generate serial number: %v", err)
-		return nil, err
-	}
-
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
+	template := x509.CertificateRequest{
 		Subject: pkix.Name{
 			Organization: []string{gc.Organization},
 			CommonName:   gc.ServiceName,
 		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
-
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
 	}
 
 	hosts := strings.Split(gc.Host, ",")
@@ -117,10 +89,6 @@ func (gc *GenerateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		}
 	}
 
-	if gc.IsCA {
-		template.IsCA = true
-		template.KeyUsage |= x509.KeyUsageCertSign
-	}
 	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
 
 	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv))

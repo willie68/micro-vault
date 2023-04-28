@@ -232,9 +232,25 @@ func (c *CAService) createCert() error {
 }
 
 // CertSignRequest signing the certificate
-func (c *CAService) CertSignRequest(template x509.Certificate, pub any) ([]byte, error) {
-	template.AuthorityKeyId = hashKeyID(c.caPrv.N)
-	return x509.CreateCertificate(rand.Reader, &template, &c.caX509, pub, &c.caPrv)
+func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) ([]byte, error) {
+	// create client certificate template
+	clientCRTTemplate := x509.Certificate{
+		Signature:          template.Signature,
+		SignatureAlgorithm: template.SignatureAlgorithm,
+
+		PublicKeyAlgorithm: template.PublicKeyAlgorithm,
+		PublicKey:          template.PublicKey,
+		EmailAddresses:     template.EmailAddresses,
+		SerialNumber:       big.NewInt(2),
+		Issuer:             c.caX509.Subject,
+		Subject:            template.Subject,
+		NotBefore:          time.Now(),
+		NotAfter:           time.Now().AddDate(1, 0, 0),
+		AuthorityKeyId:     hashKeyID(c.caPrv.N),
+		KeyUsage:           x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+	}
+	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &c.caX509, pub, &c.caPrv)
 }
 
 // CreateCertificate create a usual simple certificate

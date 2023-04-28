@@ -43,8 +43,26 @@ func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error
 	return acl, nil
 }
 
-// LoginService logging in as a client service
-func LoginService(accesskey, secret, url string) (*Client, error) {
+// LoginClientCli login an admin via username password
+func LoginClientCli(t, rt string, url string, f Refreshcallback) (*Client, error) {
+	logging.Logger.Info("login as a client with token")
+	exp := expires(t)
+	cl := &Client{
+		token:           t,
+		refreshToken:    rt,
+		url:             url,
+		expired:         time.Unix(exp, 0),
+		refreshcallback: f,
+	}
+	err := cl.init(url)
+	if err != nil {
+		return nil, err
+	}
+	return cl, nil
+}
+
+// LoginClient logging in as a client service
+func LoginClient(accesskey, secret, url string) (*Client, error) {
 	logging.Logger.Infof("login as service with access key with secret: %s %v", accesskey, len(secret) > 0)
 
 	cl := Client{

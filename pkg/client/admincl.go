@@ -153,10 +153,10 @@ func (a *AdminCl) Refresh() error {
 	}
 	a.token = ds.Token
 	a.refreshToken = ds.RefreshToken
+	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	if a.refreshcallback != nil {
 		a.refreshcallback(a.token, a.refreshToken)
 	}
-	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
 }
 

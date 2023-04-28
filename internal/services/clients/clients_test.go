@@ -1,10 +1,15 @@
 package clients
 
 import (
+	"bytes"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -45,10 +50,28 @@ func init() {
 			Rootuser:   "root",
 			Rootpwd:    "yxcvb",
 			PrivateKey: "../../../testdata/private.pem",
+			CACert: config.CACert{
+				PrivateKey:  "../../../testdata/pk.pem",
+				Certificate: "../../../testdata/crt.pem",
+				Subject: map[string]string{
+					"Country":            "de",
+					"Organization":       "MCS",
+					"OrganizationalUnit": "dev",
+					"Locality":           "Hattigen",
+					"Province":           "NRW",
+					"StreetAddress":      "Welperstraße 65",
+					"PostalCode":         "45525",
+					"CommonName":         "mcs",
+				},
+			},
 		},
 	}
 	c.Provide()
 	_, err = keyman.NewKeyman()
+	if err != nil {
+		panic(1)
+	}
+	_, err = keyman.NewCAService()
 	if err != nil {
 		panic(1)
 	}
@@ -98,6 +121,73 @@ func TestRefresh(t *testing.T) {
 	ast.NotNil(err)
 	ast.Empty(tk3)
 	ast.Empty(rt3)
+}
+
+func TestCertificate(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, k, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
+	ast.Nil(err)
+
+	pk, err := cry.Pem2Prv(k)
+	ast.Nil(err)
+
+	csr, err := createCsrPem(pk)
+	ast.Nil(err)
+	ast.NotEmpty(csr)
+	fmt.Println(csr)
+	pcrt, err := cls.Certificate(tk, csr)
+	ast.Nil(err)
+	ast.NotEmpty(pcrt)
+
+	p, _ := pem.Decode([]byte(pcrt))
+	ast.NotNil(p)
+	ast.Equal(p.Type, "CERTIFICATE")
+
+	xc, err := x509.ParseCertificate(p.Bytes)
+	ast.Nil(err)
+
+	ast.Equal(1, len(xc.EmailAddresses))
+	ast.Equal("info@wk-music.de", xc.EmailAddresses[0])
+
+	ast.Equal(1, len(xc.Subject.Country))
+	ast.Equal("AU", xc.Subject.Country[0])
+
+	ast.Equal(1, len(xc.Subject.Organization))
+	ast.Equal("Organisation", xc.Subject.Organization[0])
+}
+
+func createCsrPem(k any) (string, error) {
+	emailAddress := "info@wk-music.de"
+	subj := pkix.Name{
+		CommonName:         "MCS",
+		Country:            []string{"AU"},
+		Province:           []string{"Province"},
+		Locality:           []string{"Locality"},
+		Organization:       []string{"Organisation"},
+		OrganizationalUnit: []string{"OrganisationUnit"},
+	}
+	rawSubj := subj.ToRDNSequence()
+
+	asn1Subj, err := asn1.Marshal(rawSubj)
+	if err != nil {
+		return "", err
+	}
+	template := x509.CertificateRequest{
+		RawSubject:         asn1Subj,
+		EmailAddresses:     []string{emailAddress},
+		SignatureAlgorithm: x509.SHA256WithRSA,
+	}
+
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &template, k)
+	if err != nil {
+		return "", err
+	}
+	caPEM := new(bytes.Buffer)
+	err = pem.Encode(caPEM, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
+	if err != nil {
+		return "", err
+	}
+	return string(caPEM.Bytes()), nil
 }
 
 func TestGeneratePrivateAES(t *testing.T) {

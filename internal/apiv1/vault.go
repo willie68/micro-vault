@@ -1,8 +1,10 @@
 package apiv1
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -31,6 +33,7 @@ func NewVaultHandler() api.Handler {
 // Routes getting all routes for the config endpoint
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
+	router.Post("/clients/certificate", v.PostCert)
 	router.Get("/clients/certificate/{name}", v.GetCert)
 	router.Post("/groups/keys", v.PostKeys)
 	router.Get("/groups/keys/{id}", v.GetKey)
@@ -41,6 +44,43 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router.Get("/msg/{id}", v.GetMsg)
 	router.Delete("/msg/{id}", v.DeleteMsg)
 	return BaseURL + vaultSubpath, router
+}
+
+// PostCert posting a certificate request to this mv service, returning a signed certificate
+// @Summary posting a certificate request to this mv service, returning a signed certificate
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/certificate/{name} [post]
+func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	pb := new(bytes.Buffer)
+	_, err = io.Copy(pb, request.Body)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	ct, err := v.cl.Certificate(tk, string(pb.Bytes()))
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	response.Header().Add("Content-Type", "application/x-pem-file")
+	response.WriteHeader(http.StatusCreated)
+	_, err = response.Write([]byte(ct))
+	if err != nil {
+		logging.Logger.Errorf("error writing PEM: %v", err)
+	}
 }
 
 // GetCert getting the public key of a client certificate for the named client
