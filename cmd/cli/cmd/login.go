@@ -11,7 +11,7 @@ import (
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "log into a microvault service",
+	Short: "Login into a microvault service",
 	Long: `With login you start an mvcli session. 
 Please enter the URL for the service, 
 as well as the root user name and password.`,

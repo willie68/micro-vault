@@ -14,8 +14,8 @@ import (
 // createGroupCmd represents the groupt command
 var createGroupCmd = &cobra.Command{
 	Use:   "group",
-	Short: "create a new group",
-	Long: `create a new group in your mv instance. 
+	Short: "Create a new group",
+	Long: `Create a new group in your mv instance. 
 You can simply only add the name of the group, 
 or you can optionally add some labels to it.`,
 	RunE: func(cmd *cobra.Command, args []string) error {

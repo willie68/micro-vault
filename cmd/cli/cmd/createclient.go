@@ -13,7 +13,7 @@ import (
 // createClientCmd represents the client command
 var createClientCmd = &cobra.Command{
 	Use:   "client",
-	Short: "create a new client to the mv instance",
+	Short: "Create a new client to the mv instance",
 	Long: `With this command you can create a new client in the mv instance and add some group information to it. 
 After creation you will get an accesskey and the secret of this client. 
 Attention: The secret will never be shown again and nowhere stored on the mv instance.`,

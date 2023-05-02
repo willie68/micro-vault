@@ -13,8 +13,8 @@ import (
 // updateClientCmd represents the client command
 var updateClientCmd = &cobra.Command{
 	Use:   "client",
-	Short: "updates the groups of the named client",
-	Long:  `updates the groups of the named client`,
+	Short: "Updates the groups of the named client",
+	Long:  `Updates the groups of the named client`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		adm, err := cmdutils.AdminClient()
 		if err != nil {

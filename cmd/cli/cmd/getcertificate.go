@@ -20,8 +20,8 @@ import (
 // getCertificateCmd represents the certificate command
 var getCertificateCmd = &cobra.Command{
 	Use:   "certificate",
-	Short: "get a signed certificate from the mv ca",
-	Long:  `get a signed certificate from the mv ca`,
+	Short: "Get a signed certificate from the mv ca",
+	Long:  `Get a signed certificate from the mv ca`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cli, err := cmdutils.Client()
 		if err != nil {

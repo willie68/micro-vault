@@ -14,8 +14,8 @@ import (
 // updateGroupCmd represents the group command
 var updateGroupCmd = &cobra.Command{
 	Use:   "group",
-	Short: "update a group with new labels",
-	Long:  `update a group with new labels`,
+	Short: "Update a group with new labels",
+	Long:  `Update a group with new labels`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		adm, err := cmdutils.AdminClient()
 		if err != nil {

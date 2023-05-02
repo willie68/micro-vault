@@ -168,7 +168,92 @@ playbook.json
    
 ```
 
-Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server zu exportieren.  Allerdings gibt es einen Commandozeilen Parameter mit dem das Binary eine playbook.json aus einer Installation erzeugt. Dazu muss das Binary mit den gleichen Einstellungen wie der Service gestartet werden.  
+Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server zu exportieren.  Allerdings gibt es einen Commandozeilen Parameter mit dem das Binary eine playbook.json aus einer Installation erzeugt. Dazu muss das Binary mit den gleichen Einstellungen wie der Service gestartet werden. 
+
+# Command Client
+
+Für eine einfache Benutzung gibt es neben dem Golang Client auch einen Kommandozeilenclient. Dieser deckt die wichtigsten Funktion sowohl im Admin Bereich wie auch im Client Bereich ab. 
+
+Hier die aktuellen HIlfen:
+
+```sh
+micro-vault microservice dead simple key management service without any golden rings, just simple and secure.
+
+Usage:
+  mvcli [command]
+
+Available Commands:
+  cacert      Getting the root certificate of the ca
+  completion  Generate the autocompletion script for the specified shell
+  create      Create an object in your micro vault instance
+  get         Get some object from your micro vault instance
+  help        Help about any command
+  list        List different objects
+  login       Login into a microvault service
+  logout      Logout from a microvault service
+  playbook    Upload and execute a playbook
+  update      Updating parameters of an already created object
+
+Flags:
+  -h, --help   help for mvcli
+
+Use "mvcli [command] --help" for more information about a command.
+```
+
+Ich hoffe das das UI selbsterklärend ist. 
+
+## Login
+
+```
+## 
+
+With login you start an mvcli session. 
+Please enter the URL for the service,
+as well as the root user name and password.
+
+Usage:
+  mvcli login [flags]
+
+Flags:
+  -a, --accesskey string   insert the client acceskey
+  -h, --help               help for login
+  -p, --password string    insert the password of the admin account
+  -s, --secret string      insert the secret of the client
+      --url string         insert the url to the mv service (default "https://localhost:8443")
+  -u, --username string    insert the admin account name (default "root")
+```
+
+Mit dem Login Kommando startet man eine MV Session. Je nach Parameter wird entweder einen Client oder Admin Session gestartet. Bei der Anmeldung wird vom Server ein Token ausgestellt und ins Benutzerverzeichnis gespeichert (`mv_client.json`). Dieses wird für die weiteren Kommandos verwendet. Dieses Token ist 15 min gültig. Wird danach ein weiterer Zugriff versucht, wird zunächst mit dem RefreshToken (60min) eine erneute Anmeldung versucht. Ist auch dieses abgelaufen, muss eine erneute Anmeldung erfolgen. Je nach Parameter unterscheidet der Client selber, welcher Anmeldetyp versucht wird. Mit dem Tupel Username, Passwort (-u und -p) wird eine Anmeldung als Admin versucht. Bei Accesskey und Secret (-a und -s) wird eine Clientanmeldung versucht. Natürlich funktionieren nicht mit jedem Anmeldetyp alle Kommandos. Für bestimmte Kommandos muss eine Admin Anmeldung erfolgen. Bei der Anmeldung muss natürlich auch die BasisURL zu dem MV Service angegeben werden. Beispiele
+
+Adminanmeldung
+
+```
+c:\>mvcli.exe login -u root -p yxcvb --url https://127.0.0.1:9543
+login successful, expires: 2023-05-02 11:30:39 +0200 CEST 
+```
+
+Clientanmeldung
+
+```
+c:\>mvcli.exe login -a 12345678 -s e7d767cd1432145820669be6a60a912e --url https://127.0.0.1:9543
+login successful, expires: 2023-05-02 11:18:24 +0200 CEST 
+```
+
+Folgende Kommandos funktionieren jedoch auch ohne Anmeldung.
+
+```
+c:\>mvcli.exe cacert --url https://127.0.0.1:9543
+Getting the root certificate of the micro vault certificate authority
+
+Usage:
+  mvcli cacert [flags]
+
+Flags:
+  -h, --help         help for cacert
+      --url string   insert the url to the mv service (default "https://localhost:8443")
+```
+
+
 
 # Endpunkte
 
@@ -206,7 +291,7 @@ Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Darauf
 
 Anmeldung als Admin/CLient an MV. 
 
-URL: POST /api/v1/admin/login
+URL: POST /api/v1/login
 
 In; user/pwd oder accesskey/secret
 
@@ -216,11 +301,21 @@ Out: Token, RefreshToken
 
 Refresh einer Anmeldung an MV. 
 
-URL: GET /api/v1/admin/login/refresh
+URL: GET /api/v1/login/refresh
 
 In; Authorization mit dem Refreshtoken
 
 Out: Token, RefreshToken
+
+### Private Key
+
+privater SChlüssel des CLients als PEM Block. 
+
+URL: GET /api/v1/login/privatekey
+
+In; Authorization mit Client Token
+
+Out: PEM Datei mit dem privaten RSA SChlüssel
 
 ## Admin
 
@@ -276,4 +371,16 @@ Mit diesem Endpunkt kann ein Playbook hoch geladen und ausgeführt werden. Diese
 
 ## Client
 
+### Client Zertifikat
 
+Erzeugt ein neues Zertifikat für den Client. Benutzbar für  x509.KeyUsageKeyEncipherment, x509.KeyUsageDigitalSignature,, x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth. Dieses Zertifikat ist erzeugt mit dem privaten SChlüssel des Clients und signiert über die CA des MV Services.
+
+URL: GET /api/v1/clients/certificate
+
+In; Template für das Zertifikat. (x509.CertificateRequest als PEM: Type CERTIFICATE REQUEST)
+
+Out: Zertifikat als PEM Block
+
+## 
+
+## 

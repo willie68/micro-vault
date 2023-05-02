@@ -13,7 +13,7 @@ import (
 // loginCmd represents the login command
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "logout from a microvault service",
+	Short: "Logout from a microvault service",
 	Long:  `With logout you invalidate a mvcli session.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := cmdutils.AdminLogout()

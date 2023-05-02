@@ -13,8 +13,8 @@ import (
 // groupCmd represents the group command
 var getGroupCmd = &cobra.Command{
 	Use:   "group",
-	Short: "getting a single group",
-	Long:  `getting all properties of a single group`,
+	Short: "Getting a single group",
+	Long:  `Getting all properties of a single group`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		adm, err := cmdutils.AdminClient()
 		if err != nil {

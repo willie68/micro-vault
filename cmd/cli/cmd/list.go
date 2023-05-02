@@ -12,8 +12,8 @@ import (
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "list different objects",
-	Long:  `giving a list of different objects like groups, client or keys`,
+	Short: "List different objects",
+	Long:  `Giving a list of different objects like groups, client or keys`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
 	},

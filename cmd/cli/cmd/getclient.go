@@ -13,8 +13,8 @@ import (
 // getClientCmd represents the client command
 var getClientCmd = &cobra.Command{
 	Use:   "client",
-	Short: "getting a single client",
-	Long:  `getting all properties of a client`,
+	Short: "Getting a single client",
+	Long:  `Getting all properties of a client`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		adm, err := cmdutils.AdminClient()
 		if err != nil {
