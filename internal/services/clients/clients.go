@@ -249,6 +249,19 @@ func (c *Clients) Certificate(tk string, certTemplate string) (string, error) {
 	return string(caPEM.Bytes()), nil
 }
 
+// GetPrivateKey get the private certificate for the client
+func (c *Clients) GetPrivateKey(tk string) (string, error) {
+	_, err := c.checkTk(tk)
+	if err != nil {
+		return "", err
+	}
+	cl, err := c.client(tk)
+	if err != nil {
+		return "", err
+	}
+	return string(cl.Key), nil
+}
+
 // CreateEncryptKey creates a new encryption key, stores it into the storage with id
 func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, error) {
 	jt, err := c.checkTk(tk)

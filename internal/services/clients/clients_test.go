@@ -9,7 +9,6 @@ import (
 	"encoding/asn1"
 	"encoding/json"
 	"encoding/pem"
-	"fmt"
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -134,7 +133,7 @@ func TestCertificate(t *testing.T) {
 	csr, err := createCsrPem(pk)
 	ast.Nil(err)
 	ast.NotEmpty(csr)
-	fmt.Println(csr)
+
 	pcrt, err := cls.Certificate(tk, csr)
 	ast.Nil(err)
 	ast.NotEmpty(pcrt)
@@ -154,6 +153,11 @@ func TestCertificate(t *testing.T) {
 
 	ast.Equal(1, len(xc.Subject.Organization))
 	ast.Equal("Organisation", xc.Subject.Organization[0])
+
+	k1, err := cls.GetPrivateKey(tk)
+	ast.Nil(err)
+	ast.NotEmpty(k1)
+	ast.Equal(k, k1)
 }
 
 func createCsrPem(k any) (string, error) {

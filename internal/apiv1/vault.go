@@ -34,7 +34,7 @@ func NewVaultHandler() api.Handler {
 func (v *VaultHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/clients/certificate", v.PostCert)
-	router.Get("/clients/certificate/{name}", v.GetCert)
+	router.Get("/clients/certificate/{name}", v.GetCertByName)
 	router.Post("/groups/keys", v.PostKeys)
 	router.Get("/groups/keys/{id}", v.GetKey)
 	router.Post("/groups/crypt", v.PostCrypt)
@@ -83,7 +83,7 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 	}
 }
 
-// GetCert getting the public key of a client certificate for the named client
+// GetCertByName getting the public key of a client certificate for the named client
 // @Summary getting the public key of a client certificate for the named client
 // @Tags configs
 // @Accept  pem file
@@ -94,7 +94,7 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 // @Failure 400 {object} serror.Serr "client error information as json"
 // @Failure 500 {object} serror.Serr "server error information as json"
 // @Router /vault/certificate/{name} [post]
-func (v *VaultHandler) GetCert(response http.ResponseWriter, request *http.Request) {
+func (v *VaultHandler) GetCertByName(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
 	if err != nil {

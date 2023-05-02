@@ -10,6 +10,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/auth"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
@@ -35,6 +36,7 @@ func (l *LoginHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/", l.PostLogin)
 	router.Get("/refresh", l.GetRefresh)
+	router.Get("/privatekey", l.GetPrivateKey)
 	return BaseURL + loginSubpath, router
 }
 
@@ -180,4 +182,36 @@ func (l *LoginHandler) GetRefresh(response http.ResponseWriter, request *http.Re
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, tk)
+}
+
+// GetPrivateKey getting the personal private key of a client certificate
+// @Summary getting the personal private key of a client certificate
+// @Tags configs
+// @Accept  pem file
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /vault/certificate/{name} [post]
+func (l *LoginHandler) GetPrivateKey(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	ct, err := l.cl.GetPrivateKey(tk)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	render.Status(request, http.StatusOK)
+	response.Header().Add("Content-Type", "application/x-pem-file")
+	_, err = response.Write([]byte(ct))
+	if err != nil {
+		logging.Logger.Errorf("error writing PEM: %v", err)
+	}
 }

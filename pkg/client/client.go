@@ -166,6 +166,15 @@ func (c *Client) Name() string {
 	return c.name
 }
 
+// PrivateKey getting the public key of another client by name
+func (c *Client) PrivateKey() (*rsa.PrivateKey, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	return c.privatekey, nil
+}
+
 // Logout logging out this client
 func (c *Client) Logout() {
 	c.token = ""
@@ -177,6 +186,12 @@ func (c *Client) Certificate(template x509.CertificateRequest) (*x509.Certificat
 	err := c.checkToken()
 	if err != nil {
 		return nil, err
+	}
+	if c.privatekey == nil {
+		err = c.getPrivateKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &template, c.privatekey)
 	if err != nil {
@@ -458,6 +473,35 @@ func (c *Client) SignCheckSS(smsg pmodel.SignMessage) (bool, error) {
 		return false, err
 	}
 	return sm.Valid, nil
+}
+
+// getPrivateKey getting the public key of another client by name
+func (c *Client) getPrivateKey() error {
+	err := c.checkToken()
+	if err != nil {
+		return err
+	}
+
+	res, err := c.Get("login/privatekey")
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return ReadErr(res)
+	}
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return err
+	}
+
+	c.privatekey, err = cry.Pem2Prv(string(b))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetPublicKey getting the public key of another client by name

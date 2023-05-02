@@ -4,10 +4,14 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"fmt"
+	"encoding/pem"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/willie68/micro-vault/cmd/cli/cmd/cmdutils"
@@ -20,6 +24,10 @@ var getCertificateCmd = &cobra.Command{
 	Long:  `get a signed certificate from the mv ca`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cli, err := cmdutils.Client()
+		if err != nil {
+			return err
+		}
+		o, err := cmd.Flags().GetString("outputPath")
 		if err != nil {
 			return err
 		}
@@ -82,17 +90,25 @@ var getCertificateCmd = &cobra.Command{
 			EmailAddresses: []string{emailAddress},
 		}
 
-		p, err := cli.Certificate(template)
+		cert, err := cli.Certificate(template)
 		if err != nil {
 			return err
 		}
-		fmt.Println(p)
+		p, err := cli.PrivateKey()
+		if err != nil {
+			return err
+		}
+		err = outputCertificate(*cert, *p, filepath.Join(o, "cert.pem"), filepath.Join(o, "key.pem"))
+		if err != nil {
+			return err
+		}
 		return nil
 	},
 }
 
 func init() {
 	getCmd.AddCommand(getCertificateCmd)
+	getCertificateCmd.Flags().StringP("outputPath", "o", "./", "where to put the files")
 
 	getCertificateCmd.Flags().String("ucn", "", "insert the common name")
 	getCertificateCmd.Flags().String("uco", "", "insert the country")
@@ -103,4 +119,35 @@ func init() {
 	getCertificateCmd.Flags().String("usa", "", "insert the street address")
 	getCertificateCmd.Flags().String("upc", "", "insert the postal code")
 	getCertificateCmd.Flags().String("uem", "", "insert the email")
+}
+
+func outputCertificate(c x509.Certificate, p rsa.PrivateKey, certFile, privFile string) error {
+	certOut, err := os.Create(certFile)
+	if err != nil {
+		return err
+	}
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: c.Raw}); err != nil {
+		return err
+	}
+	if err := certOut.Close(); err != nil {
+		return err
+	}
+	log.Print("wrote cert.pem\n")
+
+	keyOut, err := os.OpenFile(privFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(&p)
+	if err != nil {
+		return err
+	}
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+		return err
+	}
+	if err := keyOut.Close(); err != nil {
+		return err
+	}
+	log.Print("wrote key.pem\n")
+	return nil
 }
