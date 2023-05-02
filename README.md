@@ -174,9 +174,10 @@ Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server
 
 Für eine einfache Benutzung gibt es neben dem Golang Client auch einen Kommandozeilenclient. Dieser deckt die wichtigsten Funktion sowohl im Admin Bereich wie auch im Client Bereich ab. 
 
-Hier die aktuellen HIlfen:
+Hier die aktuellen Hilfe:
 
 ```sh
+C:\>mvcli.exe --help
 micro-vault microservice dead simple key management service without any golden rings, just simple and secure.
 
 Usage:
@@ -186,7 +187,7 @@ Available Commands:
   cacert      Getting the root certificate of the ca
   completion  Generate the autocompletion script for the specified shell
   create      Create an object in your micro vault instance
-  get         Get some object from your micro vault instance
+  get         Get an object from your micro vault instance
   help        Help about any command
   list        List different objects
   login       Login into a microvault service
@@ -205,8 +206,7 @@ Ich hoffe das das UI selbsterklärend ist.
 ## Login
 
 ```
-## 
-
+C:\>mvcli.exe login --help
 With login you start an mvcli session. 
 Please enter the URL for the service,
 as well as the root user name and password.
@@ -228,21 +228,21 @@ Mit dem Login Kommando startet man eine MV Session. Je nach Parameter wird entwe
 Adminanmeldung
 
 ```
-c:\>mvcli.exe login -u root -p yxcvb --url https://127.0.0.1:9543
+C:\>mvcli.exe login -u root -p yxcvb --url https://127.0.0.1:9543
 login successful, expires: 2023-05-02 11:30:39 +0200 CEST 
 ```
 
 Clientanmeldung
 
 ```
-c:\>mvcli.exe login -a 12345678 -s e7d767cd1432145820669be6a60a912e --url https://127.0.0.1:9543
+C:\>mvcli.exe login -a 12345678 -s e7d767cd1432145820669be6a60a912e --url https://127.0.0.1:9543
 login successful, expires: 2023-05-02 11:18:24 +0200 CEST 
 ```
 
 Folgende Kommandos funktionieren jedoch auch ohne Anmeldung.
 
 ```
-c:\>mvcli.exe cacert --url https://127.0.0.1:9543
+C:\>mvcli.exe cacert --url https://127.0.0.1:9543
 Getting the root certificate of the micro vault certificate authority
 
 Usage:
