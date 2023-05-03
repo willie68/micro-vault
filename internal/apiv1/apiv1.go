@@ -29,7 +29,6 @@ const APIVersion = "1"
 var BaseURL = fmt.Sprintf("/api/v%s", APIVersion)
 
 // defining all sub pathes for api v1
-const configSubpath = "/config"
 const vaultSubpath = "/vault"
 const adminSubpath = "/admin"
 const loginSubpath = "/login"

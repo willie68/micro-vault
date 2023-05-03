@@ -1,5 +1,13 @@
 @echo off
-rem ".\3rd party\GoVersionSetter.exe" -i
+echo %1
+if "%~1"=="" goto simple
+if "%~1"=="-v" goto version
+goto simple
+
+:version
+".\3rd party\GoVersionSetter.exe" -i
+
+:simple
 ".\3rd party\GoVersionSetter.exe" -e npm -f ./webclient/micro-vault/package.json
 
 echo build web client
@@ -8,8 +16,13 @@ call build.cmd
 cd ..
 cd ..
 
-echo build mvcli
+rem build mvcli
 call .\deployments\buildcli.cmd
 
-echo build mv-service
+rem build mv-service
 call .\deployments\build.cmd
+
+echo copy to distribution
+mkdir .\dist
+move /Y .\mvcli.exe .\dist
+move /Y .\microvault-service.exe .\dist

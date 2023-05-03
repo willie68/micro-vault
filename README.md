@@ -3,15 +3,15 @@
 micro-vault microservice dead simple key management service without any golden rings, just simple and secure.
 The following documentation is written in German.
 
-## Wofür gibt es diesen Server?
+## Wofür gibt es diesen Service?
 
 ### Ausgangslage
 
-Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen 3 Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Auch nicht für einen Administrator. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
+Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen dritten öffentlichen Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Auch nicht für einen Administrator. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
-Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Servicen über eine 3 nicht vertraute Umgebung.
+Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Services über eine dritte nicht vertraute Umgebung.
 
-Schnell sieht man selbst wenn die eigentliche Kommunikation zwischen den einzelnen Servicen verschlüsselt stattfindet, kann ein Angreifer an die Daten gelangen. Denn wie die Datenablage erfolgt ist nicht immer ersichtlich und auf dem Messingsystem liegen zumindest zeitweise die Daten in unverschlüsselter Form vor. 
+Schnell sieht man selbst wenn die eigentliche Kommunikation zwischen den einzelnen Services verschlüsselt stattfindet, kann ein Angreifer an die Daten gelangen. Denn wie die Datenablage erfolgt ist nicht immer ersichtlich und auf dem Messingsystem liegen zumindest zeitweise die Daten in unverschlüsselter Form vor. 
 
 ![scenario_1](./doc/images/scenario_1.svg)
 
@@ -25,11 +25,11 @@ Aber wie kommt der Schlüssel von A nach B?
 
 Eine durchaus verbreitete Variante (ähnlich TLS) ist, den symmetrischen Schlüssel in der Payload zu schicken. Dieser wird dann mit dem öffentlichen Schlüssel des Zertifikates von Microservice 2 verschlüsselt. (Asymmetrische Verschlüsselung) Microservice 2 kann dann zunächst mit seinem privaten Schlüssel den symmetrischen Schlüssel dekodieren und dann die eigentliche Payload entschlüsseln.  
 
-Soweit funktioniert das auch recht gut. Nachteil ist allerdings, Microservice 1 muss irgendwie an den öffentlichen Schlüssel von Microservice 2 kommen. Um nicht eine direkte Abhängigkeit von MS1 zu MS2 zuhaben, kann man das konfigurativ erledigen oder man legt die Schlüssel in einen zentralen Schlüsselspeicher. D.h. Es gibt einen dritten Vertrauten, der als Vermittler dient.
+Soweit funktioniert das auch recht gut. Nachteil ist allerdings, Microservice 1 muss irgendwie an den öffentlichen Schlüssel von Microservice 2 kommen. Um nicht eine direkte Abhängigkeit von MS1 zu MS2 zuhaben, kann man das konfigurativ erledigen oder man legt die Schlüssel in einen zentralen Schlüsselspeicher. D.h. Es gibt einen dritten Vertrauten, hier Vault, der als Vermittler dient.
 
 ![scenario_3](./doc/images/scenario_3.svg)
 
-Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS2 muss einen asymmetrischen Schlüssel verwalten. In einer Multinode-Umgebung ist die Verwaltung dabei eine Herausforderung. Nicht nur, dass auf der MS2 Seite nun die privaten Schlüssel an alle Nodes verteilt werden müssen. Auch beim Wiederruf müssen die neuen Zertifikate an alle Nodes und den Vault ausgerollt werden. Und auch die Schlüsselgenerierung auf der Client 1 Seite birgt Risiken. Besser wäre es wenn auch der private Schlüssel von MS 2 mit in dem Vault gelegt würde und nur bei Bedarf über eine sichere Verbindung übertragen wird. Der nächste logische Schritt ist es dann, auch die symmetrischen Schlüssel im Vault zu speichern und nur eine ID zur Identifizierung des Schlüssels an den Client 2 weiter zu geben. Vault kann dann durch zusätzliche Attribut checken, ob ein Zugriff auf den Schlüssel erlaubt ist. Somit entfällt auch die Notwendigkeit den symmetrischen Schlüssel mit dem öffentlichen Schlüssel von Client 2 zu verschlüsseln. Zusätzlich kann nun die Nachricht auch weiteren Clients zur Verfügung gestellt werden, den Zugriff auf die Schlüssel regelt dann Vault anhand von Zugriffsregeln. 
+Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS2 muss einen asymmetrischen Schlüssel verwalten. In einer Multinode-Umgebung ist die Verwaltung dabei eine Herausforderung. Nicht nur, dass auf der MS2 Seite nun die privaten Schlüssel an alle Nodes verteilt werden müssen. Auch beim Wiederruf eines kompromittierten Zertifikates müssen die neuen Zertifikate an alle Nodes und Vault ausgerollt werden. Und auch die Schlüsselgenerierung auf der Client 1 Seite birgt Risiken. Besser wäre es wenn auch der private Schlüssel von MS 2 mit in dem Vault gelegt würde und nur bei Bedarf über eine sichere Verbindung übertragen wird. Der nächste logische Schritt ist es dann, auch die symmetrischen Schlüssel im Vault zu speichern und nur eine ID zur Identifizierung des Schlüssels an den Client 2 weiter zu geben. Vault kann dann durch zusätzliche Attribut checken, ob ein Zugriff auf den Schlüssel erlaubt ist. Somit entfällt auch die Notwendigkeit den symmetrischen Schlüssel mit dem öffentlichen Schlüssel von Client 2 zu verschlüsseln. Zusätzlich kann nun die Nachricht auch weiteren Clients zur Verfügung gestellt werden, den Zugriff auf die Schlüssel regelt dann Vault anhand von Zugriffsregeln. 
 
 ![scenario_4](./doc/images/scenario_4.svg)
 
@@ -39,11 +39,14 @@ Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschl�
 
 ### Was bietet nun MicroVault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen.   
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
 
-Zur Anbindung an die Clients werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich.   
+Zusätzlich ermöglich micro-vault auch die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). 
+Um den von micro vault ausgestellten Zertifikaten zu vertrauen reicht es aus das Stammzertifikat von micro-vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`)
 
-Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Auch der Adminzugangs arbeitet mit Token/RequestToken. 
+Zur Anbindung an micro vault werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich. 
+
+Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Auch der Adminzugangs arbeitet mit einem Token/RequestToken Verfahren. 
 
 ## Persistierung/Speichermodelle
 
@@ -51,7 +54,7 @@ Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 St
 
 1. In Memory: Hier werden alle relevanten Daten im Speicher des Microservice gehalten. Kein Multinodebetrieb.
 2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Kein Multinodebetrieb.
-3. MongoDB: Hier werden alle Daten in einer MongoDB abgelegt. 
+3. MongoDB: Hier werden alle Daten verschlüsselt in einer MongoDB abgelegt. 
 
 ### InMemory
 
@@ -59,7 +62,7 @@ Im Memory-only Modell werden alle Daten ausschließlich im Speicher gehalten. Wi
 
 ### Filesystem
 
-Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Breits gespeicherte Objekte haben allerdings Vorrang. Als Speicher wird eine BadgerDB verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
+Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zur Initialisierung verwendet werden. Bereits gespeicherte Objekte haben allerdings Vorrang. Als Speicher wird eine BadgerDB verwendet. Ein Multinodebetrieb ist mit diesem Storage nicht möglich.
 
 ### MongoDB
 
@@ -239,7 +242,7 @@ C:\>mvcli.exe login -a 12345678 -s e7d767cd1432145820669be6a60a912e --url https:
 login successful, expires: 2023-05-02 11:18:24 +0200 CEST 
 ```
 
-Folgende Kommandos funktionieren jedoch auch ohne Anmeldung.
+Folgende Kommandos funktionieren ohne Anmeldung.
 
 ```
 C:\>mvcli.exe cacert --url https://127.0.0.1:9543
@@ -276,7 +279,9 @@ Zum Validieren der Tokens steht der öffentliche Schlüssel (JWKS konform) unter
 }
 ```
 
+## Stamm-Zertifikat der MV CA
 
+Das Stammzertifikat der MV CA steht öffentlich unter /ca/cacert zur Verfügung. (Auch der interne Webserver verwendet ein eigenes Zertifikat, welchen von der internen CA signiert wurde.)
 
 ## Login
 
@@ -286,6 +291,8 @@ Beim Clientlogin müssen Accesskey (accesskey) und Secret (secret) übergeben we
 
 Der übliche Kommunikationsablauf (im Basic Auth Betrieb) ist wie folgt:
 Die erste Anmeldung erfolgt mit Usernamen/Passwort an dem Login Endpunkt. Daraufhin wird ein Token und ein RefreshToken erzeugt und dem Client übergeben. Mit dem Token, das üblicherweise 5 min gültig ist, können nun die verschiedenen Endpunkte benutzt werden. Ist das Token abgelaufen, kann mit dem RefreshToken an dem Endpunkt Refresh ein neues Token/RefreshToken Pärchen abgerufen werden. Das Refreshtoken ist üblicherweise 60 min gültig und kann nur zum Tokenrefresh verwendet werden. Ist auch das abgelaufen, muss eine erneute Anmeldung erfolgen.
+
+Bei der Erstellung eines CLients wird für diesen Client automatisch ein privater RSA Schlüssel generiert. Dieser kann auch hier abgerufen werden.
 
 ### Login
 
@@ -309,17 +316,17 @@ Out: Token, RefreshToken
 
 ### Private Key
 
-privater SChlüssel des CLients als PEM Block. 
+privater Schlüssel des Clients als PEM Block. 
 
 URL: GET /api/v1/login/privatekey
 
 In; Authorization mit Client Token
 
-Out: PEM Datei mit dem privaten RSA SChlüssel
+Out: PEM Datei mit dem privaten RSA Schlüssel
 
 ## Admin
 
-Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secreterneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
+Im Adminbereich finden sich die Endpunkte zum anlegen eines Clients, Secret-Erneuerung, Gruppen-Administration. Wenn nicht anders vermerkt, sind die Endpunkte nur über einen angemeldeten User mit Adminrechten zu benutzen. Andere sind auch für angemeldete Clients benutzbar. 
 
 ### Client CRUD
 
@@ -373,14 +380,10 @@ Mit diesem Endpunkt kann ein Playbook hoch geladen und ausgeführt werden. Diese
 
 ### Client Zertifikat
 
-Erzeugt ein neues Zertifikat für den Client. Benutzbar für  x509.KeyUsageKeyEncipherment, x509.KeyUsageDigitalSignature,, x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth. Dieses Zertifikat ist erzeugt mit dem privaten SChlüssel des Clients und signiert über die CA des MV Services.
+Erzeugt ein neues Zertifikat für den Client. Benutzbar für  x509.KeyUsageKeyEncipherment, x509.KeyUsageDigitalSignature,, x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth. Dieses Zertifikat ist erzeugt mit dem privaten Schlüssel des Clients und signiert über die CA des MV Services.
 
 URL: GET /api/v1/clients/certificate
 
 In; Template für das Zertifikat. (x509.CertificateRequest als PEM: Type CERTIFICATE REQUEST)
 
 Out: Zertifikat als PEM Block
-
-## 
-
-## 

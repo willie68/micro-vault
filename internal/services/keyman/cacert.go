@@ -190,10 +190,14 @@ func (c *CAService) createCert() error {
 	if err != nil {
 		return err
 	}
+	ser, err := randBigint()
+	if err != nil {
+		return err
+	}
 
 	// create the root certificate
 	ca := &x509.Certificate{
-		SerialNumber: big.NewInt(2019),
+		SerialNumber: &ser,
 		Subject: pkix.Name{
 			Organization:       []string{c.cfg.Subject["Organisation"]},
 			Country:            []string{c.cfg.Subject["Country"]},
@@ -233,6 +237,10 @@ func (c *CAService) createCert() error {
 
 // CertSignRequest signing the certificate
 func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) ([]byte, error) {
+	ser, err := randBigint()
+	if err != nil {
+		return []byte{}, err
+	}
 	// create client certificate template
 	clientCRTTemplate := x509.Certificate{
 		Signature:          template.Signature,
@@ -241,7 +249,7 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) (
 		PublicKeyAlgorithm: template.PublicKeyAlgorithm,
 		PublicKey:          template.PublicKey,
 		EmailAddresses:     template.EmailAddresses,
-		SerialNumber:       big.NewInt(2),
+		SerialNumber:       &ser,
 		Issuer:             c.caX509.Subject,
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
@@ -318,4 +326,17 @@ func hashKeyID(n *big.Int) []byte {
 	h := sha1.New()
 	h.Write(n.Bytes())
 	return h.Sum(nil)
+}
+
+func randBigint() (big.Int, error) {
+	//Max random value, a 130-bits integer, i.e 2^130 - 1
+	max := new(big.Int)
+	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
+
+	//Generate cryptographically strong pseudo-random between 0 - max
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return *big.NewInt(0), err
+	}
+	return *n, nil
 }
