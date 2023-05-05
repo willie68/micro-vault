@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Refreshcallback this callback is used on a automated refresh to give the library user the actual token and refresh token.
 type Refreshcallback func(tk, rt string)
 
 // AdminCl this is the admin client

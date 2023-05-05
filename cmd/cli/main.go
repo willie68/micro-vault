@@ -1,11 +1,17 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package main
 
-import "github.com/willie68/micro-vault/cmd/cli/cmd"
+import (
+	"os"
+
+	"github.com/willie68/micro-vault/cmd/cli/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
 }

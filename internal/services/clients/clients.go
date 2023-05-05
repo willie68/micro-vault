@@ -659,11 +659,9 @@ func search(ss any, s string) bool {
 		}
 	case []any:
 		for _, l := range vs {
-			switch v := l.(type) {
-			case string:
-				if v == s {
-					return true
-				}
+			v, ok := l.(string)
+			if ok && (v == s) {
+				return true
 			}
 		}
 	}

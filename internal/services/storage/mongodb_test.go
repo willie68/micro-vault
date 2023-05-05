@@ -343,7 +343,6 @@ func TestStoreDataErrorsMgo(t *testing.T) {
 
 	err := mgo.StoreData(dm)
 	ast.NotNil(err)
-
 }
 
 func dmEqualMgo(src, dst model.Data) bool {

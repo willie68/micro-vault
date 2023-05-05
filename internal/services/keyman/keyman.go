@@ -139,6 +139,7 @@ func saveToFile(f string, rsk *rsa.PrivateKey) error {
 	return nil
 }
 
+// JWKS returning then JWKS a collection of Jwk keys
 func (k *Keyman) JWKS() jwk.Set {
 	return k.jwks
 }

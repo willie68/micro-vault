@@ -18,6 +18,7 @@ const (
 	DoSHTTP = "shttp"
 )
 
+// SHttp a service encapsulating http and https server
 type SHttp struct {
 	cfn     config.Config
 	useSSL  bool
@@ -26,6 +27,7 @@ type SHttp struct {
 	Started bool
 }
 
+// NewSHttp creates a new shttp service
 func NewSHttp(cfn config.Config) (*SHttp, error) {
 	sh := SHttp{
 		cfn:     cfn,

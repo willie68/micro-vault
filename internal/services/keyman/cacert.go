@@ -324,7 +324,10 @@ func fileExists(filename string) bool {
 
 func hashKeyID(n *big.Int) []byte {
 	h := sha1.New()
-	h.Write(n.Bytes())
+	_, err := h.Write(n.Bytes())
+	if err != nil {
+		return []byte{}
+	}
 	return h.Sum(nil)
 }
 

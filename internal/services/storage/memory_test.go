@@ -323,7 +323,6 @@ func TestStoreDataErrors(t *testing.T) {
 
 	err = mem.StoreData(dm)
 	ast.NotNil(err)
-
 }
 
 func dmEqual(src, dst model.Data) bool {

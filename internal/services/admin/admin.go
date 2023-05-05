@@ -219,7 +219,7 @@ func (a *Admin) AddGroup(tk string, g model.Group) (string, error) {
 	return a.grs.AddGroup(g)
 }
 
-// Update updating a group to the service
+// UpdateGroup updating a group to the service
 func (a *Admin) UpdateGroup(tk string, g model.Group) (string, error) {
 	err := a.checkTk(tk)
 	if err != nil {
@@ -544,11 +544,9 @@ func search(ss any, s string) bool {
 		}
 	case []any:
 		for _, l := range vs {
-			switch v := l.(type) {
-			case string:
-				if v == s {
-					return true
-				}
+			v, ok := l.(string)
+			if ok && (v == s) {
+				return true
 			}
 		}
 	case []string:

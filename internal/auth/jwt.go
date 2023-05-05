@@ -68,7 +68,7 @@ func ParseJWTConfig(cfg config.Authentication) (JWTAuthConfig, error) {
 
 // DecodeJWT simple decode the jwt token string
 func DecodeJWT(token string) (JWT, error) {
-	jwt := JWT{
+	jt := JWT{
 		Token:   token,
 		IsValid: false,
 	}
@@ -85,26 +85,26 @@ func DecodeJWT(token string) (JWT, error) {
 	jwtParts := strings.Split(token, ".")
 	if len(jwtParts) < 2 {
 		err := errors.New("token missing payload part")
-		return jwt, err
+		return jt, err
 	}
 	var err error
 
-	jwt.Header, err = jwtDecodePart(jwtParts[0])
+	jt.Header, err = jwtDecodePart(jwtParts[0])
 	if err != nil {
 		err = fmt.Errorf("token header parse error, %v", err)
-		return jwt, err
+		return jt, err
 	}
 
-	jwt.Payload, err = jwtDecodePart(jwtParts[1])
+	jt.Payload, err = jwtDecodePart(jwtParts[1])
 	if err != nil {
 		err = fmt.Errorf("token payload parse error, %v", err)
-		return jwt, err
+		return jt, err
 	}
 	if len(jwtParts) > 2 {
-		jwt.Signature = jwtParts[2]
+		jt.Signature = jwtParts[2]
 	}
-	jwt.IsValid = true
-	return jwt, nil
+	jt.IsValid = true
+	return jt, nil
 }
 
 func jwtDecodePart(payload string) (map[string]any, error) {

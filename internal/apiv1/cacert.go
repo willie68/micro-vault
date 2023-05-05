@@ -40,5 +40,8 @@ func (c *CACert) GetCACert(response http.ResponseWriter, request *http.Request) 
 	response.Header().Add("Content-Disposition", `attachment; filename="certificate.pem"`)
 	response.Header().Set("Content-Type", "application/x-pem-file")
 	response.WriteHeader(http.StatusOK)
-	response.Write([]byte(crt))
+	_, err := response.Write([]byte(crt))
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusInternalServerError))
+	}
 }

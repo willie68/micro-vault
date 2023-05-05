@@ -274,11 +274,15 @@ func HashSecret(secret, salt []byte) string {
 	b = append(b, secret...)
 	b = append(b, salt...)
 	mySHA512 := sha512.New()
-	mySHA512.Write(b)
+	err := mySHA512.Write(b)
+	if err != nil {
+		return ""
+	}
 	sha := mySHA512.Sum(nil)
 	return hex.EncodeToString(sha)
 }
 
+// GenerateSalt generates a new salt
 func GenerateSalt() ([]byte, error) {
 	token := make([]byte, 64)
 	_, err := rand.Read(token)
