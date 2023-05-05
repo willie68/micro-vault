@@ -376,6 +376,12 @@ die Gruppeninfos aller Gruppen sind für jeden angemeldeten Client lesbar.
 
 Mit diesem Endpunkt kann ein Playbook hoch geladen und ausgeführt werden. Dieses gilt dann als Basis für den weiteren Betrieb.  Mit dem Playbook können Clients, Gruppen und Keys erstellt werden.
 
+URL: POST /admin/playbook
+
+In: Playbook Json
+
+Out: No Content
+
 ## Client
 
 ### Client Zertifikat
