@@ -35,7 +35,7 @@ func NewKeyman() (*Keyman, error) {
 		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
 	}
 
-	err := k.Init()
+	err := k.init()
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,8 @@ func NewKeyman() (*Keyman, error) {
 	return &k, nil
 }
 
-// Init initialize the key manager
-func (k *Keyman) Init() error {
+// init initialize the key manager
+func (k *Keyman) init() error {
 	var rsk *rsa.PrivateKey
 	var err error
 	if k.cfg.Service.PrivateKey != "" {
