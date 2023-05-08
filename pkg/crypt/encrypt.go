@@ -274,7 +274,7 @@ func HashSecret(secret, salt []byte) string {
 	b = append(b, secret...)
 	b = append(b, salt...)
 	mySHA512 := sha512.New()
-	err := mySHA512.Write(b)
+	_, err := mySHA512.Write(b)
 	if err != nil {
 		return ""
 	}

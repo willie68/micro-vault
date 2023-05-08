@@ -53,24 +53,6 @@ func NewCAService() (*CAService, error) {
 	return &c, nil
 }
 
-// X509Cert getting the X509 certificate
-func (c *CAService) X509Cert() *x509.Certificate {
-	return &c.caX509
-}
-
-// X509CertPEM getting the X509 certificate as pem
-func (c *CAService) X509CertPEM() (string, error) {
-	caPEM := new(bytes.Buffer)
-	err := pem.Encode(caPEM, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: c.CACert.caX509,
-	})
-	if err != nil {
-		return "", err
-	}
-	return string(caPEM.Bytes()), nil
-}
-
 func (c *CAService) init() error {
 	if c.cfg.PrivateKey == "" {
 		return errors.New("CA Cert Config should not be nil")
@@ -94,6 +76,24 @@ func (c *CAService) init() error {
 		}
 	}
 	return nil
+}
+
+// X509Cert getting the X509 certificate
+func (c *CAService) X509Cert() *x509.Certificate {
+	return &c.caX509
+}
+
+// X509CertPEM getting the X509 certificate as pem
+func (c *CAService) X509CertPEM() (string, error) {
+	caPEM := new(bytes.Buffer)
+	err := pem.Encode(caPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: c.CACert.caX509,
+	})
+	if err != nil {
+		return "", err
+	}
+	return string(caPEM.Bytes()), nil
 }
 
 func (c *CAService) loadCertificate() error {
@@ -251,6 +251,8 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) (
 		EmailAddresses:     template.EmailAddresses,
 		SerialNumber:       &ser,
 		Issuer:             c.caX509.Subject,
+		DNSNames:           template.DNSNames,
+		IPAddresses:        template.IPAddresses,
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
 		NotAfter:           time.Now().AddDate(1, 0, 0),
