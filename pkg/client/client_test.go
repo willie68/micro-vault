@@ -36,7 +36,7 @@ func initCl() {
 func TestCertificate(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://localhost:9543")
 	ast.Nil(err)
 	ast.NotNil(cli)
 

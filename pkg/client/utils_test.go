@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/x509"
 	"fmt"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/health"
 	"github.com/willie68/micro-vault/internal/services"
+	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/shttp"
 )
 
@@ -35,6 +37,14 @@ func StartServer() {
 		if err := services.InitServices(cfg); err != nil {
 			panic("error creating services")
 		}
+
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			errstr := fmt.Sprintf("could not create api routes. %s", err.Error())
+			panic(errstr)
+		}
+		ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
+		pool.AddCert(ca.X509Cert())
 
 		healthCheckConfig := health.CheckConfig(cfg.HealthCheck)
 		health.InitHealthSystem(healthCheckConfig, nil)
