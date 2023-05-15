@@ -34,7 +34,6 @@ func init() {
 			Rootpwd:    "yxcvb",
 			PrivateKey: "../../../testdata/private.pem",
 			CACert: config.CACert{
-				PrivateKey:  "../../../testdata/pk.pem",
 				Certificate: "../../../testdata/crt.pem",
 				Subject: map[string]string{
 					"Country":            "de",
