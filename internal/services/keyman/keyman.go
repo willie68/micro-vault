@@ -54,7 +54,7 @@ func (k *Keyman) init() error {
 		}
 	}
 	if rsk == nil {
-		rsk, err = rsa.GenerateKey(rand.Reader, 2048)
+		rsk, err = rsa.GenerateKey(rand.Reader, 4096)
 		if err != nil {
 			logging.Logger.Errorf("failed to generate private key: %s", err)
 			return err

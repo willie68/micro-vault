@@ -55,7 +55,6 @@ type Service struct {
 
 // CACert configuration of the ca cert service
 type CACert struct {
-	PrivateKey  string            `yaml:"privatekey"`
 	Certificate string            `yaml:"certificate"`
 	Subject     map[string]string `yaml:"subject"`
 }

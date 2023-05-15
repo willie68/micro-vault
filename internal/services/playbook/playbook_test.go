@@ -197,7 +197,7 @@ func newClient(n string, g []string) (*model.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	rsk, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, err
 	}

@@ -198,19 +198,30 @@ func Pub2Pem(k *rsa.PublicKey) ([]byte, error) {
 // Pem2Prv converts a pem string into a rsa private key
 func Pem2Prv(key string) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(key))
-	if block == nil || block.Type != "PRIVATE KEY" {
-		return nil, errors.New("error getting public key")
+	if block == nil || ((block.Type != "PRIVATE KEY") && (block.Type != "RSA PRIVATE KEY")) {
+		return nil, errors.New("error getting private key")
 	}
 
-	p, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
+	if block.Type == "PRIVATE KEY" {
+		p, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		prv, ok := p.(*rsa.PrivateKey)
+		if !ok {
+			return nil, errors.New("key is not a rsa private key")
+		}
+		return prv, nil
 	}
-	prv, ok := p.(*rsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("key is not a rsa private key")
+
+	if block.Type == "RSA PRIVATE KEY" {
+		prv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		return prv, nil
 	}
-	return prv, nil
+	return nil, fmt.Errorf("unknown private key format: %s", block.Type)
 }
 
 // Prv2Pem converts a private key to a PEM

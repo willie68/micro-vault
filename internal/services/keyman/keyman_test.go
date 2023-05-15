@@ -51,7 +51,7 @@ func TestNewKeyman(t *testing.T) {
 func TestKeymanPEM(t *testing.T) {
 	ast := assert.New(t)
 
-	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	rsk, err := rsa.GenerateKey(rand.Reader, 4096)
 	ast.Nil(err)
 	err = os.Remove(keyfile2)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {

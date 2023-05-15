@@ -567,7 +567,7 @@ func hash(p []byte) string {
 }
 
 func generateRSAKey() (string, string, error) {
-	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	rsk, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return "", "", err
 	}

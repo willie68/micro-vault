@@ -142,7 +142,7 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 }
 
 func (p *Playbook) generateNewKeyPem() (string, error) {
-	rsk, err := rsa.GenerateKey(rand.Reader, 2048)
+	rsk, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return "", err
 	}

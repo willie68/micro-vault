@@ -28,10 +28,10 @@ type Cert struct {
 
 // CAService the CA cert service
 type CAService struct {
-	cfg    config.CACert
-	CACert Cert
-	caX509 x509.Certificate
-	caPrv  rsa.PrivateKey
+	cfg       config.CACert
+	kmn       Keyman
+	caX509    x509.Certificate
+	certBytes []byte
 }
 
 // DoCAService dependency injection service name
@@ -54,10 +54,9 @@ func NewCAService() (*CAService, error) {
 }
 
 func (c *CAService) init() error {
-	if c.cfg.PrivateKey == "" {
-		return errors.New("CA Cert Config should not be nil")
-	}
-	if !fileExists(c.cfg.PrivateKey) {
+	c.kmn = do.MustInvokeNamed[Keyman](nil, DoKeyman)
+
+	if !fileExists(c.cfg.Certificate) {
 		err := c.createCert()
 		if err != nil {
 			logging.Logger.Errorf("error creating certificate: %v", err)
@@ -88,7 +87,7 @@ func (c *CAService) X509CertPEM() (string, error) {
 	caPEM := new(bytes.Buffer)
 	err := pem.Encode(caPEM, &pem.Block{
 		Type:  "CERTIFICATE",
-		Bytes: c.CACert.caX509,
+		Bytes: c.certBytes,
 	})
 	if err != nil {
 		return "", err
@@ -97,7 +96,7 @@ func (c *CAService) X509CertPEM() (string, error) {
 }
 
 func (c *CAService) loadCertificate() error {
-	f := c.cfg.PrivateKey
+	f := c.cfg.Certificate
 	b, err := os.ReadFile(f)
 	if err != nil {
 		return err
@@ -106,30 +105,10 @@ func (c *CAService) loadCertificate() error {
 	if p == nil {
 		return errors.New("no pem block found")
 	}
-	if p.Type != "RSA PRIVATE KEY" {
-		return errors.New("wrong pem block found")
-	}
-	c.CACert.caPrivateKey = p.Bytes
-
-	pk, err := x509.ParsePKCS1PrivateKey(p.Bytes)
-	if err != nil {
-		return err
-	}
-	c.caPrv = *pk
-
-	f = c.cfg.Certificate
-	b, err = os.ReadFile(f)
-	if err != nil {
-		return err
-	}
-	p, _ = pem.Decode(b)
-	if p == nil {
-		return errors.New("no pem block found")
-	}
 	if p.Type != "CERTIFICATE" {
 		return errors.New("wrong pem block found")
 	}
-	c.CACert.caX509 = p.Bytes
+	c.certBytes = p.Bytes
 	xc, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
 		return err
@@ -139,24 +118,9 @@ func (c *CAService) loadCertificate() error {
 }
 
 func (c *CAService) saveCertificate() error {
-	f := c.cfg.PrivateKey
+	f := c.cfg.Certificate
 	p := filepath.Dir(f)
 	err := os.MkdirAll(p, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	// Encode private key to pem
-	caPrivKeyPEM := new(bytes.Buffer)
-	err = pem.Encode(caPrivKeyPEM, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: c.CACert.caPrivateKey,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(f, caPrivKeyPEM.Bytes(), os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -165,7 +129,7 @@ func (c *CAService) saveCertificate() error {
 	caPEM := new(bytes.Buffer)
 	err = pem.Encode(caPEM, &pem.Block{
 		Type:  "CERTIFICATE",
-		Bytes: c.CACert.caX509,
+		Bytes: c.certBytes,
 	})
 	if err != nil {
 		return err
@@ -186,10 +150,7 @@ func (c *CAService) saveCertificate() error {
 
 func (c *CAService) createCert() error {
 	// create a private key
-	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		return err
-	}
+	caPrivKey := c.kmn.PrivateKey()
 	ser, err := randBigint()
 	if err != nil {
 		return err
@@ -224,14 +185,8 @@ func (c *CAService) createCert() error {
 		return err
 	}
 
-	xc := x509.MarshalPKCS1PrivateKey(caPrivKey)
-	caCert := Cert{
-		caX509:       caBytes,
-		caPrivateKey: xc,
-	}
-	c.CACert = caCert
+	c.certBytes = caBytes
 	c.caX509 = *ca
-	c.caPrv = *caPrivKey
 	return nil
 }
 
@@ -256,11 +211,11 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) (
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
 		NotAfter:           time.Now().AddDate(1, 0, 0),
-		AuthorityKeyId:     hashKeyID(c.caPrv.N),
+		AuthorityKeyId:     hashKeyID(c.kmn.PrivateKey().N),
 		KeyUsage:           x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	}
-	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &c.caX509, pub, &c.caPrv)
+	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &c.caX509, pub, c.kmn.PrivateKey())
 }
 
 // CreateCertificate create a usual simple certificate
@@ -283,7 +238,7 @@ func (c *CAService) CreateCertificate() (*Cert, error) {
 			OrganizationalUnit: []string{c.cfg.Subject["OrganizationalUnit"]},
 		},
 		SubjectKeyId:   hashKeyID(certPrivKey.N),
-		AuthorityKeyId: hashKeyID(c.caPrv.N),
+		AuthorityKeyId: hashKeyID(c.kmn.PrivateKey().N),
 		IPAddresses:    []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
 		NotBefore:      time.Now(),
 		NotAfter:       time.Now().AddDate(10, 0, 0),
@@ -291,7 +246,7 @@ func (c *CAService) CreateCertificate() (*Cert, error) {
 		KeyUsage:       x509.KeyUsageDigitalSignature,
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, &c.caX509, &certPrivKey.PublicKey, certPrivKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, &c.caX509, &certPrivKey.PublicKey, c.kmn.PrivateKey())
 	if err != nil {
 		return nil, err
 	}
