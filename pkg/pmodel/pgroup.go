@@ -32,7 +32,7 @@ type Message struct {
 // SignMessage this is a message for a en/decrypting request
 type SignMessage struct {
 	KeyInfo   KeyInfo `json:"keyInfo"`
-	Message   string  `json:"message"`   // the message to en/decrypt
+	Message   string  `json:"message"`   // the message to sign
 	Signature string  `json:"signature"` // the signature
 	Valid     bool    `json:"valid"`
 }
