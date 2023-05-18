@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/samber/do"
@@ -22,15 +23,16 @@ var (
 func StartServer() {
 	if sh == nil {
 		fmt.Println("starting server")
+		_ = os.Chdir("../../")
 		// loading the config file
-		config.File = "../../testdata/service_local.yaml"
+		config.File = "./testdata/service_local.yaml"
 		err := config.Load()
 		if err != nil {
 			panic("can't load local config")
 		}
 
 		cfg = config.Get()
-		cfg.Service.Playbook = "../../testdata/playbook.json"
+		cfg.Service.Playbook = "./testdata/playbook.json"
 		cfg.Provide()
 		if err := services.InitServices(cfg); err != nil {
 			panic("error creating services")

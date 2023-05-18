@@ -51,3 +51,10 @@ type EncryptKeyInfo struct {
 	Key     string    `json:"key"`
 	Created time.Time `json:"created"`
 }
+
+//EncryptKey the key for en/decryption
+type EncryptKey struct {
+	ID  string `json:"id"`
+	Alg string `json:"alg"`
+	Key string `json:"key"`
+}

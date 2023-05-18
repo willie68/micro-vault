@@ -23,7 +23,7 @@ func initCl() {
 			panic(err)
 		}
 		adm = ad
-		pb, err := os.ReadFile("../../testdata/playbook.json")
+		pb, err := os.ReadFile("./testdata/playbook.json")
 		if err != nil {
 			panic(err)
 		}
@@ -221,6 +221,42 @@ func TestEncryptClient(t *testing.T) {
 	ast.NotEmpty(text)
 	ast.Equal(orgtxt, text)
 	t.Logf("text: %s", text)
+}
+
+func TestHMAC(t *testing.T) {
+	initCl()
+	ast := assert.New(t)
+	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli)
+	defer cli.Logout()
+
+	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	ast.Nil(err)
+	ast.NotNil(cli2)
+	defer cli2.Logout()
+
+	dt := struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{
+		Username: "Willie",
+		Password: "sehrGeheim",
+	}
+
+	js, err := json.Marshal(dt)
+	ast.Nil(err)
+	ast.NotNil(js)
+	orgtxt := string(js)
+
+	msg, err := cli.HMAC256("group2", orgtxt)
+	ast.Nil(err)
+	ast.NotEmpty(msg)
+	t.Logf("data: %v", msg)
+
+	ok, err := cli2.HMAC256Verify(*msg)
+	ast.Nil(err)
+	ast.True(ok)
 }
 
 func TestSigning(t *testing.T) {

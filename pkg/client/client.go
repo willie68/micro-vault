@@ -2,8 +2,10 @@ package client
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
@@ -239,29 +241,9 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-
-	jd := struct {
-		Group string `json:"group"`
-	}{
-		Group: g,
-	}
-	res, err := c.PostJSON("vault/groups/keys", jd)
+	jr, err := c.createKey4Group(g)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
-		return "", "", err
-	}
-	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
-		return "", "", ReadErr(res)
-	}
-	jr := struct {
-		ID  string `json:"id"`
-		Alg string `json:"alg"`
-		Key string `json:"key"`
-	}{}
-	err = ReadJSON(res, &jr)
-	if err != nil {
-		logging.Logger.Errorf("json convert failed: %v", err)
+		logging.Logger.Errorf("key creation failed: %v", err)
 		return "", "", err
 	}
 	b, err := hex.DecodeString(jr.Key)
@@ -283,22 +265,10 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	res, err := c.Get(fmt.Sprintf("vault/groups/keys/%s", id))
+	jr, err := c.getKey4ID(id)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
 		return "", err
 	}
-	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
-		return "", ReadErr(res)
-	}
-	jr := struct {
-		ID  string `json:"id"`
-		Alg string `json:"alg"`
-		Key string `json:"key"`
-	}{}
-	err = ReadJSON(res, &jr)
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
 		logging.Logger.Errorf("hex convert failed: %v", err)
@@ -414,6 +384,78 @@ func (c *Client) Decrypt4Client(dt string) (string, error) {
 		return "", err
 	}
 	return cs, err
+}
+
+// HMAC256 building a HMAC256 hash of a string
+func (c *Client) HMAC256(g, dt string) (*pmodel.SignMessage, error) {
+	err := c.checkToken()
+	if err != nil {
+		return nil, err
+	}
+
+	jr, err := c.createKey4Group(g)
+	if err != nil {
+		logging.Logger.Errorf("key creation failed: %v", err)
+		return nil, err
+	}
+	b, err := hex.DecodeString(jr.Key)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return nil, err
+	}
+	h := hmac.New(sha256.New, b)
+
+	// Write Data to it
+	_, err = h.Write([]byte(dt))
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return nil, err
+	}
+
+	// Get result and encode as hexadecimal string
+	sha := hex.EncodeToString(h.Sum(nil))
+	ki := pmodel.KeyInfo{
+		Alg: "HMAC256",
+		KID: jr.ID,
+	}
+	msg := pmodel.SignMessage{
+		KeyInfo:   ki,
+		Signature: sha,
+		Message:   dt,
+		Valid:     true,
+	}
+	return &msg, nil
+}
+
+// HMAC256Verify checking the hash
+func (c *Client) HMAC256Verify(msg pmodel.SignMessage) (bool, error) {
+	err := c.checkToken()
+	if err != nil {
+		return false, err
+	}
+
+	jr, err := c.getKey4ID(msg.KeyInfo.KID)
+	if err != nil {
+		logging.Logger.Errorf("key reading failed: %v", err)
+		return false, err
+	}
+	b, err := hex.DecodeString(jr.Key)
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return false, err
+	}
+	h := hmac.New(sha256.New, b)
+
+	// Write Data to it
+	_, err = h.Write([]byte(msg.Message))
+	if err != nil {
+		logging.Logger.Errorf("hex convert failed: %v", err)
+		return false, err
+	}
+
+	// Get result and encode as hexadecimal string
+	sha := hex.EncodeToString(h.Sum(nil))
+	return sha == msg.Signature, nil
 }
 
 // Sign data with the private key
@@ -550,6 +592,45 @@ func (c *Client) CryptSS(m pmodel.Message) (*pmodel.Message, error) {
 		return nil, err
 	}
 	return &m, nil
+}
+
+func (c *Client) createKey4Group(g string) (*pmodel.EncryptKey, error) {
+	jd := struct {
+		Group string `json:"group"`
+	}{
+		Group: g,
+	}
+	res, err := c.PostJSON("vault/groups/keys", jd)
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusCreated {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var jr pmodel.EncryptKey
+	err = ReadJSON(res, &jr)
+	if err != nil {
+		logging.Logger.Errorf("json convert failed: %v", err)
+		return nil, err
+	}
+	return &jr, nil
+}
+
+func (c *Client) getKey4ID(id string) (*pmodel.EncryptKey, error) {
+	res, err := c.Get(fmt.Sprintf("vault/groups/keys/%s", id))
+	if err != nil {
+		logging.Logger.Errorf("key request failed: %v", err)
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	var jr pmodel.EncryptKey
+	err = ReadJSON(res, &jr)
+	return &jr, nil
 }
 
 // Get getting something from the endpoint

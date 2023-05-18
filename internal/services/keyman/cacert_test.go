@@ -23,7 +23,7 @@ const (
 func TestNewCaCert(t *testing.T) {
 	ast := assert.New(t)
 
-	os.Remove(certfile)
+	_ = os.Remove(certfile)
 
 	cfg := config.Config{
 		Service: config.Service{
