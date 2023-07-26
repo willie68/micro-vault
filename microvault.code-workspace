@@ -4,12 +4,6 @@
 			"path": "."
 		},
 		{
-			"path": "../Virtual-TPS"
-		},
-		{
-			"path": "../ReCoS-Remote-Command-Service"
-		},
-		{
 			"path": "../go-micro"
 		}
 	]

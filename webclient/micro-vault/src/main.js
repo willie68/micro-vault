@@ -15,6 +15,7 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
+import Chips from 'primevue/chips';
 import ConfirmDialog from 'primevue/confirmdialog';
 import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
@@ -43,6 +44,7 @@ app.directive('tooltip', Tooltip);
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('Checkbox', Checkbox)
+app.component('Chips', Chips)
 app.component('ConfirmDialog', ConfirmDialog)
 app.component('FileUpload', FileUpload)
 app.component('InputText', InputText)

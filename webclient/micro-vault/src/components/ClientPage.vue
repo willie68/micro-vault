@@ -119,27 +119,33 @@ const copySK = () => {
                 <div class="p-pad-8">
                     <div class="grid">
                         <div class="col-1">Name</div>
-                        <div class="col-4">
-                            <InputText id="name" style="width:100vh" v-model="selectedClient.name" :readonly="!ledit" />
+                        <div class="col-5">
+                            <InputText id="name" v-model="selectedClient.name" :readonly="!ledit" />
                         </div>
                     </div>
                     <div class="grid">
                         <div class="col-1">AccessKey</div>
-                        <div class="col-4">
-                            <InputText id="accesskey" style="width:100vh" v-model="selectedClient.accesskey" readonly />
+                        <div class="col-5">
+                            <InputText id="accesskey" v-model="selectedClient.accesskey" readonly />
                         </div>
                     </div>
                     <div class="grid">
                         <div class="col-1">Secret</div>
-                        <div class="col-4">
-                            <InputText id="secret" style="width:100vh" v-model="selectedClient.secret" readonly
+                        <div class="col-5">
+                            <InputText id="secret" v-model="selectedClient.secret" readonly
                                 placeholder="*****" />
                         </div>
                     </div>
                     <div class="grid">
                         <div class="col-1">Groups</div>
                         <div class="col-4">
-                            <Listbox style="width:100vh" :options="selectedClient.groups" emptyMessage="no groups available"
+                            <Chips id="groups" v-model="selectedClient.groups" />
+                        </div>
+                    </div>
+                    <div class="grid">
+                        <div class="col-1">Groups</div>
+                        <div class="col-4">
+                            <Listbox :options="selectedClient.groups" emptyMessage="no groups available"
                                 readonly />
                         </div>
                     </div>
