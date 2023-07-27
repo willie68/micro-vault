@@ -276,6 +276,7 @@ func expires(t string) int64 {
 	return int64(expf)
 }
 
+// OutputCertificate writes the given certificate and private key to the desired files
 func OutputCertificate(c x509.Certificate, p rsa.PrivateKey, certFile, privFile string) error {
 	certOut, err := os.Create(certFile)
 	if err != nil {
