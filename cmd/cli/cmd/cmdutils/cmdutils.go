@@ -18,16 +18,6 @@ import (
 	"github.com/willie68/micro-vault/pkg/client"
 )
 
-var (
-	url       string
-	username  string
-	password  string
-	accesskey string
-	secret    string
-	token     string
-	admin     bool
-)
-
 // Conf the login conf
 type Conf struct {
 	Username  string `json:"username"`
@@ -39,46 +29,7 @@ type Conf struct {
 	URL       string `json:"url"`
 }
 
-/*func clients() {
-	d, ok := readCLConf()
-	if !ok {
-		d, err := AdminLogin()
-		if err != nil {
-			panic(err)
-		}
-	}
-	if !d.Admin {
-		logging.Logger.Error("you should be logged in as an admin")
-		return
-	}
-	if d.Expired < time.Now().Unix() {
-		logging.Logger.Error("token expired. please log in again")
-		return
-	}
-	adm, err := client.LoginAdminToken(d.Token, d.URL)
-	if err != nil {
-		logging.Logger.Errorf("error getting clients: %v", err)
-		return
-	}
-	cls, err := adm.Clients()
-	if err != nil {
-		logging.Logger.Errorf("error getting clients: %v", err)
-		return
-	}
-	fmt.Println("Name, AccessKey, Groups")
-	for _, cl := range cls {
-		fmt.Printf("%s, %s, %v\r\n", cl.Name, cl.AccessKey, cl.Groups)
-	}
-}
-
-func login() {
-	if username != "" {
-		AdminLogin()
-		return
-	}
-	_ = clientLogin()
-}
-*/
+var admin bool
 
 // AdminLogin login into the admin account
 func AdminLogin(username, password, url string) (*Conf, error) {

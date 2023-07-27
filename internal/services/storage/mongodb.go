@@ -26,7 +26,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 // checking interface compatibility
@@ -159,7 +158,7 @@ func (m *MongoStorage) Init() error {
 func (m *MongoStorage) ensureTTLIndex(c *driver.Collection) (bool, error) {
 	idx := c.Indexes()
 	index := driver.IndexModel{
-		Keys:    bsonx.Doc{{Key: "expires", Value: bsonx.Int32(1)}},
+		Keys:    bson.D{{Key: "expires", Value: 1}},
 		Options: options.Index().SetExpireAfterSeconds(60).SetName("expires"),
 	}
 
