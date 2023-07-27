@@ -133,7 +133,7 @@ func TestCertificate(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(csr)
 
-	pcrt, err := cls.Certificate(tk, csr)
+	pcrt, err := cls.CreateCertificate(tk, csr)
 	ast.Nil(err)
 	ast.NotEmpty(pcrt)
 
@@ -257,7 +257,7 @@ func TestClientCertificate(t *testing.T) {
 	tk, _, _, err := cls.Login("12345678", "e7d767cd1432145820669be6a60a912e")
 	ast.Nil(err)
 
-	pub, err := cls.GetCertificate(tk, "tester1")
+	pub, err := cls.GetPublicKey(tk, "tester1")
 	ast.Nil(err)
 	ast.NotEmpty(pub)
 

@@ -4,24 +4,20 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/pem"
-	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/willie68/micro-vault/cmd/cli/cmd/cmdutils"
 )
 
-// getCertificateCmd represents the certificate command
-var getCertificateCmd = &cobra.Command{
+// createCertificateCmd represents the certificate command
+var createCertificateCmd = &cobra.Command{
 	Use:   "certificate",
-	Short: "Get a signed certificate from the mv ca",
-	Long:  `Get a signed certificate from the mv ca`,
+	Short: "Create a signed certificate from the mv ca",
+	Long:  `Create a signed certificate from the mv ca`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cli, err := cmdutils.Client()
 		if err != nil {
@@ -90,7 +86,7 @@ var getCertificateCmd = &cobra.Command{
 			EmailAddresses: []string{emailAddress},
 		}
 
-		cert, err := cli.Certificate(template)
+		cert, err := cli.CreateCertificate(template)
 		if err != nil {
 			return err
 		}
@@ -98,7 +94,7 @@ var getCertificateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = outputCertificate(*cert, *p, filepath.Join(o, "cert.pem"), filepath.Join(o, "key.pem"))
+		err = cmdutils.OutputCertificate(*cert, *p, filepath.Join(o, "cert.pem"), filepath.Join(o, "key.pem"))
 		if err != nil {
 			return err
 		}
@@ -107,47 +103,16 @@ var getCertificateCmd = &cobra.Command{
 }
 
 func init() {
-	getCmd.AddCommand(getCertificateCmd)
-	getCertificateCmd.Flags().StringP("outputPath", "o", "./", "where to put the files")
+	createCmd.AddCommand(createCertificateCmd)
+	createCertificateCmd.Flags().StringP("outputPath", "o", "./", "where to put the files")
 
-	getCertificateCmd.Flags().String("ucn", "", "insert the common name")
-	getCertificateCmd.Flags().String("uco", "", "insert the country")
-	getCertificateCmd.Flags().String("upr", "", "insert the province")
-	getCertificateCmd.Flags().String("ulo", "", "insert the locality")
-	getCertificateCmd.Flags().String("uor", "", "insert the organisation")
-	getCertificateCmd.Flags().String("uou", "", "insert the organisation unit")
-	getCertificateCmd.Flags().String("usa", "", "insert the street address")
-	getCertificateCmd.Flags().String("upc", "", "insert the postal code")
-	getCertificateCmd.Flags().String("uem", "", "insert the email")
-}
-
-func outputCertificate(c x509.Certificate, p rsa.PrivateKey, certFile, privFile string) error {
-	certOut, err := os.Create(certFile)
-	if err != nil {
-		return err
-	}
-	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: c.Raw}); err != nil {
-		return err
-	}
-	if err := certOut.Close(); err != nil {
-		return err
-	}
-	log.Print("wrote cert.pem\n")
-
-	keyOut, err := os.OpenFile(privFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return err
-	}
-	privBytes, err := x509.MarshalPKCS8PrivateKey(&p)
-	if err != nil {
-		return err
-	}
-	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
-		return err
-	}
-	if err := keyOut.Close(); err != nil {
-		return err
-	}
-	log.Print("wrote key.pem\n")
-	return nil
+	createCertificateCmd.Flags().String("ucn", "", "insert the common name")
+	createCertificateCmd.Flags().String("uco", "", "insert the country")
+	createCertificateCmd.Flags().String("upr", "", "insert the province")
+	createCertificateCmd.Flags().String("ulo", "", "insert the locality")
+	createCertificateCmd.Flags().String("uor", "", "insert the organisation")
+	createCertificateCmd.Flags().String("uou", "", "insert the organisation unit")
+	createCertificateCmd.Flags().String("usa", "", "insert the street address")
+	createCertificateCmd.Flags().String("upc", "", "insert the postal code")
+	createCertificateCmd.Flags().String("uem", "", "insert the email")
 }

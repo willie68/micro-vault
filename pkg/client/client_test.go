@@ -47,7 +47,7 @@ func TestCertificate(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(csr)
 
-	crt, err := cli.Certificate(*csr)
+	crt, err := cli.CreateCertificate(*csr)
 	ast.Nil(err)
 	ast.NotEmpty(crt)
 

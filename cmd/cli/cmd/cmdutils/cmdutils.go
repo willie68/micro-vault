@@ -1,9 +1,13 @@
 package cmdutils
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -270,4 +274,35 @@ func expires(t string) int64 {
 		return 0
 	}
 	return int64(expf)
+}
+
+func OutputCertificate(c x509.Certificate, p rsa.PrivateKey, certFile, privFile string) error {
+	certOut, err := os.Create(certFile)
+	if err != nil {
+		return err
+	}
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: c.Raw}); err != nil {
+		return err
+	}
+	if err := certOut.Close(); err != nil {
+		return err
+	}
+	log.Print("wrote cert.pem\n")
+
+	keyOut, err := os.OpenFile(privFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	privBytes, err := x509.MarshalPKCS8PrivateKey(&p)
+	if err != nil {
+		return err
+	}
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+		return err
+	}
+	if err := keyOut.Close(); err != nil {
+		return err
+	}
+	log.Print("wrote key.pem\n")
+	return nil
 }

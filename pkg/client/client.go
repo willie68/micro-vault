@@ -183,8 +183,8 @@ func (c *Client) Logout() {
 	c.refreshToken = ""
 }
 
-// Certificate create and sign a new certificate for this client
-func (c *Client) Certificate(template x509.CertificateRequest) (*x509.Certificate, error) {
+// CreateCertificate create and sign a new certificate for this client
+func (c *Client) CreateCertificate(template x509.CertificateRequest) (*x509.Certificate, error) {
 	err := c.checkToken()
 	if err != nil {
 		return nil, err

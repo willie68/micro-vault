@@ -25,7 +25,7 @@ func LoginAdminUP(u string, p []byte, url string) (*AdminCl, error) {
 	return acl, nil
 }
 
-// LoginAdminCli login an admin via username password
+// LoginAdminCli login an admin via token/refreshtoken
 func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error) {
 	logging.Logger.Info("login as admin with token")
 	exp := expires(t)
@@ -43,7 +43,7 @@ func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error
 	return acl, nil
 }
 
-// LoginClientCli login an admin via username password
+// LoginClientCli login a client via  token/refreshtoken
 func LoginClientCli(t, rt string, url string, f Refreshcallback) (*Client, error) {
 	logging.Logger.Info("login as a client with token")
 	exp := expires(t)

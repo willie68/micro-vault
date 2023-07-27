@@ -206,8 +206,8 @@ func (c *Clients) generateRefreshToken(no time.Time, n string) (string, error) {
 	return string(tsig), nil
 }
 
-// Certificate generate a new certificate for the client, signed with the CA cert
-func (c *Clients) Certificate(tk string, certTemplate string) (string, error) {
+// CreateCertificate generate a new certificate for the client, signed with the CA cert
+func (c *Clients) CreateCertificate(tk string, certTemplate string) (string, error) {
 	_, err := c.checkTk(tk)
 	if err != nil {
 		return "", err
@@ -329,8 +329,8 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	return e, nil
 }
 
-// GetCertificate get the public certificate for another client (by name)
-func (c *Clients) GetCertificate(tk string, cl string) (string, error) {
+// GetPublicKey get the public key of another client (by name)
+func (c *Clients) GetPublicKey(tk string, cl string) (string, error) {
 	if _, err := c.checkTk(tk); err != nil {
 		return "", err
 	}
@@ -579,7 +579,7 @@ func (c *Clients) ssClient(tk string, msg pmodel.Message) (*pmodel.Message, erro
 		if msg.Recipient == "" {
 			return nil, errors.New("missing recipient")
 		}
-		key, err := c.GetCertificate(tk, msg.Recipient)
+		key, err := c.GetPublicKey(tk, msg.Recipient)
 		if err != nil {
 			return nil, err
 		}

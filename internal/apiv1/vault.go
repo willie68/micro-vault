@@ -70,7 +70,7 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	ct, err := v.cl.Certificate(tk, string(pb.Bytes()))
+	ct, err := v.cl.CreateCertificate(tk, string(pb.Bytes()))
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -107,7 +107,7 @@ func (v *VaultHandler) GetCertByName(response http.ResponseWriter, request *http
 		httputils.Err(response, request, serror.Wrapc(errors.New("name should not be empty"), http.StatusBadRequest))
 		return
 	}
-	ct, err := v.cl.GetCertificate(tk, name)
+	ct, err := v.cl.GetPublicKey(tk, name)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
