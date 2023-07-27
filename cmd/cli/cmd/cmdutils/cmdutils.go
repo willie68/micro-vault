@@ -29,11 +29,8 @@ type Conf struct {
 	URL       string `json:"url"`
 }
 
-var admin bool
-
 // AdminLogin login into the admin account
 func AdminLogin(username, password, url string) (*Conf, error) {
-	admin = true
 	adm, err := client.LoginAdminUP(username, []byte(password), url)
 	if err != nil {
 		return nil, err
@@ -57,7 +54,6 @@ func AdminLogin(username, password, url string) (*Conf, error) {
 
 // ClientLogin login into the admin account
 func ClientLogin(accesskey, secret, url string) (*Conf, error) {
-	admin = false
 	cli, err := client.LoginClient(accesskey, secret, url)
 	if err != nil {
 		return nil, err
