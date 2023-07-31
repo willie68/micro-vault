@@ -7,6 +7,9 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"fmt"
+	"net"
+	"net/url"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -63,6 +66,18 @@ var createCertificateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		dnss, err := cmd.Flags().GetStringArray("dns")
+		if err != nil {
+			return err
+		}
+		ips, err := cmd.Flags().GetStringArray("ip")
+		if err != nil {
+			return err
+		}
+		uris, err := cmd.Flags().GetStringArray("uri")
+		if err != nil {
+			return err
+		}
 
 		emailAddress := uem
 		subj := pkix.Name{
@@ -81,9 +96,33 @@ var createCertificateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		netIps := []net.IP{}
+
+		for _, ip := range ips {
+			nip := net.ParseIP(ip)
+			if nip == nil {
+				return fmt.Errorf("ip format unparsable: %s", ip)
+			}
+			netIps = append(netIps, nip)
+		}
+
+		nuris := []*url.URL{}
+
+		for _, uri := range uris {
+			ul, err := url.Parse(uri)
+			if err != nil {
+				return fmt.Errorf("url format unparsable: %s", uri)
+			}
+			nuris = append(nuris, ul)
+		}
+
 		template := x509.CertificateRequest{
 			RawSubject:     asn1Subj,
 			EmailAddresses: []string{emailAddress},
+			DNSNames:       dnss,
+			IPAddresses:    netIps,
+			URIs:           nuris,
 		}
 
 		cert, err := cli.CreateCertificate(template)
@@ -115,4 +154,7 @@ func init() {
 	createCertificateCmd.Flags().String("usa", "", "insert the street address")
 	createCertificateCmd.Flags().String("upc", "", "insert the postal code")
 	createCertificateCmd.Flags().String("uem", "", "insert the email")
+	createCertificateCmd.Flags().StringArray("dns", []string{}, "insert the dnsnames")
+	createCertificateCmd.Flags().StringArray("ip", []string{}, "insert the ip addresses")
+	createCertificateCmd.Flags().StringArray("uri", []string{}, "insert the uris")
 }

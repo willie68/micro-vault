@@ -208,6 +208,7 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) (
 		Issuer:             c.caX509.Subject,
 		DNSNames:           template.DNSNames,
 		IPAddresses:        template.IPAddresses,
+		URIs:               template.URIs,
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
 		NotAfter:           time.Now().AddDate(1, 0, 0),
