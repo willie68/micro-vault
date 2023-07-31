@@ -37,8 +37,7 @@ RUN chmod 0755 /src/micro-vault-service
 
 # hadolint ignore=DL3018
 RUN set -eux; \
-    apk add --no-progress --quiet --no-cache --upgrade --virtual .run-deps \
-        tzdata
+    apk add --no-progress --quiet --no-cache --upgrade --virtual .run-deps 
 
 # hadolint ignore=DL3018,SC2183,DL4006
 RUN set -eu +x; \
