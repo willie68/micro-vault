@@ -23,5 +23,8 @@ export default  {
     const { data } = await sapi.client.post(`${clientsEndpoint}`, c)
     return data
   },
-
+  async edit(c) {
+    const { data } = await sapi.client.post(`${clientsEndpoint}/${c.name}`, c)
+    return data
+  },
 }

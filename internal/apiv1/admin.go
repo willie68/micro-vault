@@ -505,8 +505,9 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 		return
 	}
 	du := struct {
-		Name   string   `json:"name"`
-		Groups []string `json:"groups"`
+		Name   string         `json:"name"`
+		Groups []string       `json:"groups"`
+		Crt    map[string]any `json:"crt"`
 	}{}
 
 	err = json.Unmarshal(b, &du)

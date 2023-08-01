@@ -322,6 +322,7 @@ func (a *Admin) AddGroups2Client(tk, n string, gs []string) (*pmodel.Client, err
 		Groups:    c.Groups,
 		KID:       c.KID,
 		Key:       c.Key,
+		Crt:       c.Crt,
 	}
 	return &co, nil
 }

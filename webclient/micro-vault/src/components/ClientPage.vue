@@ -9,7 +9,7 @@ const toast = useToast();
 const confirm = useConfirm();
 
 const selectedClient = ref();
-const tempClient = ref({ mname: "", accesskey: "", secret: "" });
+const tempClient = ref({ mname: "", accesskey: "", secret: "", crt: {} });
 const clients = ref([])
 const lclients = ref(false)
 const ledit = ref(false)
@@ -21,6 +21,9 @@ const getClients = () => {
     pclients.then((data) => {
         clients.value = []
         data.forEach((g) => {
+            if (g.crt == null) {
+                g.crt = {}
+            }
             clients.value.push(g)
         })
         if (!selectedClient.value) {
@@ -34,7 +37,7 @@ getClients()
 
 const addClient = () => {
     tempClient.value = selectedClient.value
-    selectedClient.value = { name: "", groups: [] }
+    selectedClient.value = { name: "", groups: [], crt: {} }
     lnew.value = true
     ledit.value = true
 }
@@ -43,6 +46,12 @@ const cancelClient = () => {
     ledit.value = false
     lnew.value = false
     selectedClient.value = tempClient.value
+}
+
+const editClient = () => {
+    tempClient.value = selectedClient.value
+    lnew.value = false
+    ledit.value = true
 }
 
 const saveClient = () => {
@@ -59,6 +68,13 @@ const saveClient = () => {
     } else {
         // saving the changes
         toast.add({ severity: "success", summary: 'save client', life: 3000 });
+        let pclient = sapi.sclient.edit(selectedClient.value)
+        pclient.then((data) => {
+            let message = 'client with name \"' + data.name + "\" saved."
+            toast.add({ severity: "success", summary: 'new client', detail: message, life: 10000 });
+            console.log(data)
+            selectedClient.value = data
+        })
     }
 
     ledit.value = false
@@ -109,6 +125,8 @@ const copySK = () => {
             <Panel header="Client properties">
                 <template #icons>
                     <Button text disabled label="|" />
+                    <Button icon="pi pi-pencil" aria-label="Edit Client" text @click="editClient" :disabled="ledit"
+                        v-tooltip.left="'Edit the selected client'"></Button>
                     <Button icon="pi pi-trash" aria-label="Delete Client" text @click="deleteClient" :disabled="ledit"
                         v-tooltip.left="'Delete the selected client'"></Button>
                     <Button icon="pi pi-save" aria-label="Save Client" text @click="saveClient" :disabled="!ledit"
@@ -116,42 +134,106 @@ const copySK = () => {
                     <Button icon="pi pi-times" aria-label="Cancel Client" text @click="cancelClient" :disabled="!ledit"
                         v-tooltip.left="'Cancel the editing'"></Button>
                 </template>
-                <div class="p-pad-8">
-                    <div class="grid">
-                        <div class="col-1">Name</div>
-                        <div class="col-5">
-                            <InputText id="name" v-model="selectedClient.name" :readonly="!ledit" />
+                <TabView>
+                    <TabPanel header="General">
+                        <div class="p-pad-8">
+                            <div class="grid">
+                                <div class="col-1">Name</div>
+                                <div class="col-5">
+                                    <InputText id="name" v-model="selectedClient.name" :readonly="!lnew" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">AccessKey</div>
+                                <div class="col-5">
+                                    <InputText id="accesskey" v-model="selectedClient.accesskey" readonly />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">Secret</div>
+                                <div class="col-5">
+                                    <InputText id="secret" v-model="selectedClient.secret" readonly
+                                        placeholder="*****" />
+                                    </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">Groups</div>
+                                <div class="col-4">
+                                    <Chips id="groups" v-model="selectedClient.groups" :disabled="!ledit" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="grid">
-                        <div class="col-1">AccessKey</div>
-                        <div class="col-5">
-                            <InputText id="accesskey" v-model="selectedClient.accesskey" readonly />
+                    </TabPanel>
+                    <TabPanel header="Certificate Request">
+                        <div class="p-pad-8">
+                            <div class="grid">
+                                <div class="col-1">Common Name</div>
+                                <div class="col-5">
+                                    <InputText id="ucn" v-model="selectedClient.crt.ucn" :readonly="!ledit" />
+                                </div>
+                                <div class="col-1">Country</div>
+                                <div class="col-5">
+                                    <InputText id="uco" v-model="selectedClient.crt.uco" :readonly="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">Province</div>
+                                <div class="col-5">
+                                    <InputText id="upr" v-model="selectedClient.crt.upr" :readonly="!ledit" />
+                                </div>
+                                <div class="col-1">Locality</div>
+                                <div class="col-5">
+                                    <InputText id="ulo" v-model="selectedClient.crt.ulo" :readonly="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">Organisation</div>
+                                <div class="col-5">
+                                    <InputText id="uor" v-model="selectedClient.crt.uor" :readonly="!ledit" />
+                                </div>
+                                <div class="col-1">Organisation Unit</div>
+                                <div class="col-5">
+                                    <InputText id="uou" v-model="selectedClient.crt.uou" :readonly="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">Street Address</div>
+                                <div class="col-5">
+                                    <InputText id="usa" v-model="selectedClient.crt.usa" :readonly="!ledit" />
+                                </div>
+                                <div class="col-1">Postal Code</div>
+                                <div class="col-5">
+                                    <InputText id="upc" v-model="selectedClient.crt.upc" :readonly="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">EMail</div>
+                                <div class="col-5">
+                                    <InputText id="uem" v-model="selectedClient.crt.uem" :readonly="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">DNS Names</div>
+                                <div class="col-9">
+                                    <Chips id="dns" v-model="selectedClient.crt.dns" :disabled="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">IPs</div>
+                                <div class="col-9">
+                                    <Chips id="groups" v-model="selectedClient.crt.ip" :disabled="!ledit" />
+                                </div>
+                            </div>
+                            <div class="grid">
+                                <div class="col-1">URIs</div>
+                                <div class="col-9">
+                                    <Chips id="groups" v-model="selectedClient.crt.uri" :disabled="!ledit" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="grid">
-                        <div class="col-1">Secret</div>
-                        <div class="col-5">
-                            <InputText id="secret" v-model="selectedClient.secret" readonly
-                                placeholder="*****" />
-                        </div>
-                    </div>
-                    <div class="grid">
-                        <div class="col-1">Groups</div>
-                        <div class="col-4">
-                            <Chips id="groups" v-model="selectedClient.groups" />
-                        </div>
-                    </div>
-                    <div class="grid">
-                        <div class="col-1">Groups</div>
-                        <div class="col-4">
-                            <Listbox :options="selectedClient.groups" emptyMessage="no groups available"
-                                readonly />
-                        </div>
-                    </div>
-                </div>
+                    </TabPanel>
+                </TabView>
             </Panel>
-            <Toolbar />
         </div>
     </div>
 </template>
