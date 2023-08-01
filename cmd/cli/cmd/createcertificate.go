@@ -81,17 +81,30 @@ var createCertificateCmd = &cobra.Command{
 
 		emailAddress := uem
 		subj := pkix.Name{
-			CommonName:         ucn,
-			Country:            []string{uco},
-			Province:           []string{upr},
-			Locality:           []string{ulo},
-			Organization:       []string{uor},
-			OrganizationalUnit: []string{uou},
-			StreetAddress:      []string{usa},
-			PostalCode:         []string{upc},
+			CommonName: ucn,
+		}
+		if uco != "" {
+			subj.Country = []string{uco}
+		}
+		if upr != "" {
+			subj.Province = []string{upr}
+		}
+		if ulo != "" {
+			subj.Locality = []string{ulo}
+		}
+		if uor != "" {
+			subj.Organization = []string{uor}
+		}
+		if uor != "" {
+			subj.OrganizationalUnit = []string{uou}
+		}
+		if uor != "" {
+			subj.StreetAddress = []string{usa}
+		}
+		if uor != "" {
+			subj.PostalCode = []string{upc}
 		}
 		rawSubj := subj.ToRDNSequence()
-
 		asn1Subj, err := asn1.Marshal(rawSubj)
 		if err != nil {
 			return err

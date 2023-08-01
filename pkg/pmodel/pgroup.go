@@ -11,13 +11,13 @@ type Group struct {
 
 // Client the public client model
 type Client struct {
-	Name      string            `json:"name"`
-	AccessKey string            `json:"accesskey"`
-	Secret    string            `json:"secret"`
-	Groups    []string          `json:"groups"`
-	KID       string            `json:"kid,omitempty"`
-	Key       string            `json:"key,omitempty"`
-	Crt       map[string]string `json:"crt,omitempty"`
+	Name      string         `json:"name"`
+	AccessKey string         `json:"accesskey"`
+	Secret    string         `json:"secret"`
+	Groups    []string       `json:"groups"`
+	KID       string         `json:"kid,omitempty"`
+	Key       string         `json:"key,omitempty"`
+	Crt       map[string]any `json:"crt,omitempty"`
 }
 
 // Message this is a message for a en/decrypting request

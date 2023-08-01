@@ -250,6 +250,7 @@ func (a *Admin) Clients(tk string) ([]model.Client, error) {
 			AccessKey: c.AccessKey,
 			Secret:    "",
 			Groups:    c.Groups,
+			Crt:       c.Crt,
 		}
 		cl = append(cl, nc)
 		return true
@@ -272,6 +273,7 @@ func (a *Admin) Client4Group(tk, g string) ([]model.Client, error) {
 				AccessKey: c.AccessKey,
 				Secret:    "",
 				Groups:    c.Groups,
+				Crt:       c.Crt,
 			}
 			cl = append(cl, nc)
 		}
@@ -293,7 +295,7 @@ func (a *Admin) NewClient(tk, n string, gs []string) (*pmodel.Client, error) {
 	return cl, nil
 }
 
-// AddGroups2Client creating a new client for the system
+// AddGroups2Client adding groups to a client
 func (a *Admin) AddGroups2Client(tk, n string, gs []string) (*pmodel.Client, error) {
 	err := a.checkTk(tk)
 	if err != nil {
@@ -311,6 +313,40 @@ func (a *Admin) AddGroups2Client(tk, n string, gs []string) (*pmodel.Client, err
 		return nil, serror.ErrNotExists
 	}
 	c.Groups = gs
+	err = a.stg.UpdateClient(*c)
+	if err != nil {
+		return nil, err
+	}
+	co := pmodel.Client{
+		Name:      c.Name,
+		AccessKey: c.AccessKey,
+		Secret:    "*****",
+		Groups:    c.Groups,
+		KID:       c.KID,
+		Key:       c.Key,
+		Crt:       c.Crt,
+	}
+	return &co, nil
+}
+
+// ChangeCertificateTemplateClient changing the certificate template data of a client
+func (a *Admin) ChangeCertificateTemplateClient(tk, n string, crt map[string]any) (*pmodel.Client, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	if !a.stg.HasClient(n) {
+		return nil, serror.ErrNotExists
+	}
+	ak, ok := a.stg.AccessKey(n)
+	if !ok {
+		return nil, serror.ErrNotExists
+	}
+	c, ok := a.stg.GetClient(ak)
+	if !ok {
+		return nil, serror.ErrNotExists
+	}
+	c.Crt = crt
 	err = a.stg.UpdateClient(*c)
 	if err != nil {
 		return nil, err

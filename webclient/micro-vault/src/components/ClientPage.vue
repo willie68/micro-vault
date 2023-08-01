@@ -122,7 +122,10 @@ const copySK = () => {
             </Panel>
         </div>
         <div class="col-10 justify-content-left" v-if="selectedClient">
-            <Panel header="Client properties">
+            <Panel>
+                <template #header>
+                    Client properties: <strong>{{ selectedClient.name }}</strong>
+                </template>
                 <template #icons>
                     <Button text disabled label="|" />
                     <Button icon="pi pi-pencil" aria-label="Edit Client" text @click="editClient" :disabled="ledit"
@@ -152,9 +155,8 @@ const copySK = () => {
                             <div class="grid">
                                 <div class="col-1">Secret</div>
                                 <div class="col-5">
-                                    <InputText id="secret" v-model="selectedClient.secret" readonly
-                                        placeholder="*****" />
-                                    </div>
+                                    <InputText id="secret" v-model="selectedClient.secret" readonly placeholder="*****" />
+                                </div>
                             </div>
                             <div class="grid">
                                 <div class="col-1">Groups</div>

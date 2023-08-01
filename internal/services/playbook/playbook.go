@@ -122,6 +122,7 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 		Groups:    c.Groups,
 		Key:       c.Key,
 		KID:       c.KID,
+		Crt:       c.Crt,
 	}
 	_, err = p.stg.AddClient(cl)
 	if err != nil {

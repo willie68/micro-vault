@@ -352,6 +352,7 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 			Name:      c.Name,
 			AccessKey: c.AccessKey,
 			Groups:    c.Groups,
+			Crt:       c.Crt,
 		})
 	}
 	render.Status(request, http.StatusOK)
@@ -515,7 +516,12 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
 	}
-	cl, err := a.adm.AddGroups2Client(tk, du.Name, du.Groups)
+	_, err = a.adm.AddGroups2Client(tk, du.Name, du.Groups)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	cl, err := a.adm.ChangeCertificateTemplateClient(tk, du.Name, du.Crt)
 	if err != nil {
 		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
 		return
@@ -525,6 +531,7 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 		AccessKey: cl.AccessKey,
 		Secret:    "*****",
 		Groups:    cl.Groups,
+		Crt:       cl.Crt,
 	}
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, ccl)

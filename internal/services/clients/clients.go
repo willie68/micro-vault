@@ -13,6 +13,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"log"
+	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -229,6 +231,10 @@ func (c *Clients) CreateCertificate(tk string, certTemplate string) (string, err
 		return "", errors.New("wrong pem block found, must be \"CERTIFICATE REQUEST\"")
 	}
 	tmp, err := x509.ParseCertificateRequest(p.Bytes)
+	if err != nil {
+		return "", err
+	}
+	tmp, err = c.mergeTemplate(tmp, cl.Crt)
 	if err != nil {
 		return "", err
 	}
@@ -693,4 +699,133 @@ func (c *Clients) client(tk string) (*model.Client, error) {
 		return nil, errors.New("client unknown")
 	}
 	return cl, nil
+}
+
+func (c *Clients) mergeTemplate(tmp *x509.CertificateRequest, crt map[string]any) (*x509.CertificateRequest, error) {
+	if tmp.Subject.CommonName == "" {
+		tmp.Subject.CommonName = crt["ucn"].(string)
+	}
+	if (len(tmp.Subject.Country) == 0) && (crt["uco"] != nil) {
+		if tmp.Subject.Country == nil {
+			tmp.Subject.Country = make([]string, 0)
+		}
+		tmp.Subject.Country = append(tmp.Subject.Country, crt["uco"].(string))
+	}
+	if (len(tmp.Subject.Province) == 0) && (crt["upr"] != nil) {
+		if tmp.Subject.Province == nil {
+			tmp.Subject.Province = make([]string, 0)
+		}
+		tmp.Subject.Province = append(tmp.Subject.Province, crt["upr"].(string))
+	}
+	if (len(tmp.Subject.Locality) == 0) && (crt["ulo"] != nil) {
+		if tmp.Subject.Locality == nil {
+			tmp.Subject.Locality = make([]string, 0)
+		}
+		tmp.Subject.Locality = append(tmp.Subject.Locality, crt["ulo"].(string))
+	}
+	if (len(tmp.Subject.Organization) == 0) && (crt["uor"] != nil) {
+		if tmp.Subject.Organization == nil {
+			tmp.Subject.Organization = make([]string, 0)
+		}
+		tmp.Subject.Organization = append(tmp.Subject.Organization, crt["uor"].(string))
+	}
+	if (len(tmp.Subject.OrganizationalUnit) == 0) && (crt["uou"] != nil) {
+		if tmp.Subject.OrganizationalUnit == nil {
+			tmp.Subject.OrganizationalUnit = make([]string, 0)
+		}
+		tmp.Subject.OrganizationalUnit = append(tmp.Subject.OrganizationalUnit, crt["uou"].(string))
+	}
+	if (len(tmp.Subject.StreetAddress) == 0) && (crt["usa"] != nil) {
+		if tmp.Subject.StreetAddress == nil {
+			tmp.Subject.StreetAddress = make([]string, 0)
+		}
+		tmp.Subject.StreetAddress = append(tmp.Subject.StreetAddress, crt["usa"].(string))
+	}
+	if (len(tmp.Subject.PostalCode) == 0) && (crt["upc"] != nil) {
+		if tmp.Subject.PostalCode == nil {
+			tmp.Subject.PostalCode = make([]string, 0)
+		}
+		tmp.Subject.PostalCode = append(tmp.Subject.PostalCode, crt["upc"].(string))
+	}
+
+	if crt["uem"] != nil {
+		if tmp.EmailAddresses == nil {
+			tmp.EmailAddresses = make([]string, 0)
+		}
+		tmp.EmailAddresses = append(tmp.EmailAddresses, crt["uem"].(string))
+	}
+	if crt["dns"] != nil {
+		if tmp.DNSNames == nil {
+			tmp.DNSNames = make([]string, 0)
+		}
+		switch v := crt["dns"].(type) {
+		case string:
+			tmp.DNSNames = append(tmp.DNSNames, v)
+		case []string:
+			tmp.DNSNames = append(tmp.DNSNames, v...)
+		case []interface{}:
+			for _, mv := range v {
+				dns, ok := mv.(string)
+				if ok {
+					tmp.DNSNames = append(tmp.DNSNames, dns)
+				}
+			}
+		}
+	}
+	if crt["ip"] != nil {
+		if tmp.IPAddresses == nil {
+			tmp.IPAddresses = make([]net.IP, 0)
+		}
+		switch v := crt["ip"].(type) {
+		case string:
+			ip := net.ParseIP(v)
+			tmp.IPAddresses = append(tmp.IPAddresses, ip)
+		case []string:
+			for _, mv := range v {
+				ip := net.ParseIP(mv)
+				tmp.IPAddresses = append(tmp.IPAddresses, ip)
+			}
+		case []interface{}:
+			for _, mv := range v {
+				mvs, ok := mv.(string)
+				if ok {
+					ip := net.ParseIP(mvs)
+					tmp.IPAddresses = append(tmp.IPAddresses, ip)
+				}
+			}
+		}
+	}
+	if crt["uri"] != nil {
+		if tmp.URIs == nil {
+			tmp.URIs = make([]*url.URL, 0)
+		}
+		switch v := crt["uri"].(type) {
+		case string:
+			ul, err := url.Parse(v)
+			if err != nil {
+				return nil, err
+			}
+			tmp.URIs = append(tmp.URIs, ul)
+		case []string:
+			for _, mv := range v {
+				ul, err := url.Parse(mv)
+				if err != nil {
+					return nil, err
+				}
+				tmp.URIs = append(tmp.URIs, ul)
+			}
+		case []interface{}:
+			for _, mv := range v {
+				mvs, ok := mv.(string)
+				if ok {
+					ul, err := url.Parse(mvs)
+					if err != nil {
+						return nil, err
+					}
+					tmp.URIs = append(tmp.URIs, ul)
+				}
+			}
+		}
+	}
+	return tmp, nil
 }
