@@ -45,7 +45,7 @@ func InitServices(cfg config.Config) error {
 		return err
 	}
 
-	_, err = shttp.NewSHttp(cfg)
+	_, err = shttp.NewSHttp(cfg.Service.HTTP)
 	if err != nil {
 		return err
 	}

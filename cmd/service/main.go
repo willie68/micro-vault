@@ -104,8 +104,8 @@ func main() {
 
 	health.InitHealthSystem(healthCheckConfig, tracer)
 
-	log.Logger.Infof("ssl: %t", serviceConfig.Sslport > 0)
-	log.Logger.Infof("serviceURL: %s", serviceConfig.ServiceURL)
+	log.Logger.Infof("ssl: %t", serviceConfig.Service.HTTP.Sslport > 0)
+	log.Logger.Infof("serviceURL: %s", serviceConfig.Service.HTTP.ServiceURL)
 	router, err := apiv1.APIRoutes(serviceConfig, tracer)
 	if err != nil {
 		errstr := fmt.Sprintf("could not create api routes. %s", err.Error())
@@ -145,13 +145,13 @@ func initLogging() {
 // initConfig override the configuration from the service.yaml with the given commandline parameters
 func initConfig() {
 	if port > 0 {
-		serviceConfig.Port = port
+		serviceConfig.Service.HTTP.Port = port
 	}
 	if sslport > 0 {
-		serviceConfig.Sslport = sslport
+		serviceConfig.Service.HTTP.Sslport = sslport
 	}
 	if serviceURL != "" {
-		serviceConfig.ServiceURL = serviceURL
+		serviceConfig.Service.HTTP.ServiceURL = serviceURL
 	}
 
 	if pbf != "" {

@@ -1,15 +1,35 @@
-# port of the http server
-port: 8080 
-# port of the https server for payload only
-sslport: 8443
-# this is the servicURL from outside
-serviceURL: https://127.0.0.1:8443
-# secret file contains secrets like credentials, access key ... it has the same structure as this config and will be merged on start
+#sercret file for storing usernames and passwords
 secretfile: ""
+
 service:
+  http:
+    # port of the http server
+    port: 8080
+    # port of the https server
+    sslport: 8443
+    # this is the servicURL from outside
+    serviceURL: https://localhost:8443
+    # other dns names (used for certificate)
+    dnss: 
+      - host.docker.internal
+      - localhost
+    # other ips (used for certificate)
+    ips: 
+      - 127.0.0.1
   rootuser: root
   rootpwd: yxcvb
   privatekey: ./private.pem
+  cacert:
+    certificate:  ./certificate.pem
+    subject:
+      Country: 
+      Organization: 
+      OrganizationalUnit: 
+      Locality: 
+      Province: 
+      StreetAddress: 
+      PostalCode: 
+      CommonName: 
   storage:
     type: memory
     properties:

@@ -32,7 +32,7 @@ const (
 
 // SHttp a service encapsulating http and https server
 type SHttp struct {
-	cfn     config.Config
+	cfn     config.HTTP
 	useSSL  bool
 	sslsrv  *http.Server
 	srv     *http.Server
@@ -40,7 +40,7 @@ type SHttp struct {
 }
 
 // NewSHttp creates a new shttp service
-func NewSHttp(cfn config.Config) (*SHttp, error) {
+func NewSHttp(cfn config.HTTP) (*SHttp, error) {
 	sh := SHttp{
 		cfn:     cfn,
 		Started: false,
@@ -103,6 +103,8 @@ func (s *SHttp) startHTTPSServer(router *chi.Mux) {
 		IsCA:         false,
 		EcdsaCurve:   "P384",
 		Ed25519Key:   false,
+		DNSnames:     s.cfn.DNSNames,
+		IPs:          s.cfn.IPAddresses,
 	}
 	tlsConfig, err := gc.GenerateTLSConfig()
 	if err != nil {
@@ -146,6 +148,8 @@ type generateCertificate struct {
 	ServiceName  string
 	Organization string
 	Host         string
+	DNSnames     []string
+	IPs          []string
 	ValidFrom    string
 	ValidFor     time.Duration
 	IsCA         bool
@@ -210,6 +214,14 @@ func (gc *generateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 			template.DNSNames = append(template.DNSNames, h)
 		}
 	}
+	template.DNSNames = append(template.DNSNames, gc.DNSnames...)
+
+	for _, ips := range gc.IPs {
+		ip := net.ParseIP(ips)
+		if ip != nil {
+			template.IPAddresses = append(template.IPAddresses, ip)
+		}
+	}
 
 	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
 
@@ -228,6 +240,8 @@ func (gc *generateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
-
+	if err != nil {
+		return nil, err
+	}
 	return &tls.Config{Certificates: []tls.Certificate{tlsCert}}, nil
 }

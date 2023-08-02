@@ -21,13 +21,6 @@ const DoServiceConfig = "service_config"
 
 // Config our service configuration
 type Config struct {
-	// port of the http server
-	Port int `yaml:"port"`
-	// port of the https server
-	Sslport int `yaml:"sslport"`
-	// this is the url how to connect to this service from outside
-	ServiceURL string `yaml:"serviceURL"`
-
 	SecretFile string `yaml:"secretfile"`
 
 	Service Service `yaml:"service"`
@@ -45,12 +38,27 @@ type Config struct {
 
 // Service the configuration of services inside this ms
 type Service struct {
+	HTTP       HTTP    `yaml:"http"`
 	Playbook   string  `yaml:"playbook"`
 	Rootuser   string  `yaml:"rootuser"`
 	Rootpwd    string  `yaml:"rootpwd"`
 	PrivateKey string  `yaml:"privatekey"`
 	CACert     CACert  `yaml:"cacert"`
 	Storage    Storage `yaml:"storage"`
+}
+
+// HTTP configuration of the http service
+type HTTP struct {
+	// port of the http server
+	Port int `yaml:"port"`
+	// port of the https server
+	Sslport int `yaml:"sslport"`
+	// this is the url how to connect to this service from outside
+	ServiceURL string `yaml:"serviceURL"`
+	// other dns names (used for certificate)
+	DNSNames []string `yaml:"dnss"`
+	// other ips (used for certificate)
+	IPAddresses []string `yaml:"ips"`
 }
 
 // CACert configuration of the ca cert service
@@ -98,9 +106,13 @@ type Metrics struct {
 
 // DefaultConfig default configuration
 var DefaultConfig = Config{
-	Port:       8000,
-	Sslport:    8443,
-	ServiceURL: "https://127.0.0.1:8443",
+	Service: Service{
+		HTTP: HTTP{
+			Port:       8000,
+			Sslport:    8443,
+			ServiceURL: "https://127.0.0.1:8443",
+		},
+	},
 	SecretFile: "",
 	HealthCheck: HealthCheck{
 		Period: 30,
