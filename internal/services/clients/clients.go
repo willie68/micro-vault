@@ -31,6 +31,7 @@ import (
 	"github.com/willie68/micro-vault/internal/utils"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"github.com/willie68/micro-vault/pkg/pmodel"
+	"golang.org/x/exp/slices"
 )
 
 // DoClients constant for dependency injection
@@ -252,7 +253,7 @@ func (c *Clients) CreateCertificate(tk string, certTemplate string) (string, err
 	if err != nil {
 		return "", err
 	}
-	return string(caPEM.Bytes()), nil
+	return caPEM.String(), nil
 }
 
 // GetPrivateKey get the private certificate for the client
@@ -754,78 +755,147 @@ func (c *Clients) mergeTemplate(tmp *x509.CertificateRequest, crt map[string]any
 		}
 		tmp.EmailAddresses = append(tmp.EmailAddresses, crt["uem"].(string))
 	}
+
+	var err error
+	tmp.DNSNames, err = c.mergeDNSs(crt, tmp.DNSNames)
+	if err != nil {
+		return nil, err
+	}
+
+	tmp.IPAddresses, err = c.mergeIPs(crt, tmp.IPAddresses)
+	if err != nil {
+		return nil, err
+	}
+
+	tmp.URIs, err = c.mergeURIs(crt, tmp.URIs)
+	if err != nil {
+		return nil, err
+	}
+	return tmp, nil
+}
+
+func (c *Clients) mergeDNSs(crt map[string]any, tmpDNSs []string) ([]string, error) {
+	dnss := make([]string, 0)
+	if tmpDNSs != nil {
+		dnss = append(dnss, tmpDNSs...)
+	}
 	if crt["dns"] != nil {
-		if tmp.DNSNames == nil {
-			tmp.DNSNames = make([]string, 0)
-		}
 		switch v := crt["dns"].(type) {
 		case string:
-			tmp.DNSNames = append(tmp.DNSNames, v)
+			dnss = append(dnss, v)
 		case []string:
-			tmp.DNSNames = append(tmp.DNSNames, v...)
-		case []interface{}:
+			dnss = append(dnss, v...)
+		case []any:
 			for _, mv := range v {
 				dns, ok := mv.(string)
 				if ok {
-					tmp.DNSNames = append(tmp.DNSNames, dns)
+					dnss = append(dnss, dns)
 				}
 			}
 		}
+		slices.Sort(dnss)
+		dnss = slices.Compact(dnss)
+	}
+	return dnss, nil
+}
+
+func (c *Clients) mergeIPs(crt map[string]any, tmpIPs []net.IP) ([]net.IP, error) {
+	ips := make([]net.IP, 0)
+	if tmpIPs != nil {
+		ips = append(ips, tmpIPs...)
 	}
 	if crt["ip"] != nil {
-		if tmp.IPAddresses == nil {
-			tmp.IPAddresses = make([]net.IP, 0)
+		ipsv, err := buildIPList(crt["ip"])
+		if err != nil {
+			return nil, err
 		}
-		switch v := crt["ip"].(type) {
-		case string:
-			ip := net.ParseIP(v)
-			tmp.IPAddresses = append(tmp.IPAddresses, ip)
-		case []string:
-			for _, mv := range v {
-				ip := net.ParseIP(mv)
-				tmp.IPAddresses = append(tmp.IPAddresses, ip)
-			}
-		case []interface{}:
-			for _, mv := range v {
-				mvs, ok := mv.(string)
-				if ok {
-					ip := net.ParseIP(mvs)
-					tmp.IPAddresses = append(tmp.IPAddresses, ip)
-				}
+		ips = append(ips, ipsv...)
+		slices.SortFunc(ips, func(a, b net.IP) int {
+			return strings.Compare(a.String(), b.String())
+		})
+		return slices.CompactFunc(ips, func(e1, e2 net.IP) bool {
+			return e1.Equal(e2)
+		}), nil
+	}
+	return ips, nil
+}
+
+func buildIPList(crtIPs any) ([]net.IP, error) {
+	ips := make([]net.IP, 0)
+	switch v := crtIPs.(type) {
+	case string:
+		ip := net.ParseIP(v)
+		ips = append(ips, ip)
+	case []string:
+		for _, mv := range v {
+			ip := net.ParseIP(mv)
+			ips = append(ips, ip)
+		}
+	case []any:
+		for _, mv := range v {
+			switch mvv := mv.(type) {
+			case string:
+				ip := net.ParseIP(mvv)
+				ips = append(ips, ip)
+			case net.IP:
+				ips = append(ips, mvv)
 			}
 		}
 	}
+	return ips, nil
+}
+
+func (c *Clients) mergeURIs(crt map[string]any, tmpURIs []*url.URL) ([]*url.URL, error) {
+	uris := make([]*url.URL, 0)
+	if tmpURIs != nil {
+		uris = append(uris, tmpURIs...)
+	}
 	if crt["uri"] != nil {
-		if tmp.URIs == nil {
-			tmp.URIs = make([]*url.URL, 0)
+		u, err := buildURIList(crt["uri"])
+		if err != nil {
+			return nil, err
 		}
-		switch v := crt["uri"].(type) {
-		case string:
-			ul, err := url.Parse(v)
+		uris = append(uris, u...)
+		slices.SortFunc(uris, func(a, b *url.URL) int {
+			return strings.Compare(a.String(), b.String())
+		})
+		return slices.CompactFunc(uris, func(e1, e2 *url.URL) bool {
+			return e1.String() == e2.String()
+		}), nil
+	}
+	return uris, nil
+}
+
+func buildURIList(crtUris any) ([]*url.URL, error) {
+	uris := make([]*url.URL, 0)
+	switch v := crtUris.(type) {
+	case string:
+		ul, err := url.Parse(v)
+		if err != nil {
+			return nil, err
+		}
+		uris = append(uris, ul)
+	case []string:
+		for _, mv := range v {
+			ul, err := url.Parse(mv)
 			if err != nil {
 				return nil, err
 			}
-			tmp.URIs = append(tmp.URIs, ul)
-		case []string:
-			for _, mv := range v {
-				ul, err := url.Parse(mv)
+			uris = append(uris, ul)
+		}
+	case []any:
+		for _, mv := range v {
+			switch mvv := mv.(type) {
+			case string:
+				ul, err := url.Parse(mvv)
 				if err != nil {
 					return nil, err
 				}
-				tmp.URIs = append(tmp.URIs, ul)
-			}
-		case []interface{}:
-			for _, mv := range v {
-				mvs, ok := mv.(string)
-				if ok {
-					ul, err := url.Parse(mvs)
-					if err != nil {
-						return nil, err
-					}
-					tmp.URIs = append(tmp.URIs, ul)
-				}
+				uris = append(uris, ul)
+			case url.URL:
+				uris = append(uris, &mvv)
 			}
 		}
 	}
-	return tmp, nil
+	return uris, nil
 }
