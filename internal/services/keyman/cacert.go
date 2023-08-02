@@ -160,7 +160,7 @@ func (c *CAService) createCert() error {
 	ca := &x509.Certificate{
 		SerialNumber: &ser,
 		Subject: pkix.Name{
-			Organization:       []string{c.cfg.Subject["Organisation"]},
+			Organization:       []string{c.cfg.Subject["Organization"]},
 			Country:            []string{c.cfg.Subject["Country"]},
 			Province:           []string{c.cfg.Subject["Province"]},
 			Locality:           []string{c.cfg.Subject["Locality"]},

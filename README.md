@@ -283,6 +283,18 @@ Zum Validieren der Tokens steht der öffentliche Schlüssel (JWKS konform) unter
 
 Das Stammzertifikat der MV CA steht öffentlich unter /ca/cacert zur Verfügung. (Auch der interne Webserver verwendet ein eigenes Zertifikat, welchen von der internen CA signiert wurde.)
 
+### Linux
+
+Um dieses herrunter zu laden ruft man einfach 
+
+`curl -k https://<serverurl>/ca/cacert >cert.crt`
+
+Danach muss unter Linux das Zertifikat unter /usr/local/share/ca-certificates/ gespeichert werden.
+
+`mv cert.crt /usr/local/share/ca-certificates/mv-cert.crt`
+
+Nun muss noch einmal `update-ca-certificates` aufgerufen werden.
+
 ## Login
 
 Für die Anmeldung, egal ob admin oder service client gibt es nur 2 Endpunkte. Einmal für den Login und einmal für den Tokenrefresh. Anhand der Parameter entscheidet sich dann, ob ein Admin Login oder ein Client Login ausgeführt wird.

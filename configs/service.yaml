@@ -22,14 +22,14 @@ service:
   cacert:
     certificate:  ./certificate.pem
     subject:
-      Country: 
-      Organization: 
-      OrganizationalUnit: 
+      Country: de
+      Organization: mcs
+      OrganizationalUnit: dev
       Locality: 
       Province: 
       StreetAddress: 
       PostalCode: 
-      CommonName: 
+      CommonName: micro-vault
   storage:
     type: memory
     properties:
