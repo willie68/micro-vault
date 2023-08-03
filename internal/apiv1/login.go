@@ -130,16 +130,16 @@ func (l *LoginHandler) PostLogin(response http.ResponseWriter, request *http.Req
 func (l *LoginHandler) GetRefresh(response http.ResponseWriter, request *http.Request) {
 	rt, err := token(request)
 	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 		return
 	}
 	jtp, err := jwt.ParseInsecure([]byte(rt))
 	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 		return
 	}
 	if len(jtp.Audience()) != 1 {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 		return
 	}
 	aud := jtp.Audience()[0]
@@ -147,20 +147,20 @@ func (l *LoginHandler) GetRefresh(response http.ResponseWriter, request *http.Re
 	if aud == clients.JKAudience {
 		t, rt, err = l.cl.Refresh(rt)
 		if err != nil {
-			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+			l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 			return
 		}
 	}
 	if aud == admin.JKAudience {
 		t, rt, err = l.adm.Refresh(rt)
 		if err != nil {
-			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+			l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 			return
 		}
 	}
 	jt, err := auth.DecodeJWT(t)
 	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 		return
 	}
 	var name string
