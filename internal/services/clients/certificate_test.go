@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"crypto/x509"
 	"net"
 	"net/url"
 	"strings"
@@ -304,4 +305,39 @@ func TestMergeURIListInterface(t *testing.T) {
 	ast.True(slices.ContainsFunc(uris, func(e *url.URL) bool {
 		return strings.EqualFold(e.String(), "www.mcs.de")
 	}))
+}
+
+func TestMergeEmptyTemplate(t *testing.T) {
+
+	ast := assert.New(t)
+
+	tmp := &x509.CertificateRequest{}
+
+	crt := make(map[string]any)
+	crt["ucn"] = "common"
+	crt["uco"] = "de"
+	crt["upr"] = "province"
+	crt["ulo"] = "locality"
+	crt["uor"] = "organisation"
+	crt["uou"] = "organisational-unit"
+	crt["usa"] = "street"
+	crt["uem"] = "email@test.com"
+	crt["dns"] = []string{"localhost"}
+	crt["ip"] = []string{"127.0.0.1"}
+	crt["uri"] = []string{"http://localhost.com"}
+
+	tmp, err := mergeTemplate(tmp, crt)
+
+	ast.Nil(err)
+	ast.Equal("common", tmp.Subject.CommonName)
+	ast.Equal("de", tmp.Subject.Country[0])
+	ast.Equal("province", tmp.Subject.Province[0])
+	ast.Equal("locality", tmp.Subject.Locality[0])
+	ast.Equal("organisation", tmp.Subject.Organization[0])
+	ast.Equal("organisational-unit", tmp.Subject.OrganizationalUnit[0])
+	ast.Equal("street", tmp.Subject.StreetAddress[0])
+	ast.Equal("email@test.com", tmp.EmailAddresses[0])
+	ast.Equal("localhost", tmp.DNSNames[0])
+	ast.Equal("127.0.0.1", tmp.IPAddresses[0].String())
+	ast.Equal("http://localhost.com", tmp.URIs[0].String())
 }
