@@ -2,7 +2,9 @@ package apiv1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -10,6 +12,7 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/auth"
+	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/admin"
@@ -21,6 +24,7 @@ import (
 type LoginHandler struct {
 	cl  clients.Clients
 	adm admin.Admin
+	cfg config.Config
 }
 
 // NewLoginHandler returning a new REST API Handler for admin endpoints
@@ -28,6 +32,7 @@ func NewLoginHandler() api.Handler {
 	return &LoginHandler{
 		cl:  do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
 		adm: do.MustInvokeNamed[admin.Admin](nil, admin.DoAdmin),
+		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
 	}
 }
 
@@ -60,7 +65,7 @@ func (l *LoginHandler) PostLogin(response http.ResponseWriter, request *http.Req
 	}{}
 	err := json.NewDecoder(request.Body).Decode(&up)
 	if err != nil {
-		httputils.Err(response, request, serror.InternalServerError(err))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.InternalServerError(err), ErrInvalidRequest))
 		return
 	}
 	isService := up.AccessKey != "" && up.Username == ""
@@ -68,19 +73,19 @@ func (l *LoginHandler) PostLogin(response http.ResponseWriter, request *http.Req
 	if isService {
 		t, rt, k, err = l.cl.Login(up.AccessKey, up.Secret)
 		if err != nil {
-			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+			l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 			return
 		}
 	} else {
 		t, rt, err = l.adm.LoginUP(up.Username, []byte(up.Password))
 		if err != nil {
-			httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+			l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 			return
 		}
 	}
 	jt, err := auth.DecodeJWT(t)
 	if err != nil {
-		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		l.responseOAuthError(response, request, l.wrapOAuthErr(*serror.Wrapc(err, http.StatusBadRequest), ErrInvalidRequest))
 		return
 	}
 	var name string
@@ -214,4 +219,82 @@ func (l *LoginHandler) GetPrivateKey(response http.ResponseWriter, request *http
 	if err != nil {
 		logging.Logger.Errorf("error writing PEM: %v", err)
 	}
+}
+
+type OAuthErr struct {
+	serror.Serr
+	OError string `json:"error"`
+	ODesc  string `json:"error_description"`
+	OUri   string `json:"error_uri"`
+}
+
+func (o *OAuthErr) Error() string {
+	if o.Key == "" {
+		o.Key = "unexpected-error"
+	}
+	byt, err := json.Marshal(o)
+	if err != nil {
+		return o.str()
+	}
+	return string(byt)
+}
+
+func (o *OAuthErr) str() string {
+	s := make([]string, 0)
+	if o.Msg != "" {
+		s = append(s, o.Msg)
+	}
+	s = append(s, fmt.Sprintf(", code: %d", o.Code))
+	s = append(s, fmt.Sprintf(", key: %s", o.Key))
+	if o.Srv != "" {
+		s = append(s, fmt.Sprintf(", service: %s", o.Srv))
+	}
+	if o.Origin != "" {
+		s = append(s, fmt.Sprintf(", origin: %s", o.Origin))
+	}
+	if o.OError != "" {
+		s = append(s, fmt.Sprintf(", error: %s", o.OError))
+	}
+	if o.ODesc != "" {
+		s = append(s, fmt.Sprintf(", error_description: %s", o.ODesc))
+	}
+	if o.OUri != "" {
+		s = append(s, fmt.Sprintf(", error_uri: %s", o.OUri))
+	}
+	return strings.Join(s, "")
+}
+
+const (
+	// ErrInvalidRequest The request is missing a parameter so the server can’t proceed with the request. This may also be returned if the request includes an unsupported parameter or repeats a parameter.
+	ErrInvalidRequest string = "invalid_request"
+	// ErrInvalidClient Client authentication failed, such as if the request contains an invalid client ID or secret. Send an HTTP 401 response in this case.
+	ErrInvalidClient string = "invalid_client"
+	// ErrInvalidGrant The authorization code (or user’s password for the password grant type) is invalid or expired. This is also the error you would return if the redirect URL given in the authorization grant does not match the URL provided in this access token request.
+	ErrInvalidGrant string = "invalid_grant"
+	// ErrInvalidScope For access token requests that include a scope (password or client_credentials grants), this error indicates an invalid scope value in the request.
+	ErrInvalidScope string = "invalid_scope"
+	// ErrUnauthorizedClient This client is not authorized to use the requested grant type. For example, if you restrict which applications can use the Implicit grant, you would return this error for the other apps.
+	ErrUnauthorizedClient string = "unauthorized_client"
+	// ErrUnsupportedGrantType If a grant type is requested that the authorization server doesn’t recognize, use this code. Note that unknown grant types also use this specific error code rather than using the invalid_request above.
+	ErrUnsupportedGrantType string = "unsupported_grant_type"
+)
+
+func (l *LoginHandler) wrapOAuthErr(serr serror.Serr, oautherr string) *OAuthErr {
+	s := serr.Origin
+	if s == "" {
+		s = serr.Msg
+	}
+	oer := OAuthErr{
+		Serr:   serr,
+		OError: oautherr,
+		ODesc:  s,
+		OUri:   fmt.Sprintf("See the full API docs at %s/docs/authentication", l.cfg.Service.HTTP.ServiceURL),
+	}
+	return &oer
+}
+
+// Err writes an error response
+func (l *LoginHandler) responseOAuthError(w http.ResponseWriter, r *http.Request, err *OAuthErr) {
+	render.Status(r, err.Code)
+	render.JSON(w, r, err)
 }
