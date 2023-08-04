@@ -300,6 +300,10 @@ Danach muss unter Linux das Zertifikat unter /usr/local/share/ca-certificates/ g
 
 Nun muss noch einmal `update-ca-certificates` aufgerufen werden.
 
+### Windows
+
+Wie man das Stammzertifikat unter Windows installiert, kann auf den entsprechenden Internet Seiten nach gelesen werden. 
+
 ## Login
 
 Für die Anmeldung, egal ob admin oder service client gibt es nur 2 Endpunkte. Einmal für den Login und einmal für den Tokenrefresh. Anhand der Parameter entscheidet sich dann, ob ein Admin Login oder ein Client Login ausgeführt wird.
@@ -313,7 +317,7 @@ Bei der Erstellung eines CLients wird für diesen Client automatisch ein private
 
 ### Login
 
-Anmeldung als Admin/CLient an MV. 
+Anmeldung als Admin/Client an MV. 
 
 URL: POST /api/v1/login
 
