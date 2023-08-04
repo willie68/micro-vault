@@ -80,6 +80,76 @@ func LoginClient(accesskey, secret, url string) (*Client, error) {
 	return &cl, nil
 }
 
+// ClientBuilder creating a new Client with a fluid builder pattern
+type ClientBuilder struct {
+	acc  string
+	sec  string
+	burl string
+}
+
+// NewClient fluid starting point creating a new client
+func NewClient() *ClientBuilder {
+	return &ClientBuilder{}
+}
+
+// WithAccessKey adding the access key
+func (c *ClientBuilder) WithAccessKey(accessKey string) *ClientBuilder {
+	c.acc = accessKey
+	return c
+}
+
+// WithSecret ading the secret
+func (c *ClientBuilder) WithSecret(secret string) *ClientBuilder {
+	c.sec = secret
+	return c
+}
+
+// WithBaseURL adding the base URL to the mv service
+func (c *ClientBuilder) WithBaseURL(baseURL string) *ClientBuilder {
+	c.burl = baseURL
+	return c
+}
+
+// Login loggin the client in
+func (c *ClientBuilder) Login() (*Client, error) {
+	return LoginClient(c.acc, c.sec, c.burl)
+}
+
+// AdminBuilder creating a new admin client with a fluid builder pattern
+type AdminBuilder struct {
+	username string
+	password []byte
+	burl     string
+}
+
+// NewAdmin fluid starting point creating a new admin client
+func NewAdmin() *AdminBuilder {
+	return &AdminBuilder{}
+}
+
+// WithUser login with this user
+func (a *AdminBuilder) WithUser(user string) *AdminBuilder {
+	a.username = user
+	return a
+}
+
+// WithPassword login with this user password
+func (a *AdminBuilder) WithPassword(pwd []byte) *AdminBuilder {
+	a.password = pwd
+	return a
+}
+
+// WithBaseURL adding the base URL to the mv service
+func (a *AdminBuilder) WithBaseURL(baseURL string) *AdminBuilder {
+	a.burl = baseURL
+	return a
+}
+
+// Login loggin the admin client in
+func (a *AdminBuilder) Login() (*AdminCl, error) {
+	return LoginAdminUP(a.username, a.password, a.burl)
+}
+
 func expires(t string) int64 {
 	at, err := auth.DecodeJWT(t)
 	if err != nil {

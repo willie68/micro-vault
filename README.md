@@ -178,7 +178,9 @@ playbook.json
 
 Aus Sicherheitsgründen gibt keinen Weg, ein Playbook aus einem laufenden Server zu exportieren.  Allerdings gibt es einen Commandozeilen Parameter mit dem das Binary eine playbook.json aus einer Installation erzeugt. Dazu muss das Binary mit den gleichen Einstellungen wie der Service gestartet werden. 
 
-# Command Client
+# Clients 
+
+## Command Client
 
 Für eine einfache Benutzung gibt es neben dem Golang Client auch einen Kommandozeilenclient. Dieser deckt die wichtigsten Funktion sowohl im Admin Bereich wie auch im Client Bereich ab. 
 
@@ -211,7 +213,7 @@ Use "mvcli [command] --help" for more information about a command.
 
 Ich hoffe das das UI selbsterklärend ist. 
 
-## Login
+### Login
 
 ```
 C:\>mvcli.exe login --help
@@ -261,9 +263,13 @@ Flags:
       --url string   insert the url to the mv service (default "https://localhost:8443")
 ```
 
+## Golang Client
 
+Für Golang gibt es eine eigene Client-Bibliothek. 
 
-# Endpunkte
+Beispiele zur Anwendung kann man unter example/golang finden.
+
+# REST Endpunkte
 
 ## öffentlicher  Schlüssel
 
