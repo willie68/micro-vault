@@ -144,7 +144,7 @@ playbook.json
             "groups": ["group1", "group4"],
             "key": "{PEM file content} -----BEGIN PRIVATE KEY-----  \nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKc...\n-----END PRIVATE KEY-----",
             "kid": "h_oL_duFx67WHB9fd5-VKXnCHNvHj33ZDIokD_dEhyQ"
-<        }, {
+        }, {
             "name": "tester2",
             "accesskey": "87654321",
             "secret": "e7d767cd1432145820669be6a60a912e",

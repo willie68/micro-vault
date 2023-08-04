@@ -22,13 +22,21 @@ function submit() {
   }
   //  let that = this;
   fetch(actionPostUrl, options)
-    .then((res) => res.json())
+    .then((res) => {
+      if (res.ok) {
+        return res.json()
+      }
+      return Promise.reject({ status: res.status, message: res.statusText })
+    })
     .then((data) => {
       loginStore.afterlogin(data.access_token, data.refresh_token)
       sapi.init()
       toast.add({ severity: "success", summary: 'Logged in', detail: 'You’ve successfully logged into Micro Vault Admin Interface.', life: 3000 });
     })
-    .catch((err) => console.log(err.message))
+    .catch((err) => {
+      console.log(err.status, err.message)
+      toast.add({ severity: "error", summary: 'Login error', detail: err.message, life: 5000 });
+    })
 }
 
 console.log("service url:" + loginStore.baseurl);
