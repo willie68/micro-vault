@@ -150,7 +150,12 @@ playbook.json
             "secret": "e7d767cd1432145820669be6a60a912e",
             "groups": ["group2", "group4"],
             "key": "{PEM file content} -----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwgg...\n-----END PRIVATE KEY-----",
-            "kid": "M5pQtcH5y2zxBtdhs-eAS7iJWiQzFsrsYMorkCMRi3s"
+            "kid": "M5pQtcH5y2zxBtdhs-eAS7iJWiQzFsrsYMorkCMRi3s",
+            "crt" : {
+              "dns" : ["landlord.local", "architect.local"],
+              "ip": ["192.168.178.10"],
+              "ucn": "landlord"
+            }
         }
     ],
     "keys": [{
