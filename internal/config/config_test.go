@@ -15,12 +15,12 @@ func TestLoadFromYaml(t *testing.T) {
 	err := Load()
 	ast.Nil(err)
 
-	ast.Equal(8000, Get().Port)
-	ast.Equal(8443, Get().Sslport)
+	ast.Equal(8000, Get().Service.HTTP.Port)
+	ast.Equal(8443, Get().Service.HTTP.Sslport)
 
 	ast.Equal(60, Get().HealthCheck.Period)
 	ast.Equal("", Get().SecretFile)
-	ast.Equal("https://127.0.0.1:8443", Get().ServiceURL)
+	ast.Equal("https://localhost:8443", Get().Service.HTTP.ServiceURL)
 }
 
 func TestDefaultConfig(t *testing.T) {
@@ -28,12 +28,12 @@ func TestDefaultConfig(t *testing.T) {
 	config = DefaultConfig
 	cnf := Get()
 
-	ast.Equal(8000, cnf.Port)
-	ast.Equal(8443, cnf.Sslport)
+	ast.Equal(8000, cnf.Service.HTTP.Port)
+	ast.Equal(8443, cnf.Service.HTTP.Sslport)
 
 	ast.Equal(30, cnf.HealthCheck.Period)
 	ast.Equal("", cnf.SecretFile)
-	ast.Equal("https://127.0.0.1:8443", cnf.ServiceURL)
+	ast.Equal("https://127.0.0.1:8443", cnf.Service.HTTP.ServiceURL)
 
 	ast.Equal("INFO", cnf.Logging.Level)
 }

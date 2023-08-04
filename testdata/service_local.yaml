@@ -1,13 +1,22 @@
-# port of the http server
-port: 9580 
-# port of the https server
-sslport: 9543
-# this is the servicURL from outside
-serviceURL: https://localhost:9543
 #sercret file for storing usernames and passwords
 secretfile:
 
 service:
+  http:
+    # port of the http server
+    port: 9580 
+    # port of the https server
+    sslport: 9543
+    # this is the servicURL from outside
+    serviceURL: https://localhost:9543
+    # other dns names (used for certificate)
+    dnss: 
+      - host.docker.internal
+      - localhost
+    # other ips (used for certificate)
+    ips: 
+      - 127.0.0.1
+      - 192.168.178.10
   rootuser: root
   rootpwd: yxcvb
   privatekey: ./configs/private.pem

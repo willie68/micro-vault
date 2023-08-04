@@ -59,7 +59,7 @@ const saveClient = () => {
         // creating a new client
         let pclient = sapi.sclient.new(selectedClient.value)
         pclient.then((data) => {
-            let message = 'new client with name \"' + data.name + "\" created. Please copy the access key and the secret from this view. The secret is only shown once."
+            let message = 'new client with name "' + data.name + "\" created. Please copy the access key and the secret from this view. The secret is only shown once."
             toast.add({ severity: "success", summary: 'new client', detail: message, life: 10000 });
             console.log(data)
             selectedClient.value = data
@@ -70,7 +70,7 @@ const saveClient = () => {
         toast.add({ severity: "success", summary: 'save client', life: 3000 });
         let pclient = sapi.sclient.edit(selectedClient.value)
         pclient.then((data) => {
-            let message = 'client with name \"' + data.name + "\" saved."
+            let message = 'client with name "' + data.name + "\" saved."
             toast.add({ severity: "success", summary: 'new client', detail: message, life: 10000 });
             console.log(data)
             selectedClient.value = data
