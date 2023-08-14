@@ -5,9 +5,19 @@ The following documentation is written in German.
 
 ## Wofür gibt es diesen Service?
 
-### Ausgangslage
+Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei gab es 2 grundlegende Probleme in der Implementierung. 
 
-Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei sollten bestimmte Daten zwischen Services über einen dritten öffentlichen Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Auch nicht für einen Administrator. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
+### Zertifikate
+
+Die Services kommunizieren untereinander innerhalb des Kubernetes Clusters über REST. Alle Services verwenden HTTPS mit entsprechenden selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen 2 Wege in Betracht. 
+
+- Erzeugung des Zertifikates beim Hochfahren des Containers. Leider verzögert dieser Schritt das Starten eine Containers doch erheblich, so dass eine automatische Skalierung beim Loadbalancing dabei nachteilig beeinflusst wird. Nebenbei haben dann alle Instanzen eines Service unterschiedliche Zertifikate, was evtl. auf der Clientseite zu Problemen führen kann.
+- Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden.
+- Erzeugung offline und kopieren aus einem ext. Speicher (build oder Startzeit), diese Variante könnte sicherheitstechnisch problematisch sein.
+
+### Verschlüsselte Übertragung
+
+Bestimmte Daten sollen zwischen Services über einen dritten öffentlichen Service (Message Broker) sicher ausgetauscht werden können. d.h. die Daten sollten für andere nicht beteiligte Komponenten nicht einsehbar sein. Auch nicht für einen Administrator. Es besteht aber zwischen den kommunizierenden Services keine direkte Verbindung. (Beide Service können sowohl zeitlich wie auch Räumlich getrennt sein.) 
 
 Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Services über eine dritte nicht vertraute Umgebung.
 
@@ -39,10 +49,12 @@ Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschl�
 
 ### Was bietet nun MicroVault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. MicroVault verwaltet Clients. Clients sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
+MicroVault bietet genau das, nicht mehr aber auch nicht weniger. 
 
-Zusätzlich ermöglich micro-vault auch die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). 
-Um den von micro vault ausgestellten Zertifikaten zu vertrauen reicht es aus das Stammzertifikat von micro-vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`)
+Service-Client sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
+
+Zusätzlich ermöglich micro-vault auch die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). Jeder Service-Client kann signierte Zertifikate anfordern. Andere Clients, die dann diese Zertifikate validieren, benötigen nur das Root Zertifikat von der MicroVault-Instanz. Die Zertifikate können im MV UI mit bestimmten Eigenschaften, wie DNS Namen, IP Namen... konfiguriert werden.
+Um den von micro vault ausgestellten Zertifikaten zu vertrauen reicht es aus das Stammzertifikat von micro-vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`) 
 
 Zur Anbindung an micro vault werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich. 
 
