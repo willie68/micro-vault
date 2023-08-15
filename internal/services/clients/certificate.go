@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 func mergeTemplate(tmp *x509.CertificateRequest, crt map[string]any) (*x509.CertificateRequest, error) {

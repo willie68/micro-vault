@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"slices"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/pkg/pmodel"
-	"golang.org/x/exp/slices"
 )
 
 var (
