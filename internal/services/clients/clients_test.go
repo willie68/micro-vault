@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"testing"
+	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -157,6 +158,8 @@ func TestCertificate(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(k1)
 	ast.Equal(k, k1)
+	ast.True(time.Now().Add(time.Hour * 24 * 29).Before(xc.NotAfter))
+	ast.True(time.Now().Add(time.Hour * 24 * 31).After(xc.NotAfter))
 }
 
 func createCsrPem(k any) (string, error) {

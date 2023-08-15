@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
@@ -54,6 +55,7 @@ func StartServer() {
 		healthRouter := apiv1.HealthRoutes(cfg, nil)
 		sh.StartServers(router, healthRouter)
 	}
+	time.Sleep(10 * time.Second)
 }
 
 func TestStartServer(t *testing.T) {

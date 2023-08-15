@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
@@ -171,7 +172,7 @@ func TestCSR(t *testing.T) {
 	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	ast.Nil(err)
 
-	b, err := ca.CertSignRequest(template, &certPrivKey.PublicKey)
+	b, err := ca.CertSignRequest(template, &certPrivKey.PublicKey, time.Hour*24*365)
 	ast.Nil(err)
 	ast.True(len(b) > 0)
 

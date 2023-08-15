@@ -1,19 +1,21 @@
-# micro-vault
+# **MCS Micro-Vault**
 
-micro-vault microservice dead simple key management service without any golden rings, just simple and secure.
+Micro-Vault microservice dead simple key management service without any golden rings, just simple and secure.
 The following documentation is written in German.
 
 ## Wofür gibt es diesen Service?
 
 Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dabei gab es 2 grundlegende Probleme in der Implementierung. 
 
-### Zertifikate
+### Zertifikate, Zertifikatsstelle, Certificate authority
 
-Die Services kommunizieren untereinander innerhalb des Kubernetes Clusters über REST. Alle Services verwenden HTTPS mit entsprechenden selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen 2 Wege in Betracht. 
+Beispiel: Innerhalb eines Kubernetes Clusters kommunizieren  die Services untereinander über REST. Alle Services verwenden HTTPS mit selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen 2 Wege in Betracht. 
 
-- Erzeugung des Zertifikates beim Hochfahren des Containers. Leider verzögert dieser Schritt das Starten eine Containers doch erheblich, so dass eine automatische Skalierung beim Loadbalancing dabei nachteilig beeinflusst wird. Nebenbei haben dann alle Instanzen eines Service unterschiedliche Zertifikate, was evtl. auf der Clientseite zu Problemen führen kann.
-- Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden.
-- Erzeugung offline und kopieren aus einem ext. Speicher (build oder Startzeit), diese Variante könnte sicherheitstechnisch problematisch sein.
+- Erzeugung des Zertifikates beim Hochfahren des Containers. Leider verzögert dieser Schritt den Start des Containers doch erheblich, so dass eine automatische Skalierung beim Loadbalancing dabei nachteilig beeinflusst wird. Nebenbei haben dann alle Instanzen eines Service unterschiedliche Zertifikate, was evtl. auf der Clientseite zu Problemen führen kann. Bei Änderungen der DNS, IP muss dann der Service neu gestartet werden. 
+- Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden. Bei Änderungen der DNS, IP muss dann der Build neu gestartet werden. 
+- Erzeugung offline und kopieren aus einem ext. Speicher (build oder Startzeit), diese Variante könnte sicherheitstechnisch problematisch sein, denn der Zertifikatsspeicher muss gut abgesichert werden. 
+
+Abhilfe schafft da eine zentrale Zertifikatsstelle im Cluster (Certificate authority, CA), die direkt den CSR ausführen kann. Somit müssen die Clients zur Zertifikatskontrolle nur das Root Zertifikat der CA importiert haben.
 
 ### Verschlüsselte Übertragung
 
@@ -47,16 +49,18 @@ Der Client 1 muss nun aber weiterhin neue symmetrische Schlüssel generieren, MS
 
 Da Vault nun alle Informationen zur Kommunikation hat, kann man der Ver/Entschlüsseln bzw. das Signieren und den Check dazu auch komplett auf Vault verlegen. Die Clients verwalten dann nur noch eine Verbindung. Nachteil ist dann natürlich, dass Vault neben der Schlüssel- und Clientverwaltung, nun auch die deutlich Resourcen-bindende Arbeit des Ver/Entschlüsselns bzw. der Signierung übernehmen muss. In sofern ist die Nutzung von Serverside Encryption auch nur bei kleiner Payload zu empfehlen. 
 
-### Was bietet nun MicroVault?
+### Was bietet nun Micro-Vault?
 
-MicroVault bietet genau das, nicht mehr aber auch nicht weniger. 
+Micro-Vault bietet genau das, nicht mehr aber auch nicht weniger. 
 
-Service-Client sind per Namen identifizierbar. Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
+Service-Client sind per Namen identifizierbar. 
 
-Zusätzlich ermöglich micro-vault auch die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). Jeder Service-Client kann signierte Zertifikate anfordern. Andere Clients, die dann diese Zertifikate validieren, benötigen nur das Root Zertifikat von der MicroVault-Instanz. Die Zertifikate können im MV UI mit bestimmten Eigenschaften, wie DNS Namen, IP Namen... konfiguriert werden.
-Um den von micro vault ausgestellten Zertifikaten zu vertrauen reicht es aus das Stammzertifikat von micro-vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`) 
+Micro-Vault ermöglicht die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). Jeder Service-Client kann signierte Zertifikate anfordern. Andere Clients, die dann diese Zertifikate validieren, benötigen nur das Root Zertifikat von der Micro-Vault-Instanz. Die Zertifikate können im MV UI mit bestimmten Eigenschaften, wie DNS Namen, IP Namen... konfiguriert werden. Vorteil es gibt eine zentrale Stelle, wo alle Zertifikatsinformation der verschiedenen Services konfiguriert werden können. Je nach Service Implementierung muss man dann nur noch dafür sorgen, dass die Services die neuen Zertifikate abholen.
+Um den von micro vault ausgestellten Zertifikaten zu vertrauen, reicht es aus das Stammzertifikat von Micro-Vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`) 
 
-Zur Anbindung an micro vault werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich. 
+Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
+
+Zur Anbindung an Micro-Vault werden 2 REST Interfaces angeboten, einmal der Admin Bereich für das Management der Gruppen und Clients und ein weiteres REST Interface für den Client Bereich. 
 
 Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem Identity-Management ansprechbar. Hier werden Gruppen und Clients verwaltet. Auch der Adminzugangs arbeitet mit einem Token/RequestToken Verfahren. 
 
@@ -164,9 +168,10 @@ playbook.json
             "key": "{PEM file content} -----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwgg...\n-----END PRIVATE KEY-----",
             "kid": "M5pQtcH5y2zxBtdhs-eAS7iJWiQzFsrsYMorkCMRi3s",
             "crt" : {
-              "dns" : ["landlord.local", "architect.local"],
+              "dns" : ["Micro-Vault.local", "search.local"],
               "ip": ["192.168.178.10"],
-              "ucn": "landlord"
+              "ucn": "search",
+              "vad": "30d"
             }
         }
     ],
@@ -212,8 +217,8 @@ Available Commands:
   get         Get an object from your micro vault instance
   help        Help about any command
   list        List different objects
-  login       Login into a microvault service
-  logout      Logout from a microvault service
+  login       Login into a Micro-Vault service
+  logout      Logout from a Micro-Vault service
   playbook    Upload and execute a playbook
   update      Updating parameters of an already created object
 
@@ -432,3 +437,4 @@ URL: GET /api/v1/clients/certificate
 In; Template für das Zertifikat. (x509.CertificateRequest als PEM: Type CERTIFICATE REQUEST)
 
 Out: Zertifikat als PEM Block
+

@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -27,16 +28,18 @@ import (
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/utils"
+	"github.com/willie68/micro-vault/internal/utils/str2duration"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
 // DoClients constant for dependency injection
 const (
-	DoClients      = "clients"
-	JKAudience     = "microvault-client"
-	rtUsageKey     = "usage"
-	rtUsageRefresh = "mv-refresh"
+	DoClients        = "clients"
+	JKAudience       = "microvault-client"
+	rtUsageKey       = "usage"
+	rtUsageRefresh   = "mv-refresh"
+	defaultCertValid = time.Hour * 24 * 365
 )
 
 // Clients business logic for client management
@@ -221,6 +224,13 @@ func (c *Clients) CreateCertificate(tk string, certTemplate string) (string, err
 		return "", err
 	}
 
+	validTo := defaultCertValid // one year is the default valid certificate duration
+	if vad, ok := cl.Crt["vad"].(string); ok {
+		validTo, err = str2duration.ParseDuration(vad)
+		if err != nil {
+			return "", fmt.Errorf("configure vad with a valid duration: %v", err)
+		}
+	}
 	p, _ := pem.Decode([]byte(certTemplate))
 	if p == nil {
 		return "", errors.New("no pem block found")
@@ -236,12 +246,10 @@ func (c *Clients) CreateCertificate(tk string, certTemplate string) (string, err
 	if err != nil {
 		return "", err
 	}
-
-	b, err := c.crt.CertSignRequest(*tmp, &pk.PublicKey)
+	b, err := c.crt.CertSignRequest(*tmp, &pk.PublicKey, validTo)
 	if err != nil {
 		return "", err
 	}
-
 	caPEM := new(bytes.Buffer)
 	err = pem.Encode(caPEM, &pem.Block{
 		Type:  "CERTIFICATE",

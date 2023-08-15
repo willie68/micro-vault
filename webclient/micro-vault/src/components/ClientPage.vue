@@ -232,6 +232,12 @@ const copySK = () => {
                                     <Chips id="groups" v-model="selectedClient.crt.uri" :disabled="!ledit" />
                                 </div>
                             </div>
+                            <div class="grid">
+                                <div class="col-1">period of validity</div>
+                                <div class="col-5">
+                                    <InputText id="vad" v-model="selectedClient.crt.vad" :readonly="!ledit" v-tooltip.right="'insert a duration like 3w4d7h (3 weeks, 4 days and 7 hours)'"/>
+                                </div>
+                            </div>
                         </div>
                     </TabPanel>
                 </TabView>

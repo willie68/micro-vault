@@ -191,7 +191,7 @@ func (c *CAService) createCert() error {
 }
 
 // CertSignRequest signing the certificate
-func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) ([]byte, error) {
+func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any, validTo time.Duration) ([]byte, error) {
 	ser, err := randBigint()
 	if err != nil {
 		return []byte{}, err
@@ -211,7 +211,7 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any) (
 		URIs:               template.URIs,
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
-		NotAfter:           time.Now().AddDate(1, 0, 0),
+		NotAfter:           time.Now().Add(validTo),
 		AuthorityKeyId:     hashKeyID(c.kmn.PrivateKey().N),
 		KeyUsage:           x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},

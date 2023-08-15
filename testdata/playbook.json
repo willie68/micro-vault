@@ -34,7 +34,13 @@
                 "group1",
                 "group2",
                 "group4"
-            ]
+            ],
+            "crt" : {
+                "dns" : ["wkmusicsearch.local", "wkmusicsearch.local"],
+                "ip": ["192.168.178.10"],
+                "ucn": "wkmusicsearch",
+                "vad": "30d"
+              }
         },
         {
             "name": "tester2",

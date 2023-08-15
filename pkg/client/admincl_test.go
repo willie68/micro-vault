@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/pkg/pmodel"
+	"golang.org/x/exp/slices"
 )
 
 var (
@@ -86,23 +87,15 @@ func TestAdmPlaybook(t *testing.T) {
 
 	gs, err := adm.Groups()
 	ast.Nil(err)
-	found := false
-	for _, g := range gs {
-		if g.Name == "group4" {
-			found = true
-		}
-	}
-	ast.True(found)
+	ast.True(slices.ContainsFunc(gs, func(g pmodel.Group) bool {
+		return g.Name == "group4"
+	}))
 
 	cs, err := adm.Clients()
 	ast.Nil(err)
-	found = false
-	for _, c := range cs {
-		if c.Name == "tester4" && c.AccessKey == "1234567890" {
-			found = true
-		}
-	}
-	ast.True(found)
+	ast.True(slices.ContainsFunc(cs, func(c pmodel.Client) bool {
+		return c.Name == "tester4" && c.AccessKey == "1234567890"
+	}))
 }
 
 func TestAdmNewClient(t *testing.T) {

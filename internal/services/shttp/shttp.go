@@ -225,7 +225,8 @@ func (gc *generateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 
 	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
 
-	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv))
+	// TODO get the validto from the configuration
+	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv), time.Hour*24*365)
 	if err != nil {
 		log.Logger.Fatalf("Failed to create certificate: %v", err)
 		return nil, err

@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"slices"
+
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 func TestMergeDNSSingles(t *testing.T) {
@@ -71,7 +72,7 @@ func TestMergeDNSListInterface(t *testing.T) {
 	ast := assert.New(t)
 
 	crt := make(map[string]any)
-	crt["dns"] = []interface{}{"willie.host"}
+	crt["dns"] = []any{"willie.host"}
 	dnss, err := mergeDNSs(crt, []string{"local.host", "remote.host"})
 	ast.Nil(err)
 	ast.Equal(3, len(dnss))
@@ -172,7 +173,7 @@ func TestMergeIPListInterface(t *testing.T) {
 	ip := net.ParseIP("192.168.178.10")
 
 	crt := make(map[string]any)
-	crt["ip"] = []interface{}{"192.168.178.11", ip}
+	crt["ip"] = []any{"192.168.178.11", ip}
 	ips, err := mergeIPs(crt, []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("192.168.178.11")})
 	ast.Nil(err)
 	ast.Equal(3, len(ips))
@@ -290,7 +291,7 @@ func TestMergeURIListInterface(t *testing.T) {
 	ast.Nil(err)
 
 	crt := make(map[string]any)
-	crt["uri"] = []interface{}{"localhost", *uri}
+	crt["uri"] = []any{"localhost", *uri}
 	u1, _ := url.Parse("localhost")
 	u2, _ := url.Parse("www.mcs.de")
 	uris, err := mergeURIs(crt, []*url.URL{u1, u2})

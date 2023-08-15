@@ -39,7 +39,8 @@
           "crt" : {
             "dns" : ["landlord.local", "architect.local"],
             "ip": ["192.168.178.10"],
-            "ucn": "landlord"
+            "ucn": "landlord",
+            "vad": "30d"
           }
       },
       {
