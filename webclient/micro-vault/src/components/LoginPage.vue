@@ -31,7 +31,7 @@ function submit() {
     .then((data) => {
       loginStore.afterlogin(data.access_token, data.refresh_token)
       sapi.init()
-      toast.add({ severity: "success", summary: 'Logged in', detail: 'You’ve successfully logged into Micro Vault Admin Interface.', life: 3000 });
+      toast.add({ severity: "success", summary: 'Logged in', detail: 'You’ve successfully logged into Micro-Vault Admin Interface.', life: 3000 });
     })
     .catch((err) => {
       console.log(err.status, err.message)
@@ -49,14 +49,14 @@ console.log("service url:" + loginStore.baseurl);
     <br />
     <br />
     <Card style="width: 40em">
-      <template #title>Micro Vault Login</template>
+      <template #title>Micro-Vault Login</template>
       <template #content>
         <div class="grid">
           <div class="col">
             <div class="card">
               <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="125" height="125" />
               <div class="center">
-                <h1>Micro Vault</h1>
+                <h1>Micro-Vault</h1>
               </div>
             </div>
           </div>

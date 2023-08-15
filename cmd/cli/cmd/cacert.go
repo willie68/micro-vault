@@ -14,7 +14,7 @@ import (
 var cacertCmd = &cobra.Command{
 	Use:   "cacert",
 	Short: "Getting the root certificate of the ca",
-	Long:  `Getting the root certificate of the micro vault certificate authority`,
+	Long:  `Getting the root certificate of the micro-vault certificate authority`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		adm, err := cmdutils.AdminClient()
 		if err != nil {

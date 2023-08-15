@@ -12,7 +12,7 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get an object from your micro vault instance",
+	Short: "Get an object from your micro-vault instance",
 	Long:  `You can get more information about groups and client, or you can get a certificat for your client`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("get called")

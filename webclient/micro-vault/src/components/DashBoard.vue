@@ -31,7 +31,7 @@ const logout = () => {
   <Toolbar>
     <template #start>
       <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="50" />
-      <Button text>Micro Vault Simple Admin Client</Button>
+      <Button text>Micro-Vault Simple Admin Client</Button>
     </template>
     <template #end>
       <Button icon="pi pi-power-off" aria-label="Add Group" text @click="logout" />

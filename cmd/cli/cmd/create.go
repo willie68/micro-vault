@@ -12,8 +12,8 @@ import (
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create an object in your micro vault instance",
-	Long:  `Creating object new in your micro vault instance, client, group.`,
+	Short: "Create an object in your micro-vault instance",
+	Long:  `Creating object new in your micro-vault instance, client, group.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
 	},

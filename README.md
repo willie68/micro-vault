@@ -56,7 +56,7 @@ Micro-Vault bietet genau das, nicht mehr aber auch nicht weniger.
 Service-Client sind per Namen identifizierbar. 
 
 Micro-Vault ermöglicht die Erstellung signierter Zertifikate für die Clients und dient als CA (Certificate Authority). Jeder Service-Client kann signierte Zertifikate anfordern. Andere Clients, die dann diese Zertifikate validieren, benötigen nur das Root Zertifikat von der Micro-Vault-Instanz. Die Zertifikate können im MV UI mit bestimmten Eigenschaften, wie DNS Namen, IP Namen... konfiguriert werden. Vorteil es gibt eine zentrale Stelle, wo alle Zertifikatsinformation der verschiedenen Services konfiguriert werden können. Je nach Service Implementierung muss man dann nur noch dafür sorgen, dass die Services die neuen Zertifikate abholen.
-Um den von micro vault ausgestellten Zertifikaten zu vertrauen, reicht es aus das Stammzertifikat von Micro-Vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`) 
+Um den von Micro-Vault ausgestellten Zertifikaten zu vertrauen, reicht es aus das Stammzertifikat von Micro-Vault zu installieren. Dieses kann über die mvcli auch automatisiert erfolgen. (`mvcli cacert`) 
 
 Die Client-Anmeldung erfolgt dann per AccessKey und Secret. Das Secret wird nur bei dem Client-Anlegerequest einmalig ausgegeben. Die eigentlichen Funktionen können dann über das bei der Anmeldung ausgestellte Token angesprochen werden. Ist dieses Token abgelaufen, kann entweder per RefreshToken einmalig oder per AccessKey/Secret ein neues Token ausgestellt werden. Clients können Gruppen zugeordnet werden. Nur innerhalb einer Gruppe können Keys (Signatur) und Schlüssel (Crypt) ausgetauscht werden. Jeder Client ist automatisch in seiner eigenen Gruppe, d.h. jeder Client kann sich auch "private" Keys ausstellen lassen. 
 
@@ -213,8 +213,8 @@ Usage:
 Available Commands:
   cacert      Getting the root certificate of the ca
   completion  Generate the autocompletion script for the specified shell
-  create      Create an object in your micro vault instance
-  get         Get an object from your micro vault instance
+  create      Create an object in your Micro-Vault instance
+  get         Get an object from your Micro-Vault instance
   help        Help about any command
   list        List different objects
   login       Login into a Micro-Vault service
@@ -270,7 +270,7 @@ Folgende Kommandos funktionieren ohne Anmeldung.
 
 ```
 C:\>mvcli.exe cacert --url https://127.0.0.1:9543
-Getting the root certificate of the micro vault certificate authority
+Getting the root certificate of the Micro-Vault certificate authority
 
 Usage:
   mvcli cacert [flags]

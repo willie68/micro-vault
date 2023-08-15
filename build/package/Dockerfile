@@ -82,7 +82,7 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
   CMD wget -q -T 5 --spider http://localhost:8080/livez
 
 LABEL org.opencontainers.image.title="MicroVault" \
-      org.opencontainers.image.description="MCS Micro Vault micro key management service" \
+      org.opencontainers.image.description="MCS Micro-Vault micro key management service" \
       org.opencontainers.image.version="${IMG_VERSION}" \
       org.opencontainers.image.source="https://github.com/willie68/micro-vault.git" \
       org.opencontainers.image.vendor="MCS (www.rcarduino.de)" \

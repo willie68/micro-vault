@@ -11,11 +11,11 @@ defineProps({
   <div class="greetings">
     <div class="card">
       <img alt="Vault logo" class="logo" src="../assets/vault.svg" width="125" height="125" />
-      <h1>Micro Vault</h1>
+      <h1>Micro-Vault</h1>
     </div>
     <h1 class="green">{{ msg }}</h1>
     <h3>
-      You’ve successfully logged into Micro Vault Admin Interface.
+      You’ve successfully logged into Micro-Vault Admin Interface.
     </h3>
   </div>
 </template>
