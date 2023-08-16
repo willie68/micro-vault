@@ -1,11 +1,14 @@
 package apiv1
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"io"
 	"net/http"
 
+	"github.com/cloudflare/cfssl/certinfo"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/samber/do"
@@ -48,6 +51,7 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Get("/clients/{name}", a.GetClient)
 	router.Get("/groupkeys", a.GetKeys)
 	router.Post("/groupkeys", a.PostKey)
+	router.Post("/utils/decodecert", a.PostDecodeCertificate)
 	return BaseURL + adminSubpath, router
 }
 
@@ -627,4 +631,45 @@ func (a *AdminHandler) PostKey(response http.ResponseWriter, request *http.Reque
 	}
 	render.Status(request, http.StatusCreated)
 	render.JSON(response, request, cl)
+}
+
+// PostDecodeCertificate decoding a certificate
+// @Summary decoding a certificate
+// @Tags configs
+// @Accept  string
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload body pem file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groups [post]
+func (a *AdminHandler) PostDecodeCertificate(response http.ResponseWriter, request *http.Request) {
+	var b []byte
+	var err error
+	var p *pem.Block
+	var xc *x509.Certificate
+	_, err = token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+
+	if b, err = io.ReadAll(request.Body); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	p, _ = pem.Decode(b)
+	if p == nil {
+		httputils.Err(response, request, serror.BadRequest(errors.New("can't decode body, not a PEM format")))
+		return
+	}
+
+	if xc, err = x509.ParseCertificate(p.Bytes); err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	certInfo := certinfo.ParseCertificate(xc)
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, certInfo)
 }

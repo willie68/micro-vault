@@ -51,7 +51,7 @@ var updateGroupCmd = &cobra.Command{
 }
 
 func init() {
-	updateCmd.AddCommand(updateGroupCmd)
+	decodeCmd.AddCommand(updateGroupCmd)
 
 	updateGroupCmd.Flags().StringP("name", "n", "", "Name of the group")
 	updateGroupCmd.MarkFlagRequired("name")

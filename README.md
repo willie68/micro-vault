@@ -426,6 +426,74 @@ In: Playbook Json
 
 Out: No Content
 
+### Utils Certificate
+
+#### Dekodieren eines Zertifikates
+
+Mit diesem Endpunkt kann man ein öffentliches Zertifikat dekodieren und als JSON zurück geben lassen. Achtung: Das Zertifikat wird nur konvertiert und nicht geprüft.
+
+URL POST /admin//utils/decodecert
+
+In: Zertifikat im PEM Format
+
+Out: Dekodiertes Zertifikat in JSON
+
+Beispielantwort:
+
+```json
+{
+    "subject": {
+        "common_name": "mcs",
+        "country": "de",
+        "organization": "MCS",
+        "organizational_unit": "dev",
+        "locality": "Hattigen",
+        "province": "NRW",
+        "street_address": "Welperstraße 65",
+        "postal_code": "45525",
+        "names": [
+            "de",
+            "NRW",
+            "Hattigen",
+            "Welperstraße 65",
+            "45525",
+            "MCS",
+            "dev",
+            "mcs"
+        ]
+    },
+    "issuer": {
+        "common_name": "mcs",
+        "country": "de",
+        "organization": "MCS",
+        "organizational_unit": "dev",
+        "locality": "Hattigen",
+        "province": "NRW",
+        "street_address": "Welperstraße 65",
+        "postal_code": "45525",
+        "names": [
+            "de",
+            "NRW",
+            "Hattigen",
+            "Welperstraße 65",
+            "45525",
+            "MCS",
+            "dev",
+            "mcs"
+        ]
+    },
+    "serial_number": "843198170162794019371705681989803412654",
+    "not_before": "2023-08-02T13:49:58Z",
+    "not_after": "2033-08-02T13:49:58Z",
+    "sigalg": "SHA256WithRSA",
+    "authority_key_id": "63:8F:F5:0C:04:5A:03:4C:7B:D1:9E:B6:A2:74:19:95:F4:C2:53:BB",
+    "subject_key_id": "63:8F:F5:0C:04:5A:03:4C:7B:D1:9E:B6:A2:74:19:95:F4:C2:53:BB",
+    "pem": "-----BEGIN CERTIFICATE-----\n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\nIqvyYJi0vaYu/FpwrcpBSrWjem1/FjS70L8E\n-----END CERTIFICATE-----\n"
+}
+```
+
+
+
 ## Client
 
 ### Client Zertifikat

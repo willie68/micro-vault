@@ -473,6 +473,30 @@ func (a *AdminCl) DeleteClient(n string) error {
 	return nil
 }
 
+func (a *AdminCl) DecodeCertificate(pem string) (map[string]any, error) {
+	err := a.checkToken()
+	if err != nil {
+		return nil, err
+	}
+	res, err := a.Post("admin/utils/decodecert", "text/plain", strings.NewReader(pem))
+	if err != nil {
+		logging.Logger.Errorf("update client request failed: %v", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		logging.Logger.Errorf("update client bad response: %d", res.StatusCode)
+		return nil, ReadErr(res)
+	}
+	cj := make(map[string]any)
+	err = ReadJSON(res, &cj)
+	if err != nil {
+		logging.Logger.Errorf("parsing response failed: %v", err)
+		return nil, err
+	}
+	return cj, nil
+}
+
 // PostJSON posting a json string to the endpoint
 func (a *AdminCl) PostJSON(endpoint string, body any) (*http.Response, error) {
 	byt, err := json.Marshal(body)

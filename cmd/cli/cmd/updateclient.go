@@ -39,7 +39,7 @@ var updateClientCmd = &cobra.Command{
 }
 
 func init() {
-	updateCmd.AddCommand(updateClientCmd)
+	updateCmd.AddCommand(decodeCertificateCmd)
 	updateClientCmd.Flags().StringP("name", "n", "", "Name of the client")
 	updateClientCmd.MarkFlagRequired("name")
 	updateClientCmd.Flags().StringSliceP("groups", "g", []string{}, "Groups to which the clients belong to.")
