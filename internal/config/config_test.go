@@ -8,9 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	serviceLocalFile = "./../../testdata/service_local_file.yaml"
+	logFile          = "file.log"
+)
+
 func TestLoadFromYaml(t *testing.T) {
 	ast := assert.New(t)
-	File = "./../../testdata/service_local_file.yaml"
+	File = serviceLocalFile
 
 	err := Load()
 	ast.Nil(err)
@@ -54,21 +59,21 @@ func TestCfgSubst(t *testing.T) {
 func TestEnvSubstRightCase(t *testing.T) {
 	ast := assert.New(t)
 
-	err := os.Setenv("logfile", "file.log")
+	err := os.Setenv("logfile", logFile)
 	ast.Nil(err)
 
-	File = "./../../testdata/service_local_file.yaml"
+	File = serviceLocalFile
 
 	err = Load()
 	ast.Nil(err)
 
-	ast.Equal("file.log", Get().Logging.Filename)
+	ast.Equal(logFile, Get().Logging.Filename)
 }
 
 func TestEnvSubstWrongCase(t *testing.T) {
 	ast := assert.New(t)
 
-	err := os.Setenv("LogFile", "file.log")
+	err := os.Setenv("LogFile", logFile)
 	ast.Nil(err)
 
 	File = "./../../testdata/service_local_file.yaml"
@@ -76,7 +81,7 @@ func TestEnvSubstWrongCase(t *testing.T) {
 	err = Load()
 	ast.Nil(err)
 
-	ast.Equal("file.log", Get().Logging.Filename)
+	ast.Equal(logFile, Get().Logging.Filename)
 }
 
 func TestSecretMapping(t *testing.T) {

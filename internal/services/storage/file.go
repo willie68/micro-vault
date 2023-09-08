@@ -82,10 +82,10 @@ func (f *FileStorage) Init() error {
 // Close closes the database, freeing all needed resources
 func (f *FileStorage) Close() error {
 	f.db.Close()
-	do.ShutdownNamed(nil, interfaces.DoStorage)
+	err := do.ShutdownNamed(nil, interfaces.DoStorage)
 	f.ticker.Stop()
 	f.tckDone <- true
-	return nil
+	return err
 }
 
 func (f *FileStorage) cleanup() {
@@ -205,6 +205,9 @@ func (f *FileStorage) AddClient(c model.Client) (string, error) {
 		}
 		return true
 	})
+	if err != nil {
+		return "", err
+	}
 	if found {
 		return "", errors.New("client already exists")
 	}
@@ -243,6 +246,9 @@ func (f *FileStorage) ListClients(c func(g model.Client) bool) error {
 			item := it.Item()
 			var g model.Client
 			valCopy, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
 			err = json.Unmarshal(valCopy, &g)
 			if err != nil {
 				return err
@@ -339,7 +345,6 @@ func (f *FileStorage) HasEncryptKey(id string) bool {
 // ListEncryptKeys list all clients via callback function
 func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
 	var cnt int64
-	cnt = 0
 	err := f.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
@@ -350,6 +355,9 @@ func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) boo
 				item := it.Item()
 				var g model.EncryptKey
 				valCopy, err := item.ValueCopy(nil)
+				if err != nil {
+					return err
+				}
 				err = json.Unmarshal(valCopy, &g)
 				if err != nil {
 					return err
@@ -413,7 +421,6 @@ func (f *FileStorage) DeleteData(id string) (bool, error) {
 // ListData list all datas via callback function
 func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 	var cnt int64
-	cnt = 0
 	err := f.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
@@ -424,6 +431,9 @@ func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 				item := it.Item()
 				var g model.Data
 				valCopy, err := item.ValueCopy(nil)
+				if err != nil {
+					return err
+				}
 				err = json.Unmarshal(valCopy, &g)
 				if err != nil {
 					return err
@@ -466,7 +476,6 @@ func (f *FileStorage) has(t, k string) (found bool) {
 			if found {
 				it.Close()
 			}
-			return nil
 		}
 		return nil
 	})

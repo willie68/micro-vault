@@ -89,11 +89,11 @@ func (s *SHttp) ShutdownServers() {
 func (s *SHttp) startHTTPSServer(router *chi.Mux) {
 	ul, err := url.Parse(s.cfn.ServiceURL)
 	if err != nil {
-		log.Logger.Alertf("could not create tls config. %s", err.Error())
+		log.Logger.Alertf("servcie url unparsable: %s %s", s.cfn.ServiceURL, err.Error())
 	}
 	host, _, err := net.SplitHostPort(ul.Host)
 	if err != nil {
-		log.Logger.Alertf("could not create tls config. %s", err.Error())
+		log.Logger.Alertf("can't split host and port. %s", err.Error())
 	}
 	gc := generateCertificate{
 		ServiceName:  config.Servicename,

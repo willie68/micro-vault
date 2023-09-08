@@ -31,7 +31,8 @@ func NewStorage(s config.Storage) (interfaces.Storage, error) {
 			return nil, err
 		}
 	case "mongodb":
-		js, err := json.Marshal(s.Properties)
+		var js []byte
+		js, err = json.Marshal(s.Properties)
 		if err != nil {
 			return nil, err
 		}
@@ -42,5 +43,5 @@ func NewStorage(s config.Storage) (interfaces.Storage, error) {
 		}
 		stg, err = NewMongoStorage(mdcfg)
 	}
-	return stg, nil
+	return stg, err
 }

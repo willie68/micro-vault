@@ -125,10 +125,3 @@ func checkHealthCheckTimer() {
 		}
 	}
 }
-
-// sendMessage sending a span message to tracer
-func sendMessage(tracer opentracing.Tracer, message string) {
-	span := tracer.StartSpan("health-send-msg")
-	println(message)
-	span.Finish()
-}

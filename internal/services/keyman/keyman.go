@@ -20,13 +20,11 @@ const DoKeyman = "keyman"
 
 // Keyman the key manager service
 type Keyman struct {
-	cfg           config.Config
-	rsk           *rsa.PrivateKey
-	kid           string
-	jwks          jwk.Set
-	signKey       jwk.Key
-	caPrivate     string
-	caCertificate string
+	cfg     config.Config
+	rsk     *rsa.PrivateKey
+	kid     string
+	jwks    jwk.Set
+	signKey jwk.Key
 }
 
 // NewKeyman creates a new Keyman service
@@ -56,7 +54,7 @@ func (k *Keyman) init() error {
 	if rsk == nil {
 		rsk, err = rsa.GenerateKey(rand.Reader, 4096)
 		if err != nil {
-			logging.Logger.Errorf("failed to generate private key: %s", err)
+			logging.Logger.Errorf("failed to generate private key: %v", err)
 			return err
 		}
 		err = saveToFile(k.cfg.Service.PrivateKey, rsk)
@@ -67,18 +65,22 @@ func (k *Keyman) init() error {
 	k.rsk = rsk
 
 	key, err := jwk.FromRaw(rsk)
+	if err != nil {
+		log.Printf("failed to generate jwk key: %v", err)
+		return err
+	}
 
 	err = jwk.AssignKeyID(key)
 	if err != nil {
-		log.Printf("failed to generate private key: %s", err)
+		log.Printf("failed to assign key id: %v", err)
 		return err
 	}
 	k.signKey = key
 
 	k.kid = key.KeyID()
-	kin, err := key.PublicKey() //jwk.FromRaw(rsk.PublicKey)
+	kin, err := key.PublicKey()
 	if err != nil {
-		log.Printf("failed to generate jwks: %s", err)
+		log.Printf("failed to generate jwks: %v", err)
 		return err
 	}
 	kin.Set(jwk.AlgorithmKey, "RS256")

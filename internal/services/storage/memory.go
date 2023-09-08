@@ -65,10 +65,10 @@ func (m *Memory) Close() error {
 	m.clients = sync.Map{}
 	m.keys = sync.Map{}
 	m.revokes = sync.Map{}
-	do.ShutdownNamed(nil, interfaces.DoStorage)
+	err := do.ShutdownNamed(nil, interfaces.DoStorage)
 	m.ticker.Stop()
 	m.tckDone <- true
-	return nil
+	return err
 }
 
 func (m *Memory) cleanup() {
@@ -263,7 +263,6 @@ func (m *Memory) HasEncryptKey(id string) bool {
 // ListEncryptKeys list all clients via callback function
 func (m *Memory) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
 	var cnt int64
-	cnt = 0
 	m.keys.Range(func(key, value any) bool {
 		n := true
 		if cnt >= s && cnt < (s+l) {
@@ -310,7 +309,6 @@ func (m *Memory) DeleteData(id string) (bool, error) {
 // ListData list all datas via callback function
 func (m *Memory) ListData(s, l int64, c func(c model.Data) bool) error {
 	var cnt int64
-	cnt = 0
 	m.datas.Range(func(key, value any) bool {
 		cnt++
 		n := true

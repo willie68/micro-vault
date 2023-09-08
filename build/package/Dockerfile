@@ -27,11 +27,11 @@ ENV GOOS="linux"
 ENV GOARCH="amd64"
 ENV CGO_ENABLED="0"
 
-RUN go build -ldflags="-s -w" -o micro-vault-service cmd/service/main.go 
+RUN go build -ldflags="-s -w" -o microvault-service cmd/service/main.go 
 
 ## Task: set permissions
 
-RUN chmod 0755 /src/micro-vault-service
+RUN chmod 0755 /src/microvault-service
 
 ## Task: runtime dependencies
 
@@ -65,7 +65,7 @@ FROM alpine:3.18
 ARG RELEASE
 ENV IMG_VERSION="${RELEASE}"
 
-COPY --from=builder /src/micro-vault-service /usr/local/bin/
+COPY --from=builder /src/microvault-service /usr/local/bin/
 COPY --from=builder /src/configs/service.yaml /config/
 COPY --from=builder /src/configs/secret.yaml /config/
 COPY --from=builder /usr/share/rundeps /usr/share/rundeps
@@ -73,7 +73,7 @@ COPY --from=builder /usr/share/rundeps /usr/share/rundeps
 RUN set -eux; \
     xargs -a /usr/share/rundeps apk add --no-progress --quiet --no-cache --upgrade --virtual .run-deps
 
-ENTRYPOINT ["/usr/local/bin/micro-vault-service"]
+ENTRYPOINT ["/usr/local/bin/microvault-service"]
 CMD ["--config","/config/service.yaml"]
 
 EXPOSE 8080 8443
@@ -88,5 +88,5 @@ LABEL org.opencontainers.image.title="MicroVault" \
       org.opencontainers.image.vendor="MCS (www.rcarduino.de)" \
       org.opencontainers.image.authors="info@wk-music.de" \
       maintainer="MCS" \
-      NAME="micro-vault-service"
+      NAME="microvault-service"
 

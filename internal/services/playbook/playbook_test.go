@@ -20,6 +20,9 @@ import (
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 )
 
+const pbFile = "../../../testdata/playbook.json"
+const pbExportFile = "../../../testdata/playbook_export.json"
+
 var stg interfaces.Storage
 
 func init() {
@@ -33,7 +36,7 @@ func init() {
 func TestPlaybook(t *testing.T) {
 	ast := assert.New(t)
 
-	pb := NewPlaybookFile("../../../testdata/playbook.json")
+	pb := NewPlaybookFile(pbFile)
 	ast.NotNil(pb)
 
 	err := pb.Load()
@@ -70,23 +73,22 @@ func TestPlaybookMissingFile(t *testing.T) {
 
 func TestPlaybookModel(t *testing.T) {
 	ast := assert.New(t)
-	stg.Init()
+	err := stg.Init()
+	ast.Nil(err)
 
 	pm := model.Playbook{
 		Groups: []model.Group{
-			model.Group{
+			{
 				Name: "group1",
-			},
-			model.Group{
+			}, {
 				Name: "group2",
 			},
 		},
 		Clients: []model.Client{
-			model.Client{
+			{
 				Name:      "tester1",
 				AccessKey: "123",
-			},
-			model.Client{
+			}, {
 				Name:      "tester2",
 				AccessKey: "456",
 			},
@@ -98,7 +100,7 @@ func TestPlaybookModel(t *testing.T) {
 	ast.False(stg.HasClient("tester1"))
 	ast.False(stg.HasGroup("tester1"))
 
-	err := pb.Play()
+	err = pb.Play()
 	ast.Nil(err)
 
 	ast.True(stg.HasGroup("group1"))
@@ -115,7 +117,7 @@ func TestPlaybookModel(t *testing.T) {
 func TestPlaybookExport(t *testing.T) {
 	ast := assert.New(t)
 	stg.Init()
-	pb := NewPlaybookFile("../../../testdata/playbook.json")
+	pb := NewPlaybookFile(pbFile)
 	ast.NotNil(pb)
 	err := pb.Load()
 	ast.Nil(err)
@@ -126,7 +128,7 @@ func TestPlaybookExport(t *testing.T) {
 	ast.Nil(err)
 	stg.StoreEncryptKey(*e)
 
-	err = pb.Export("../../../testdata/playbook_export.json")
+	err = pb.Export(pbExportFile)
 	ast.Nil(err)
 }
 
@@ -160,10 +162,10 @@ func TestBigExport(t *testing.T) {
 		ast.Nil(err)
 	}
 
-	err := pb.Export("../../../testdata/playbook_export.json")
+	err := pb.Export(pbExportFile)
 	ast.Nil(err)
 
-	data, err := os.ReadFile("../../../testdata/playbook_export.json")
+	data, err := os.ReadFile(pbExportFile)
 	ast.Nil(err)
 	var pm model.Playbook
 	err = json.Unmarshal(data, &pm)

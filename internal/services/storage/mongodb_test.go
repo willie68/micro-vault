@@ -20,8 +20,8 @@ const (
 var mgo *MongoStorage
 
 func mongoInit() {
-	do.ShutdownNamed(nil, config.DoServiceConfig)
-	do.ShutdownNamed(nil, keyman.DoKeyman)
+	_ = do.ShutdownNamed(nil, config.DoServiceConfig)
+	_ = do.ShutdownNamed(nil, keyman.DoKeyman)
 
 	cfg := config.Config{
 		Service: config.Service{
@@ -113,7 +113,7 @@ func TestGroupCRUDMgo(t *testing.T) {
 	ast.Nil(err)
 	ast.True(ok)
 
-	dg, ok = mgo.GetGroup(g.Name)
+	_, ok = mgo.GetGroup(g.Name)
 	ast.False(ok)
 }
 
@@ -276,7 +276,7 @@ func TestStoreEncryptKeyMgo(t *testing.T) {
 	ast.Equal(e.ID, e1.ID)
 	ast.Equal(e.Alg, e1.Alg)
 	ast.Equal(e.Key, e1.Key)
-	//ast.Equal(e.Created, e1.Created)
+	// ast.Equal(e.Created, e1.Created)
 	ast.Equal(e.Group, e1.Group)
 
 	ok, err = mgo.DeleteEncryptKey(e.ID)

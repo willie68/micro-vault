@@ -82,7 +82,7 @@ func TestGroupCRUD(t *testing.T) {
 	ast.Nil(err)
 	ast.True(ok)
 
-	dg, ok = mem.GetGroup(g.Name)
+	_, ok = mem.GetGroup(g.Name)
 	ast.False(ok)
 }
 

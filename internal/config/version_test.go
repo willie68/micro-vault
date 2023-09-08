@@ -6,12 +6,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	specialVersion = "1.2.3-special"
+	errParsing     = "Error in parsing"
+)
+
 func TestParsing(t *testing.T) {
 	ast := assert.New(t)
-	versionStr := "1.2.3-special"
+	versionStr := specialVersion
 
 	version, err := ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 	ast.Equal(1, version.Major, "Major version not equal")
 	ast.Equal(2, version.Minor, "Minor version not equal")
 	ast.Equal(3, version.Patch, "Patch version not equal")
@@ -20,10 +25,10 @@ func TestParsing(t *testing.T) {
 
 func TestCompareEqual(t *testing.T) {
 	ast := assert.New(t)
-	versionStr := "1.2.3-special"
+	versionStr := specialVersion
 
 	version, err := ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 
 	ast.False(version.IsEqual(Version{
 		Major: 2,
@@ -49,7 +54,7 @@ func TestCompareEqual(t *testing.T) {
 	versionStr = "1.2.3"
 
 	version, err = ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 
 	version2 = Version{
 		Major: 1,
@@ -64,7 +69,7 @@ func TestCompareEqual(t *testing.T) {
 	versionStr = "1.2"
 
 	version, err = ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 
 	version2 = Version{
 		Major: 1,
@@ -78,7 +83,7 @@ func TestCompareEqual(t *testing.T) {
 	versionStr = "1"
 
 	version, err = ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 
 	version2 = Version{
 		Major: 1,
@@ -91,10 +96,10 @@ func TestCompareEqual(t *testing.T) {
 
 func TestCompareGreater(t *testing.T) {
 	ast := assert.New(t)
-	versionStr := "1.2.3-special"
+	versionStr := specialVersion
 
 	version, err := ParseVersion(versionStr)
-	ast.Nil(err, "Error in parsing")
+	ast.Nil(err, errParsing)
 
 	ast.True(version.IsGreaterThan(Version{
 		Major: 0,

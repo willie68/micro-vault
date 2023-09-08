@@ -39,16 +39,20 @@ func NewAdminHandler() api.Handler {
 func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router := chi.NewRouter()
 	router.Post("/playbook", a.PostPlaybook)
-	router.Get("/groups", a.GetGroups)
-	router.Post("/groups", a.PostGroups)
-	router.Get("/groups/{name}", a.GetGroup)
-	router.Post("/groups/{name}", a.PostGroup)
-	router.Delete("/groups/{name}", a.DeleteGroup)
-	router.Get("/clients", a.GetClients)
-	router.Post("/clients", a.PostNewClient)
-	router.Delete("/clients/{name}", a.DeleteClient)
-	router.Post("/clients/{name}", a.PostClient)
-	router.Get("/clients/{name}", a.GetClient)
+	rtGroups := "/groups"
+	router.Get(rtGroups, a.GetGroups)
+	router.Post(rtGroups, a.PostGroups)
+	rtGroupName := rtGroups + "/{name}"
+	router.Get(rtGroupName, a.GetGroup)
+	router.Post(rtGroupName, a.PostGroup)
+	router.Delete(rtGroupName, a.DeleteGroup)
+	rtClients := "/clients"
+	router.Get(rtClients, a.GetClients)
+	router.Post(rtClients, a.PostNewClient)
+	rtClientName := rtClients + "/{name}"
+	router.Delete(rtClientName, a.DeleteClient)
+	router.Post(rtClientName, a.PostClient)
+	router.Get(rtClientName, a.GetClient)
 	router.Get("/groupkeys", a.GetKeys)
 	router.Post("/groupkeys", a.PostKey)
 	router.Post("/utils/decodecert", a.PostDecodeCertificate)

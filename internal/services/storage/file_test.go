@@ -17,7 +17,8 @@ func testInit(ast *assert.Assertions) {
 	s, err := NewFileStorage("../../../testdata/filestorage")
 	ast.Nil(err)
 	s1, _ := s.(*FileStorage)
-	s1.clear()
+	err = s1.clear()
+	ast.Nil(err)
 	stg = s
 }
 
@@ -98,7 +99,7 @@ func TestGroupCRUDFS(t *testing.T) {
 	ast.Nil(err)
 	ast.True(ok)
 
-	dg, ok = stg.GetGroup(g.Name)
+	_, ok = stg.GetGroup(g.Name)
 	ast.False(ok)
 }
 
@@ -243,7 +244,7 @@ func TestStoreEncryptKeyFS(t *testing.T) {
 	ast.Equal(e.ID, e1.ID)
 	ast.Equal(e.Alg, e1.Alg)
 	ast.Equal(e.Key, e1.Key)
-	//ast.Equal(e.Created, e1.Created)
+	// ast.Equal(e.Created, e1.Created)
 	ast.Equal(e.Group, e1.Group)
 
 	ok, err = stg.DeleteEncryptKey(e.ID)

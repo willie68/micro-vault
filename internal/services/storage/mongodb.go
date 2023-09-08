@@ -31,6 +31,8 @@ import (
 // checking interface compatibility
 var _ interfaces.Storage = &MongoStorage{}
 
+const smpErrLog = "error: %v"
+
 // MongoDBConfig configuration for a mongodb
 type MongoDBConfig struct {
 	Hosts        []string `yaml:"hosts" json:"hosts"`
@@ -186,9 +188,9 @@ func checkForIndex(c *driver.Collection) (bool, error) {
 func (m *MongoStorage) ensureEncryption() error {
 	opts := options.FindOne()
 	flt := bson.D{
-		{"class", cCCrypt},
-		{"identifier", cCMasterCrypt},
-		{"cid", m.knm.KID()},
+		{Key: "class", Value: cCCrypt},
+		{Key: "identifier", Value: cCMasterCrypt},
+		{Key: "cid", Value: m.knm.KID()},
 	}
 
 	res := m.colObj.FindOne(m.ctx, flt, opts)
@@ -278,17 +280,17 @@ func (m *MongoStorage) setEncryption() error {
 
 	opts := options.FindOneAndReplace().SetUpsert(true)
 	flt := bson.D{
-		{"class", cCCrypt},
-		{"identifier", cCMasterCrypt},
-		{"cid", m.knm.KID()},
+		{Key: "class", Value: cCCrypt},
+		{Key: "identifier", Value: cCMasterCrypt},
+		{Key: "cid", Value: m.knm.KID()},
 	}
 
 	obj := bson.D{
-		{"class", cCCrypt},
-		{"identifier", cCMasterCrypt},
-		{"cid", m.knm.KID()},
-		{"object", ct},
-		{"message", mk},
+		{Key: "class", Value: cCCrypt},
+		{Key: "identifier", Value: cCMasterCrypt},
+		{Key: "cid", Value: m.knm.KID()},
+		{Key: "object", Value: ct},
+		{Key: "message", Value: mk},
 	}
 
 	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
@@ -303,8 +305,8 @@ func (m *MongoStorage) setEncryption() error {
 
 // Close closing the connection to mongo
 func (m *MongoStorage) Close() error {
-	m.client.Disconnect(m.ctx)
-	return nil
+	err := m.client.Disconnect(m.ctx)
+	return err
 }
 
 // RevokeToken set this token id to the revoked token
@@ -363,7 +365,7 @@ func (m *MongoStorage) DeleteGroup(n string) (bool, error) {
 func (m *MongoStorage) GetGroups() ([]model.Group, error) {
 	opts := options.Find()
 	obj := bson.D{
-		{"class", cCGroup},
+		{Key: "class", Value: cCGroup},
 	}
 	cur, err := m.colObj.Find(m.ctx, obj, opts)
 	if err != nil {
@@ -374,17 +376,17 @@ func (m *MongoStorage) GetGroups() ([]model.Group, error) {
 	gl := make([]model.Group, 0)
 
 	for cur.Next(m.ctx) {
-		var result bson.D
+		var result bson.M
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Logger.Errorf("error: %v", err)
+			log.Logger.Errorf(smpErrLog, err)
 		}
 		var g model.Group
-		res, ok := result.Map()["object"].(string)
+		res, ok := result["object"].(string)
 		if ok {
 			err = m.decrypt(res, &g)
 			if err != nil {
-				log.Logger.Errorf("error: %v", err)
+				log.Logger.Errorf(smpErrLog, err)
 			} else {
 				gl = append(gl, g)
 			}
@@ -401,7 +403,7 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 	var g model.Group
 	ok, err := m.one(cCGroup, n, &g)
 	if err != nil {
-		log.Logger.Errorf("error: %v", err)
+		log.Logger.Errorf(smpErrLog, err)
 		return nil, false
 	}
 	if !ok {
@@ -511,7 +513,7 @@ func (m *MongoStorage) DeleteClient(a string) (bool, error) {
 func (m *MongoStorage) ListClients(c func(g model.Client) bool) error {
 	opts := options.Find()
 	obj := bson.D{
-		{"class", cCClient},
+		{Key: "class", Value: cCClient},
 	}
 	cur, err := m.colObj.Find(m.ctx, obj, opts)
 	if err != nil {
@@ -546,7 +548,7 @@ func (m *MongoStorage) GetClient(a string) (*model.Client, bool) {
 	var c model.Client
 	ok, err := m.one(cCClientA, a, &c)
 	if err != nil {
-		log.Logger.Errorf("error: %v", err)
+		log.Logger.Errorf(smpErrLog, err)
 		return nil, false
 	}
 	if !ok {
@@ -573,7 +575,7 @@ func (m *MongoStorage) AccessKey(n string) (string, bool) {
 	var c model.Client
 	ok, err := m.one(cCClient, n, &c)
 	if err != nil {
-		log.Logger.Errorf("error: %v", err)
+		log.Logger.Errorf(smpErrLog, err)
 		return "", false
 	}
 	if !ok {
@@ -616,10 +618,10 @@ func (m *MongoStorage) HasEncryptKey(id string) bool {
 
 // ListEncryptKeys list all clients via callback function
 func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
-	opts := options.Find().SetSort(bson.D{{"identifier", 1}}).SetSkip(s).SetLimit(l)
+	opts := options.Find().SetSort(bson.D{{Key: "identifier", Value: 1}}).SetSkip(s).SetLimit(l)
 	obj := bson.D{
-		{"class", cCCrypt},
-		{"identifier", bson.D{{"$ne", cCMasterCrypt}}},
+		{Key: "class", Value: cCCrypt},
+		{Key: "identifier", Value: bson.D{{Key: "$ne", Value: cCMasterCrypt}}},
 	}
 	cur, err := m.colObj.Find(m.ctx, obj, opts)
 	if err != nil {
@@ -628,18 +630,18 @@ func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bo
 	defer cur.Close(m.ctx)
 
 	for cur.Next(m.ctx) {
-		var result bson.D
+		var result bson.M
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Logger.Errorf("lkeys: error: %v", err)
+			log.Logger.Errorf("lkeys:"+smpErrLog, err)
 			continue
 		}
 		var g model.EncryptKey
-		res, ok := result.Map()["object"].(string)
+		res, ok := result["object"].(string)
 		if ok {
 			err = m.decrypt(res, &g)
 			if err != nil {
-				log.Logger.Errorf("lkeys: error: %v", err)
+				log.Logger.Errorf("lkeys:"+smpErrLog, err)
 				continue
 			}
 			ok := c(g)
@@ -693,10 +695,10 @@ func (m *MongoStorage) DeleteData(id string) (bool, error) {
 
 // ListData list all data entries via callback function
 func (m *MongoStorage) ListData(s, l int64, c func(c model.Data) bool) error {
-	opts := options.Find().SetSort(bson.D{{"identifier", 1}}).SetSkip(s).SetLimit(l)
+	opts := options.Find().SetSort(bson.D{{Key: "identifier", Value: 1}}).SetSkip(s).SetLimit(l)
 	obj := bson.D{
-		{"class", cCData},
-		{"identifier", bson.D{{"$ne", cCMasterCrypt}}},
+		{Key: "class", Value: cCData},
+		{Key: "identifier", Value: bson.D{{Key: "$ne", Value: cCMasterCrypt}}},
 	}
 	cur, err := m.colObj.Find(m.ctx, obj, opts)
 	if err != nil {
@@ -753,8 +755,8 @@ func (m *MongoStorage) upsert(c, i string, exp *time.Time, o any) error {
 
 	opts := options.FindOneAndReplace().SetUpsert(true)
 	flt := bson.D{
-		{"class", c},
-		{"identifier", i},
+		{Key: "class", Value: c},
+		{Key: "identifier", Value: i},
 	}
 	res := m.colObj.FindOneAndReplace(m.ctx, flt, obj, opts)
 	if res.Err() != nil {
@@ -769,8 +771,8 @@ func (m *MongoStorage) upsert(c, i string, exp *time.Time, o any) error {
 func (m *MongoStorage) exists(c, i string) (bool, error) {
 	opts := options.FindOne()
 	obj := bson.D{
-		{"class", c},
-		{"identifier", i},
+		{Key: "class", Value: c},
+		{Key: "identifier", Value: i},
 	}
 	res := m.colObj.FindOne(m.ctx, obj, opts)
 	if res != nil {
@@ -788,8 +790,8 @@ func (m *MongoStorage) exists(c, i string) (bool, error) {
 func (m *MongoStorage) one(c, i string, obj any) (bool, error) {
 	opts := options.FindOne()
 	flt := bson.D{
-		{"class", c},
-		{"identifier", i},
+		{Key: "class", Value: c},
+		{Key: "identifier", Value: i},
 	}
 	res := m.colObj.FindOne(m.ctx, flt, opts)
 	if res != nil {
@@ -819,8 +821,8 @@ func (m *MongoStorage) one(c, i string, obj any) (bool, error) {
 func (m *MongoStorage) delete(c, i string) (bool, error) {
 	opts := options.Delete()
 	flt := bson.D{
-		{"class", c},
-		{"identifier", i},
+		{Key: "class", Value: c},
+		{Key: "identifier", Value: i},
 	}
 	res, err := m.colObj.DeleteOne(m.ctx, flt, opts)
 	if err != nil {

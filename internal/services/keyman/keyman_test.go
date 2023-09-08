@@ -44,8 +44,10 @@ func TestNewKeyman(t *testing.T) {
 
 	pb := k.PrivateKey()
 	ast.NotNil(pb)
-	do.ShutdownNamed(nil, config.DoServiceConfig)
-	do.ShutdownNamed(nil, DoKeyman)
+	err = do.ShutdownNamed(nil, config.DoServiceConfig)
+	ast.Nil(err)
+	err = do.ShutdownNamed(nil, DoKeyman)
+	ast.Nil(err)
 }
 
 func TestKeymanPEM(t *testing.T) {
@@ -74,6 +76,8 @@ func TestKeymanPEM(t *testing.T) {
 	pr := k.PrivateKey()
 	ast.NotNil(pr)
 
-	do.ShutdownNamed(nil, config.DoServiceConfig)
-	do.ShutdownNamed(nil, DoKeyman)
+	err = do.ShutdownNamed(nil, config.DoServiceConfig)
+	ast.Nil(err)
+	err = do.ShutdownNamed(nil, DoKeyman)
+	ast.Nil(err)
 }

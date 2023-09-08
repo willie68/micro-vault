@@ -21,6 +21,21 @@ const (
 	certfile = "../../../testdata/cert3.pem"
 )
 
+var subjectMap map[string]string
+
+func init() {
+	subjectMap = map[string]string{
+		"Country":            "de",
+		"Organization":       "MCS",
+		"OrganizationalUnit": "dev",
+		"Locality":           "Hattigen",
+		"Province":           "NRW",
+		"StreetAddress":      "Welperstraße 65",
+		"PostalCode":         "45525",
+		"CommonName":         "mcs",
+	}
+}
+
 func TestNewCaCert(t *testing.T) {
 	ast := assert.New(t)
 
@@ -31,16 +46,7 @@ func TestNewCaCert(t *testing.T) {
 			PrivateKey: keyfile,
 			CACert: config.CACert{
 				Certificate: certfile,
-				Subject: map[string]string{
-					"Country":            "de",
-					"Organization":       "MCS",
-					"OrganizationalUnit": "dev",
-					"Locality":           "Hattigen",
-					"Province":           "NRW",
-					"StreetAddress":      "Welperstraße 65",
-					"PostalCode":         "45525",
-					"CommonName":         "mcs",
-				},
+				Subject:     subjectMap,
 			},
 		},
 	}
@@ -68,7 +74,7 @@ func TestNewCaCert(t *testing.T) {
 
 	ast.Equal("CERTIFICATE", p.Type)
 
-	shutDownNamed()
+	shutDownNamed(ast)
 }
 
 func TestCR(t *testing.T) {
@@ -79,16 +85,7 @@ func TestCR(t *testing.T) {
 			PrivateKey: keyfile,
 			CACert: config.CACert{
 				Certificate: certfile,
-				Subject: map[string]string{
-					"Country":            "de",
-					"Organization":       "MCS",
-					"OrganizationalUnit": "dev",
-					"Locality":           "Hattigen",
-					"Province":           "NRW",
-					"StreetAddress":      "Welperstraße 65",
-					"PostalCode":         "45525",
-					"CommonName":         "mcs",
-				},
+				Subject:     subjectMap,
 			},
 		},
 	}
@@ -112,7 +109,7 @@ func TestCR(t *testing.T) {
 	p, _ := pem.Decode(cert.caX509)
 	ast.Equal("CERTIFICATE", p.Type)
 
-	shutDownNamed()
+	shutDownNamed(ast)
 }
 
 func TestCSR(t *testing.T) {
@@ -123,16 +120,7 @@ func TestCSR(t *testing.T) {
 			PrivateKey: keyfile,
 			CACert: config.CACert{
 				Certificate: certfile,
-				Subject: map[string]string{
-					"Country":            "de",
-					"Organization":       "MCS",
-					"OrganizationalUnit": "dev",
-					"Locality":           "Hattigen",
-					"Province":           "NRW",
-					"StreetAddress":      "Welperstraße 65",
-					"PostalCode":         "45525",
-					"CommonName":         "mcs",
-				},
+				Subject:     subjectMap,
 			},
 		},
 	}
@@ -176,11 +164,14 @@ func TestCSR(t *testing.T) {
 	ast.Nil(err)
 	ast.True(len(b) > 0)
 
-	shutDownNamed()
+	shutDownNamed(ast)
 }
 
-func shutDownNamed() {
-	do.ShutdownNamed(nil, config.DoServiceConfig)
-	do.ShutdownNamed(nil, DoKeyman)
-	do.ShutdownNamed(nil, DoCAService)
+func shutDownNamed(ast *assert.Assertions) {
+	err := do.ShutdownNamed(nil, config.DoServiceConfig)
+	ast.Nil(err)
+	err = do.ShutdownNamed(nil, DoKeyman)
+	ast.Nil(err)
+	err = do.ShutdownNamed(nil, DoCAService)
+	ast.Nil(err)
 }
