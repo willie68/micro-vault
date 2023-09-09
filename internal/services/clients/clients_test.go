@@ -531,7 +531,3 @@ func checkRToken(rt string, ast *assert.Assertions) {
 	ast.True(ok)
 	ast.Equal("tester1", n)
 }
-
-func TestCompact(t *testing.T) {
-
-}

@@ -35,11 +35,13 @@ import (
 
 // DoClients constant for dependency injection
 const (
-	DoClients        = "clients"
-	JKAudience       = "microvault-client"
-	rtUsageKey       = "usage"
-	rtUsageRefresh   = "mv-refresh"
-	defaultCertValid = time.Hour * 24 * 365
+	DoClients           = "clients"
+	JKAudience          = "microvault-client"
+	rtUsageKey          = "usage"
+	rtUsageRefresh      = "mv-refresh"
+	defaultCertValid    = time.Hour * 24 * 365
+	errTkNotValidGroups = "token not valid, no groups"
+	errAccKeyPermit     = "access to key permitted"
 )
 
 // Clients business logic for client management
@@ -133,18 +135,18 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 
 	n, ok := tk.PrivateClaims()["name"].(string)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid")
+		logging.Logger.Error("failed to refresh, token not valid, no name given")
 		return "", "", serror.ErrTokenNotValid
 	}
 
 	a, ok := c.stg.AccessKey(n)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid")
+		logging.Logger.Error("failed to refresh, token not valid, no access key")
 		return "", "", serror.ErrTokenNotValid
 	}
 	cl, ok := c.stg.GetClient(a)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid")
+		logging.Logger.Error("failed to refresh, token not valid, no client defined")
 		return "", "", serror.ErrTokenNotValid
 	}
 
@@ -152,13 +154,13 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := c.generateRefreshToken(no, cl.Name)
 	if err != nil {
-		logging.Logger.Errorf("failed to sign token: %s", err)
+		logging.Logger.Errorf("sign token: failed to generate refesh token: %s", err)
 		return "", "", err
 	}
 
 	tsig, err := c.generateToken(no, cl.Name, cl.Groups)
 	if err != nil {
-		logging.Logger.Errorf("failed to sign token: %s", err)
+		logging.Logger.Errorf("sign token: failed to generate token: %s", err)
 		return "", "", err
 	}
 
@@ -166,7 +168,7 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 	exp := tk.Expiration()
 	err = c.stg.RevokeToken(tk.JwtID(), exp)
 	if err != nil {
-		logging.Logger.Errorf("failed to revoke token: %s", err)
+		logging.Logger.Errorf("sign token: failed to revoke token: %s", err)
 	}
 
 	return tsig, rtsig, nil
@@ -282,7 +284,7 @@ func (c *Clients) CreateEncryptKey(tk string, group string) (*model.EncryptKey, 
 	}
 	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
-		return nil, errors.New("token not valid, no groups")
+		return nil, errors.New(errTkNotValidGroups)
 	}
 	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, group)
@@ -324,7 +326,7 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	}
 	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
-		return nil, errors.New("token not valid, no groups")
+		return nil, errors.New(errTkNotValidGroups)
 	}
 
 	e, ok := c.stg.GetEncryptKey(id)
@@ -335,7 +337,7 @@ func (c *Clients) GetEncryptKey(tk string, id string) (*model.EncryptKey, error)
 	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, e.Group)
 	if !f && (!ok || (e.Group != n)) {
-		return nil, errors.New("access to key permitted")
+		return nil, errors.New(errAccKeyPermit)
 	}
 
 	return e, nil
@@ -492,7 +494,7 @@ func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
 
 	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
-		return nil, errors.New("token not valid, no groups")
+		return nil, errors.New(errTkNotValidGroups)
 	}
 
 	dt, ok := c.stg.GetData(id)
@@ -503,7 +505,7 @@ func (c *Clients) GetData(tk, id string) (*pmodel.Message, error) {
 	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, dt.Group)
 	if !f && (!ok || (dt.Group != n)) {
-		return nil, errors.New("access to key permitted")
+		return nil, errors.New(errAccKeyPermit)
 	}
 	var msg pmodel.Message
 	err = json.Unmarshal([]byte(dt.Payload), &msg)
@@ -522,7 +524,7 @@ func (c *Clients) DeleteData(tk, id string) (bool, error) {
 
 	gr, ok := jt.PrivateClaims()["groups"]
 	if !ok {
-		return false, errors.New("token not valid, no groups")
+		return false, errors.New(errTkNotValidGroups)
 	}
 
 	dt, ok := c.stg.GetData(id)
@@ -533,7 +535,7 @@ func (c *Clients) DeleteData(tk, id string) (bool, error) {
 	n, ok := jt.PrivateClaims()["name"].(string)
 	f := search(gr, dt.Group)
 	if !f && (!ok || (dt.Group != n)) {
-		return false, errors.New("access to key permitted")
+		return false, errors.New(errAccKeyPermit)
 	}
 
 	return c.stg.DeleteData(id)

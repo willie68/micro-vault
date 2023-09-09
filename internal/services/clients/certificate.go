@@ -9,59 +9,29 @@ import (
 	"slices"
 )
 
+func mergeListWCRTValue(source []string, crtValue any, appendValue bool) []string {
+	if ((len(source) == 0) || appendValue) && (crtValue != nil) {
+		if source == nil {
+			source = make([]string, 0)
+		}
+		return append(source, crtValue.(string))
+	}
+	return source
+}
+
 func mergeTemplate(tmp *x509.CertificateRequest, crt map[string]any) (*x509.CertificateRequest, error) {
 	if tmp.Subject.CommonName == "" {
 		tmp.Subject.CommonName = crt["ucn"].(string)
 	}
-	if (len(tmp.Subject.Country) == 0) && (crt["uco"] != nil) {
-		if tmp.Subject.Country == nil {
-			tmp.Subject.Country = make([]string, 0)
-		}
-		tmp.Subject.Country = append(tmp.Subject.Country, crt["uco"].(string))
-	}
-	if (len(tmp.Subject.Province) == 0) && (crt["upr"] != nil) {
-		if tmp.Subject.Province == nil {
-			tmp.Subject.Province = make([]string, 0)
-		}
-		tmp.Subject.Province = append(tmp.Subject.Province, crt["upr"].(string))
-	}
-	if (len(tmp.Subject.Locality) == 0) && (crt["ulo"] != nil) {
-		if tmp.Subject.Locality == nil {
-			tmp.Subject.Locality = make([]string, 0)
-		}
-		tmp.Subject.Locality = append(tmp.Subject.Locality, crt["ulo"].(string))
-	}
-	if (len(tmp.Subject.Organization) == 0) && (crt["uor"] != nil) {
-		if tmp.Subject.Organization == nil {
-			tmp.Subject.Organization = make([]string, 0)
-		}
-		tmp.Subject.Organization = append(tmp.Subject.Organization, crt["uor"].(string))
-	}
-	if (len(tmp.Subject.OrganizationalUnit) == 0) && (crt["uou"] != nil) {
-		if tmp.Subject.OrganizationalUnit == nil {
-			tmp.Subject.OrganizationalUnit = make([]string, 0)
-		}
-		tmp.Subject.OrganizationalUnit = append(tmp.Subject.OrganizationalUnit, crt["uou"].(string))
-	}
-	if (len(tmp.Subject.StreetAddress) == 0) && (crt["usa"] != nil) {
-		if tmp.Subject.StreetAddress == nil {
-			tmp.Subject.StreetAddress = make([]string, 0)
-		}
-		tmp.Subject.StreetAddress = append(tmp.Subject.StreetAddress, crt["usa"].(string))
-	}
-	if (len(tmp.Subject.PostalCode) == 0) && (crt["upc"] != nil) {
-		if tmp.Subject.PostalCode == nil {
-			tmp.Subject.PostalCode = make([]string, 0)
-		}
-		tmp.Subject.PostalCode = append(tmp.Subject.PostalCode, crt["upc"].(string))
-	}
+	tmp.Subject.Country = mergeListWCRTValue(tmp.Subject.Country, crt["uco"], false)
+	tmp.Subject.Province = mergeListWCRTValue(tmp.Subject.Province, crt["upr"], false)
+	tmp.Subject.Locality = mergeListWCRTValue(tmp.Subject.Locality, crt["ulo"], false)
+	tmp.Subject.Organization = mergeListWCRTValue(tmp.Subject.Organization, crt["uor"], false)
+	tmp.Subject.OrganizationalUnit = mergeListWCRTValue(tmp.Subject.OrganizationalUnit, crt["uou"], false)
+	tmp.Subject.StreetAddress = mergeListWCRTValue(tmp.Subject.StreetAddress, crt["usa"], false)
+	tmp.Subject.PostalCode = mergeListWCRTValue(tmp.Subject.PostalCode, crt["upc"], false)
 
-	if crt["uem"] != nil {
-		if tmp.EmailAddresses == nil {
-			tmp.EmailAddresses = make([]string, 0)
-		}
-		tmp.EmailAddresses = append(tmp.EmailAddresses, crt["uem"].(string))
-	}
+	tmp.EmailAddresses = mergeListWCRTValue(tmp.EmailAddresses, crt["uem"], true)
 
 	var err error
 	tmp.DNSNames, err = mergeDNSs(crt, tmp.DNSNames)
@@ -183,25 +153,45 @@ func buildURIList(crtUris any) ([]*url.URL, error) {
 		}
 		uris = append(uris, ul)
 	case []string:
-		for _, mv := range v {
-			ul, err := url.Parse(mv)
+		luris, err := stringsToURLList(v)
+		if err != nil {
+			return nil, err
+		}
+		uris = append(uris, luris...)
+	case []any:
+		luris, err := anyToURLList(v)
+		if err != nil {
+			return nil, err
+		}
+		uris = append(uris, luris...)
+	}
+	return uris, nil
+}
+
+func stringsToURLList(v []string) ([]*url.URL, error) {
+	uris := make([]*url.URL, 0)
+	for _, mv := range v {
+		ul, err := url.Parse(mv)
+		if err != nil {
+			return nil, err
+		}
+		uris = append(uris, ul)
+	}
+	return uris, nil
+}
+
+func anyToURLList(v []any) ([]*url.URL, error) {
+	uris := make([]*url.URL, 0)
+	for _, mv := range v {
+		switch mvv := mv.(type) {
+		case string:
+			ul, err := url.Parse(mvv)
 			if err != nil {
 				return nil, err
 			}
 			uris = append(uris, ul)
-		}
-	case []any:
-		for _, mv := range v {
-			switch mvv := mv.(type) {
-			case string:
-				ul, err := url.Parse(mvv)
-				if err != nil {
-					return nil, err
-				}
-				uris = append(uris, ul)
-			case url.URL:
-				uris = append(uris, &mvv)
-			}
+		case url.URL:
+			uris = append(uris, &mvv)
 		}
 	}
 	return uris, nil

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// createCmd represents the create command
+// createCmd represents the create command, creating an object in the microvault system
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an object in your micro-vault instance",

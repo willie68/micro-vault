@@ -83,7 +83,7 @@ func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := a.generateRefreshToken(no)
 	if err != nil {
-		log.Printf("failed to generate token: %s", err)
+		log.Printf("failed to generate refresh token: %s", err)
 		return "", "", err
 	}
 
@@ -107,13 +107,13 @@ func (a *Admin) Refresh(rt string) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := a.generateRefreshToken(no)
 	if err != nil {
-		log.Printf("failed to sign token: %s", err)
+		log.Printf("failed to generate refresh token: %s", err)
 		return "", "", err
 	}
 
 	tsig, err := a.generateToken(no)
 	if err != nil {
-		log.Printf("failed to sign token: %s", err)
+		log.Printf("failed to generate token: %s", err)
 		return "", "", err
 	}
 

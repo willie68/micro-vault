@@ -220,19 +220,19 @@ func TestPlaybook(t *testing.T) {
 
 	pm := model.Playbook{
 		Groups: []model.Group{
-			model.Group{
+			{
 				Name: "group1",
 			},
-			model.Group{
+			{
 				Name: "group2",
 			},
 		},
 		Clients: []model.Client{
-			model.Client{
+			{
 				Name:      "tester1",
 				AccessKey: "123",
 			},
-			model.Client{
+			{
 				Name:      "tester2",
 				AccessKey: "456",
 			},

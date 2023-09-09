@@ -221,6 +221,7 @@ func (l *LoginHandler) GetPrivateKey(response http.ResponseWriter, request *http
 	}
 }
 
+// OAuthErr error description for an OAuth error
 type OAuthErr struct {
 	serror.Serr
 	OError string `json:"error"`
