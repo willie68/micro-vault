@@ -18,6 +18,10 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	errParsingResponse = "parsing response failed: %v"
+)
+
 // Refreshcallback this callback is used on a automated refresh to give the library user the actual token and refresh token.
 type Refreshcallback func(tk, rt string)
 
@@ -112,7 +116,7 @@ func (a *AdminCl) Login() error {
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return err
 	}
 	if ds.Token == "" {
@@ -146,7 +150,7 @@ func (a *AdminCl) Refresh() error {
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return err
 	}
 	if ds.Token == "" {
@@ -211,7 +215,7 @@ func (a *AdminCl) Groups() ([]pmodel.Group, error) {
 	gs := make([]pmodel.Group, 0)
 	err = ReadJSON(res, &gs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return []pmodel.Group{}, err
 	}
 
@@ -238,7 +242,7 @@ func (a *AdminCl) Group(n string) (*pmodel.Group, error) {
 	var gs pmodel.Group
 	err = ReadJSON(res, &gs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -353,7 +357,7 @@ func (a *AdminCl) Clients(opts ...ClientsOption) ([]pmodel.Client, error) {
 	cs := make([]pmodel.Client, 0)
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return []pmodel.Client{}, err
 	}
 
@@ -380,7 +384,7 @@ func (a *AdminCl) Client(n string) (*pmodel.Client, error) {
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -413,7 +417,7 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -446,7 +450,7 @@ func (a *AdminCl) UpdateClient(n string, g []string) (*pmodel.Client, error) {
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -473,6 +477,7 @@ func (a *AdminCl) DeleteClient(n string) error {
 	return nil
 }
 
+// DecodeCertificate decoding the certificate into a map
 func (a *AdminCl) DecodeCertificate(pem string) (map[string]any, error) {
 	err := a.checkToken()
 	if err != nil {
@@ -491,7 +496,7 @@ func (a *AdminCl) DecodeCertificate(pem string) (map[string]any, error) {
 	cj := make(map[string]any)
 	err = ReadJSON(res, &cj)
 	if err != nil {
-		logging.Logger.Errorf("parsing response failed: %v", err)
+		logging.Logger.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 	return cj, nil

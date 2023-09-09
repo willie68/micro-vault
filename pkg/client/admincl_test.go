@@ -64,7 +64,7 @@ func TestAdmPlaybook(t *testing.T) {
 
 	pm := model.Playbook{
 		Groups: []model.Group{
-			model.Group{
+			{
 				Name: "group4",
 				Label: map[string]string{
 					"de": "Gruppe 4",
@@ -73,7 +73,7 @@ func TestAdmPlaybook(t *testing.T) {
 			},
 		},
 		Clients: []model.Client{
-			model.Client{
+			{
 				Name:      "tester4",
 				AccessKey: "1234567890",
 				Secret:    "0987654321",
