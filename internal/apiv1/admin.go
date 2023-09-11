@@ -56,6 +56,7 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 	router.Get("/groupkeys", a.GetKeys)
 	router.Post("/groupkeys", a.PostKey)
 	router.Post("/utils/decodecert", a.PostDecodeCertificate)
+	router.Get("/info", a.GetInfo)
 	return BaseURL + adminSubpath, router
 }
 
@@ -676,4 +677,30 @@ func (a *AdminHandler) PostDecodeCertificate(response http.ResponseWriter, reque
 	certInfo := certinfo.ParseCertificate(xc)
 	render.Status(request, http.StatusOK)
 	render.JSON(response, request, certInfo)
+}
+
+// GetInfo getting service information
+// @Summary getting service informations
+// @Tags configs
+// @Produce  n.n.
+// @Param token as authentication header
+// @Param payload info file
+// @Success 200 {object} nothing
+// @Failure 400 {object} serror.Serr "client error information as json"
+// @Failure 500 {object} serror.Serr "server error information as json"
+// @Router /admin/groupkeys [post]
+func (a *AdminHandler) GetInfo(response http.ResponseWriter, request *http.Request) {
+	var err error
+	tk, err := token(request)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
+	infos, err := a.adm.GetInfo(tk)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusInternalServerError))
+		return
+	}
+	render.Status(request, http.StatusOK)
+	render.JSON(response, request, infos)
 }

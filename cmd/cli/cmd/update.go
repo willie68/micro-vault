@@ -20,5 +20,5 @@ var updateCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(decodeCmd)
+	rootCmd.AddCommand(updateCmd)
 }

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -46,6 +47,7 @@ type Admin struct {
 	kmn     keyman.Keyman
 	cls     clients.Clients
 	grs     groups.Groups
+	cfg     config.Config
 }
 
 // NewAdmin creates a new admin service
@@ -58,6 +60,7 @@ func NewAdmin() (Admin, error) {
 		kmn:     do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
 		cls:     do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
 		grs:     do.MustInvokeNamed[groups.Groups](nil, groups.DoGroups),
+		cfg:     cfg,
 	}
 	err := a.Init()
 	if err != nil {
@@ -467,6 +470,29 @@ func (a *Admin) CreateGroupKey(tk, g string) (*model.EncryptKey, error) {
 	return ek, nil
 }
 
+func (a *Admin) GetInfo(tk string) ([]string, error) {
+	err := a.checkTk(tk)
+	if err != nil {
+		return nil, err
+	}
+	infos := make([]string, 0)
+	infos = append(infos, "service: "+config.Servicename)
+	infos = append(infos, "auth type: "+a.cfg.Auth.Type)
+	infos = append(infos, fmt.Sprintf("metrics: %v", a.cfg.Metrics.Enable))
+	infos = append(infos, fmt.Sprintf("http port: %d", a.cfg.Service.HTTP.Port))
+	infos = append(infos, fmt.Sprintf("https port: %d", a.cfg.Service.HTTP.Sslport))
+	infos = append(infos, fmt.Sprintf("service url: %s", a.cfg.Service.HTTP.ServiceURL))
+	for _, n := range a.cfg.Service.HTTP.DNSNames {
+		infos = append(infos, fmt.Sprintf("DNS name: %s", n))
+	}
+	for _, n := range a.cfg.Service.HTTP.IPAddresses {
+		infos = append(infos, fmt.Sprintf("IPAddresses: %s", n))
+	}
+	infos = append(infos, "storage type: "+a.cfg.Service.Storage.Type)
+
+	return infos, nil
+}
+
 func (a *Admin) checkTk(tk string) error {
 	token, err := jwt.Parse([]byte(tk), jwt.WithKey(jwa.RS256, a.kmn.PublicKey()))
 	if err != nil {
@@ -512,7 +538,7 @@ func (a *Admin) checkRtk(tk string) (jwt.Token, error) {
 	return token, nil
 }
 
-// CreateClient creates a new client with defined groups
+// createClient creates a new client with defined groups
 func (a *Admin) createClient(n string, g []string) (*pmodel.Client, error) {
 	if a.stg.HasClient(n) || a.stg.HasGroup(n) {
 		return nil, serror.ErrAlreadyExists

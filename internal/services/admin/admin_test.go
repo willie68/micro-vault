@@ -90,9 +90,12 @@ func TestNewPlaybook(t *testing.T) {
 }
 
 func installPlaybook() {
-	stg.Init()
+	err := stg.Init()
+	if err != nil {
+		panic(1)
+	}
 	pb := playbook.NewPlaybookFile("../../../testdata/playbook.json")
-	err := pb.Load()
+	err = pb.Load()
 	if err != nil {
 		panic(1)
 	}
@@ -397,7 +400,8 @@ func TestKeys(t *testing.T) {
 
 func TestKeys4Group(t *testing.T) {
 	ast := assert.New(t)
-	stg.Init()
+	err := stg.Init()
+	ast.Nil(err)
 	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
 	ast.Nil(err)
 	ast.NotEmpty(tk)

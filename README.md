@@ -9,7 +9,7 @@ Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dab
 
 ### Zertifikate, Zertifikatsstelle, Certificate authority
 
-Beispiel: Innerhalb eines Kubernetes Clusters kommunizieren  die Services untereinander über REST. Alle Services verwenden HTTPS mit selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen 2 Wege in Betracht. 
+Beispiel: Innerhalb eines Kubernetes Clusters kommunizieren  die Services untereinander über REST. Alle Services verwenden HTTPS mit selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen mehrere Wege in Betracht. 
 
 - Erzeugung des Zertifikates beim Hochfahren des Containers. Leider verzögert dieser Schritt den Start des Containers doch erheblich, so dass eine automatische Skalierung beim Loadbalancing dabei nachteilig beeinflusst wird. Nebenbei haben dann alle Instanzen eines Service unterschiedliche Zertifikate, was evtl. auf der Clientseite zu Problemen führen kann. Bei Änderungen der DNS, IP muss dann der Service neu gestartet werden. 
 - Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden. Bei Änderungen der DNS, IP muss dann der Build neu gestartet werden. 
@@ -23,7 +23,7 @@ Bestimmte Daten sollen zwischen Services über einen dritten öffentlichen Servi
 
 Hier mal ein Beispiel einer Messaging Kommunikation zwischen 2 Services über eine dritte nicht vertraute Umgebung.
 
-Schnell sieht man selbst wenn die eigentliche Kommunikation zwischen den einzelnen Services verschlüsselt stattfindet, kann ein Angreifer an die Daten gelangen. Denn wie die Datenablage erfolgt ist nicht immer ersichtlich und auf dem Messingsystem liegen zumindest zeitweise die Daten in unverschlüsselter Form vor. 
+Auch wenn die eigentliche Kommunikation zwischen den einzelnen Services verschlüsselt stattfindet, kann ein Angreifer an die Daten gelangen. Denn wie die Datenablage erfolgt, ist nicht immer ersichtlich und auf dem Messingsystem liegen zumindest zeitweise die Daten in unverschlüsselter Form vor. 
 
 ![scenario_1](./doc/images/scenario_1.svg)
 
@@ -69,8 +69,8 @@ Der Adminbereich ist per BasicAuth (Username/Passwort) bzw. per JWT und externem
 Die Speicherung kann auf mehrere Arten erfolgen. Implementiert sind derzeit 3 Storagearten
 
 1. In Memory: Hier werden alle relevanten Daten im Speicher des Microservice gehalten. Kein Multinodebetrieb.
-2. Filesystem: Mit diesem Storage werden die Daten in einem Filesystem gehalten. Kein Multinodebetrieb.
-3. MongoDB: Hier werden alle Daten verschlüsselt in einer MongoDB abgelegt. 
+2. Filesystem: Mit diesem Storage werden die Daten in einer filebasierten Datenbank (BadgerDB) gehalten. Kein Multinodebetrieb.
+3. MongoDB: Hier werden alle Daten verschlüsselt in einer MongoDB abgelegt. Multinodebetrieb möglich.
 
 ### InMemory
 
@@ -82,7 +82,7 @@ Alle Daten werden auf dem Filesystem gespeichert. Ein Playbook kann auch hier zu
 
 ### MongoDB
 
-Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie auch die Collection und der Index müssen von Hand angelegt werden. Für eine Development Instanz gibt es im Doc Ordner die Datei  dev.md mit den entsprechenden Befehlen für die Mongo Shell. Dieser Storage kann auch im Multinode Betrieb verwendet werden, wenn alle Nodes auf die gleiche MongoDB Zugriff haben. Hier werden alle Informationen ausgetauscht.
+Alle Daten werden verschlüsselt in einer MongoDB abgelegt. Die Datenbank wie auch die Collection und der Index müssen von Hand angelegt werden. Für eine Development Instanz gibt es im Doc Ordner die Datei  dev.md mit den entsprechenden Befehlen für die Mongo Shell. Dieser Storage kann auch im Multinode Betrieb verwendet werden, wenn alle Nodes auf die gleiche MongoDB Zugriff haben und das gleiche private Zertifikat verwendet wird. Hier werden alle Informationen ausgetauscht.
 
 ### Multinodebetrieb
 

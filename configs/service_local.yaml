@@ -32,7 +32,7 @@ service:
       PostalCode: 45525
       CommonName: mcs
   storage:
-    type: memory
+    type: mongodb
     properties:
       hosts:
         - 127.0.0.1:27017
