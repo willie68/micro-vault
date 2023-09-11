@@ -8,9 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	encryptMsg = "encrypt this golang"
+)
+
 func TestEnDecodeAES(t *testing.T) {
 	ast := assert.New(t)
-	originalText := "encrypt this golang"
+	originalText := encryptMsg
 	t.Logf("org: %s", originalText)
 	key := []byte("example key 1234")
 
@@ -30,7 +34,7 @@ func TestEnDecodeAES(t *testing.T) {
 func TestCryptKey(t *testing.T) {
 	ast := assert.New(t)
 
-	originalText := "encrypt this golang"
+	originalText := encryptMsg
 
 	rsk, err := generateKey()
 	ast.Nil(err)
@@ -49,7 +53,7 @@ func TestCryptKey(t *testing.T) {
 func TestCryptPEM(t *testing.T) {
 	ast := assert.New(t)
 
-	originalText := "encrypt this golang"
+	originalText := encryptMsg
 
 	rsk, err := generateKey()
 	ast.Nil(err)

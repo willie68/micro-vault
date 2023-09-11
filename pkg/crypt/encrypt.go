@@ -20,6 +20,11 @@ import (
 	"github.com/willie68/micro-vault/internal/logging"
 )
 
+const (
+	pemBlockPrivateKey    = "PRIVATE KEY"
+	pemBlockRSAPrivateKey = "RSA PRIVATE KEY"
+)
+
 // Encrypt string to base64 crypto using AES
 func Encrypt(key []byte, text string) (string, error) {
 	// key := []byte(keyText)
@@ -67,7 +72,7 @@ func Decrypt(key []byte, cryptoText string) (string, error) {
 	// XORKeyStream can work in-place if the two arguments are the same.
 	stream.XORKeyStream(ciphertext, ciphertext)
 
-	return fmt.Sprintf("%s", ciphertext), nil
+	return string(ciphertext), nil
 }
 
 // EncryptPEM string to base64 crypto using PEM File with public key
@@ -198,11 +203,11 @@ func Pub2Pem(k *rsa.PublicKey) ([]byte, error) {
 // Pem2Prv converts a pem string into a rsa private key
 func Pem2Prv(key string) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(key))
-	if block == nil || ((block.Type != "PRIVATE KEY") && (block.Type != "RSA PRIVATE KEY")) {
+	if block == nil || ((block.Type != pemBlockPrivateKey) && (block.Type != pemBlockRSAPrivateKey)) {
 		return nil, errors.New("error getting private key")
 	}
 
-	if block.Type == "PRIVATE KEY" {
+	if block.Type == pemBlockPrivateKey {
 		p, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, err
@@ -214,7 +219,7 @@ func Pem2Prv(key string) (*rsa.PrivateKey, error) {
 		return prv, nil
 	}
 
-	if block.Type == "RSA PRIVATE KEY" {
+	if block.Type == pemBlockRSAPrivateKey {
 		prv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, err
@@ -232,7 +237,7 @@ func Prv2Pem(rsk *rsa.PrivateKey) ([]byte, error) {
 	}
 
 	pemblock := &pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  pemBlockPrivateKey,
 		Bytes: pubbuf,
 	}
 

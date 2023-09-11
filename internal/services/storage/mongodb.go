@@ -104,11 +104,11 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 }
 
 func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
-	rb := bson.NewRegistryBuilder()
+	rb := bson.NewRegistry()
 	rb.RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
 
 	uri := fmt.Sprintf("mongodb://%s", mcnfg.Hosts[0])
-	opts := options.Client().SetRegistry(rb.Build())
+	opts := options.Client().SetRegistry(rb)
 	opts.ApplyURI(uri)
 	if mcnfg.Username != "" {
 		opts.Auth = &options.Credential{
@@ -195,22 +195,22 @@ func (m *MongoStorage) ensureEncryption() error {
 
 	res := m.colObj.FindOne(m.ctx, flt, opts)
 	if res == nil || res.Err() == driver.ErrNoDocuments {
-		return m.setEncryption()
+		return m.newEncryption()
 	}
 	if res.Err() != nil {
 		return res.Err()
 	}
-	var result bson.D
+	var result bson.M
 	err := res.Decode(&result)
 	if err != nil {
 		return err
 	}
 	// Testing if database can be used with the service key pair
-	err = m.ensureDatabase(result.Map())
+	err = m.ensureDatabase(result)
 	if err != nil {
 		return err
 	}
-	sobj, ok := result.Map()["object"].(string)
+	sobj, ok := result["object"].(string)
 	if ok {
 		obj, err := cry.DecryptKey(*m.knm.PrivateKey(), sobj)
 		if err != nil {
@@ -244,7 +244,7 @@ func (m *MongoStorage) ensureDatabase(mp primitive.M) error {
 	return nil
 }
 
-func (m *MongoStorage) setEncryption() error {
+func (m *MongoStorage) newEncryption() error {
 	id := xid.New().String()
 	buf := make([]byte, 32)
 	_, err := rand.Read(buf)

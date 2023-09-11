@@ -36,9 +36,9 @@ const (
 var _ interfaces.Storage = &FileStorage{}
 
 // NewFileStorage creates a new memory storage
-func NewFileStorage(p string) (interfaces.Storage, error) {
+func NewFileStorage(path string) (interfaces.Storage, error) {
 	stg := FileStorage{
-		path: p,
+		path: path,
 	}
 	err := stg.Init()
 	if err != nil {
@@ -114,22 +114,22 @@ func (f *FileStorage) IsRevoked(id string) bool {
 }
 
 // AddGroup adding a group to internal store
-func (f *FileStorage) AddGroup(g model.Group) (string, error) {
-	err := f.update(groupKey, g.Name, g)
+func (f *FileStorage) AddGroup(group model.Group) (string, error) {
+	err := f.update(groupKey, group.Name, group)
 	if err != nil {
 		return "", err
 	}
-	return g.Name, nil
+	return group.Name, nil
 }
 
 // HasGroup checks if a group is present
-func (f *FileStorage) HasGroup(n string) (found bool) {
-	return f.has(groupKey, n)
+func (f *FileStorage) HasGroup(name string) (found bool) {
+	return f.has(groupKey, name)
 }
 
 // DeleteGroup deletes a group if present
-func (f *FileStorage) DeleteGroup(n string) (bool, error) {
-	err := f.delete(groupKey, n)
+func (f *FileStorage) DeleteGroup(name string) (bool, error) {
+	err := f.delete(groupKey, name)
 	if err != nil {
 		return false, err
 	}
@@ -167,9 +167,9 @@ func (f *FileStorage) GetGroups() ([]model.Group, error) {
 }
 
 // GetGroup getting a single group
-func (f *FileStorage) GetGroup(n string) (*model.Group, bool) {
+func (f *FileStorage) GetGroup(name string) (*model.Group, bool) {
 	var g model.Group
-	ok := f.get(groupKey, n, &g)
+	ok := f.get(groupKey, name, &g)
 	if !ok {
 		return nil, false
 	}
@@ -177,10 +177,10 @@ func (f *FileStorage) GetGroup(n string) (*model.Group, bool) {
 }
 
 // HasClient checks if a client is present
-func (f *FileStorage) HasClient(n string) bool {
+func (f *FileStorage) HasClient(name string) bool {
 	found := false
 	err := f.ListClients(func(g model.Client) bool {
-		if g.Name == n {
+		if g.Name == name {
 			found = true
 			return false
 		}
@@ -193,13 +193,13 @@ func (f *FileStorage) HasClient(n string) bool {
 }
 
 // AddClient adding the client to the internal storage
-func (f *FileStorage) AddClient(c model.Client) (string, error) {
-	if f.has(clientKey, c.AccessKey) {
+func (f *FileStorage) AddClient(client model.Client) (string, error) {
+	if f.has(clientKey, client.AccessKey) {
 		return "", errors.New("client already exists")
 	}
 	found := false
 	err := f.ListClients(func(g model.Client) bool {
-		if g.Name == c.Name {
+		if g.Name == client.Name {
 			found = true
 			return false
 		}
@@ -211,16 +211,16 @@ func (f *FileStorage) AddClient(c model.Client) (string, error) {
 	if found {
 		return "", errors.New("client already exists")
 	}
-	err = f.update(clientKey, c.AccessKey, c)
+	err = f.update(clientKey, client.AccessKey, client)
 	if err != nil {
 		return "", err
 	}
-	return c.Name, nil
+	return client.Name, nil
 }
 
 // UpdateClient adding the client to the internal storage
-func (f *FileStorage) UpdateClient(c model.Client) error {
-	err := f.update(clientKey, c.AccessKey, c)
+func (f *FileStorage) UpdateClient(client model.Client) error {
+	err := f.update(clientKey, client.AccessKey, client)
 	if err != nil {
 		return err
 	}
@@ -228,8 +228,8 @@ func (f *FileStorage) UpdateClient(c model.Client) error {
 }
 
 // DeleteClient delete a client
-func (f *FileStorage) DeleteClient(a string) (bool, error) {
-	err := f.delete(clientKey, a)
+func (f *FileStorage) DeleteClient(access string) (bool, error) {
+	err := f.delete(clientKey, access)
 	if err != nil {
 		return false, err
 	}
@@ -237,7 +237,7 @@ func (f *FileStorage) DeleteClient(a string) (bool, error) {
 }
 
 // ListClients list all clients via callback function
-func (f *FileStorage) ListClients(c func(g model.Client) bool) error {
+func (f *FileStorage) ListClients(callback func(cl model.Client) bool) error {
 	err := f.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
@@ -253,7 +253,7 @@ func (f *FileStorage) ListClients(c func(g model.Client) bool) error {
 			if err != nil {
 				return err
 			}
-			if !c(g) {
+			if !callback(g) {
 				break
 			}
 		}
@@ -266,9 +266,9 @@ func (f *FileStorage) ListClients(c func(g model.Client) bool) error {
 }
 
 // GetClient returning a client with an access key
-func (f *FileStorage) GetClient(a string) (*model.Client, bool) {
+func (f *FileStorage) GetClient(access string) (*model.Client, bool) {
 	var cl model.Client
-	ok := f.get(clientKey, a, &cl)
+	ok := f.get(clientKey, access, &cl)
 	if !ok {
 		return nil, false
 	}
@@ -276,10 +276,10 @@ func (f *FileStorage) GetClient(a string) (*model.Client, bool) {
 }
 
 // ClientByKID returning a client by it's kid of the private key
-func (f *FileStorage) ClientByKID(k string) (*model.Client, bool) {
+func (f *FileStorage) ClientByKID(kid string) (*model.Client, bool) {
 	var c *model.Client
 	err := f.ListClients(func(g model.Client) bool {
-		if g.KID == k {
+		if g.KID == kid {
 			c = &g
 			return false
 		}
@@ -295,11 +295,11 @@ func (f *FileStorage) ClientByKID(k string) (*model.Client, bool) {
 }
 
 // AccessKey returning the access key of client with name
-func (f *FileStorage) AccessKey(n string) (string, bool) {
+func (f *FileStorage) AccessKey(name string) (string, bool) {
 	key := ""
 	found := false
 	err := f.ListClients(func(g model.Client) bool {
-		if g.Name == n {
+		if g.Name == name {
 			found = true
 			key = g.AccessKey
 			return false
@@ -316,11 +316,11 @@ func (f *FileStorage) AccessKey(n string) (string, bool) {
 }
 
 // StoreEncryptKey stores the encrypt keys
-func (f *FileStorage) StoreEncryptKey(e model.EncryptKey) error {
-	if e.ID == "" {
+func (f *FileStorage) StoreEncryptKey(encKey model.EncryptKey) error {
+	if encKey.ID == "" {
 		return serror.ErrMissingID
 	}
-	err := f.update(encryptionKey, e.ID, e)
+	err := f.update(encryptionKey, encKey.ID, encKey)
 	if err != nil {
 		return err
 	}
@@ -342,16 +342,16 @@ func (f *FileStorage) HasEncryptKey(id string) bool {
 	return f.has(encryptionKey, id)
 }
 
-// ListEncryptKeys list all clients via callback function
-func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bool) error {
-	var cnt int64
+// ListEncryptKeys list all keys via callback function
+func (f *FileStorage) ListEncryptKeys(start, length int64, callback func(c model.EncryptKey) bool) error {
 	err := f.db.View(func(txn *badger.Txn) error {
+		var cnt int64
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		prefix := []byte(encryptionKey)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			cnt++
-			if cnt > s && cnt < (s+l) {
+			if cnt > start && cnt < (start+length) {
 				item := it.Item()
 				var g model.EncryptKey
 				valCopy, err := item.ValueCopy(nil)
@@ -362,7 +362,7 @@ func (f *FileStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) boo
 				if err != nil {
 					return err
 				}
-				if !c(g) {
+				if !callback(g) {
 					break
 				}
 			}
@@ -419,15 +419,15 @@ func (f *FileStorage) DeleteData(id string) (bool, error) {
 }
 
 // ListData list all datas via callback function
-func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
-	var cnt int64
+func (f *FileStorage) ListData(start, length int64, callback func(c model.Data) bool) error {
 	err := f.db.View(func(txn *badger.Txn) error {
+		var cnt int64
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		prefix := []byte(dataKey)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			cnt++
-			if cnt > s && cnt < (s+l) {
+			if cnt > start && cnt < (start+length) {
 				item := it.Item()
 				var g model.Data
 				valCopy, err := item.ValueCopy(nil)
@@ -438,7 +438,7 @@ func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 				if err != nil {
 					return err
 				}
-				if !c(g) {
+				if !callback(g) {
 					break
 				}
 			}
@@ -451,28 +451,28 @@ func (f *FileStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 	return nil
 }
 
-func (f *FileStorage) update(t, k string, p any) error {
-	v, err := json.Marshal(p)
+func (f *FileStorage) update(tenant, key string, payload any) error {
+	v, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 	return f.db.Update(func(txn *badger.Txn) error {
-		err := txn.Set(buildKey(t, k), v)
+		err := txn.Set(buildKey(tenant, key), v)
 		return err
 	})
 }
 
-func (f *FileStorage) has(t, k string) (found bool) {
-	key := string(buildKey(t, k))
+func (f *FileStorage) has(tenant, key string) (found bool) {
+	tkey := string(buildKey(tenant, key))
 	err := f.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		prefix := []byte(t)
+		prefix := []byte(tenant)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
-			found = string(item.Key()) == key
+			found = string(item.Key()) == tkey
 			if found {
 				it.Close()
 			}
@@ -486,10 +486,10 @@ func (f *FileStorage) has(t, k string) (found bool) {
 	return
 }
 
-func (f *FileStorage) get(t, k string, v any) bool {
-	key := buildKey(t, k)
+func (f *FileStorage) get(tenant, key string, value any) bool {
+	tkey := buildKey(tenant, key)
 	err := f.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
+		item, err := txn.Get(tkey)
 		if err != nil {
 			return err
 		}
@@ -497,7 +497,7 @@ func (f *FileStorage) get(t, k string, v any) bool {
 		if err != nil {
 			return err
 		}
-		err = json.Unmarshal(valCopy, v)
+		err = json.Unmarshal(valCopy, value)
 		return err
 	})
 	if err != nil {
@@ -507,10 +507,10 @@ func (f *FileStorage) get(t, k string, v any) bool {
 	return true
 }
 
-func (f *FileStorage) delete(t, k string) error {
-	key := buildKey(t, k)
+func (f *FileStorage) delete(tenant, key string) error {
+	tkey := buildKey(tenant, key)
 	err := f.db.Update(func(txn *badger.Txn) error {
-		return txn.Delete(key)
+		return txn.Delete(tkey)
 	})
 	if err != nil {
 		log.Logger.Errorf("error deleting entry: %v", err)
@@ -523,6 +523,6 @@ func (f *FileStorage) clear() error {
 	return f.db.DropAll()
 }
 
-func buildKey(t, k string) []byte {
-	return []byte(fmt.Sprintf("%s_%s", t, k))
+func buildKey(tenant, key string) []byte {
+	return []byte(fmt.Sprintf("%s_%s", tenant, key))
 }

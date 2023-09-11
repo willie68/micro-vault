@@ -14,11 +14,17 @@ import (
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
+const (
+	localURL = "https://127.0.0.1:9543"
+	clAccess = "12345678"
+	clSecret = "e7d767cd1432145820669be6a60a912e"
+)
+
 func initCl() {
 	StartServer()
 
 	if adm == nil {
-		ad, err := LoginAdminUP("root", []byte("yxcvb"), "https://127.0.0.1:9543")
+		ad, err := LoginAdminUP("root", []byte("yxcvb"), localURL)
 		if err != nil {
 			panic(err)
 		}
@@ -37,7 +43,7 @@ func initCl() {
 func TestCertificate(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 
@@ -87,7 +93,7 @@ func createCsrPem() (*x509.CertificateRequest, error) {
 func TestRefreshClient(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 
@@ -114,7 +120,7 @@ func TestRefreshClient(t *testing.T) {
 func TestEncryptSameUser(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 
@@ -143,18 +149,18 @@ func TestEncryptSameUser(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(text)
 	ast.Equal(orgtxt, text)
-	t.Logf("text: %s", text)
+	t.Logf("encrypt same user text: %s", text)
 }
 
 func TestEncryptGroup4(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -182,18 +188,18 @@ func TestEncryptGroup4(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(text)
 	ast.Equal(orgtxt, text)
-	t.Logf("text: %s", text)
+	t.Logf("encrypt group 4 text: %s", text)
 }
 
 func TestEncryptClient(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -220,18 +226,18 @@ func TestEncryptClient(t *testing.T) {
 	ast.Nil(err)
 	ast.NotEmpty(text)
 	ast.Equal(orgtxt, text)
-	t.Logf("text: %s", text)
+	t.Logf("encrypt client text: %s", text)
 }
 
 func TestHMAC(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -262,12 +268,12 @@ func TestHMAC(t *testing.T) {
 func TestSigning(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -327,12 +333,12 @@ func TestServerSideCryptGroup(t *testing.T) {
 		Message:   string(b),
 	}
 
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -362,7 +368,7 @@ func TestServerSideCryptGroup(t *testing.T) {
 func TestNameToken(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
@@ -375,7 +381,7 @@ func TestNameToken(t *testing.T) {
 func TestSSStore(t *testing.T) {
 	initCl()
 	ast := assert.New(t)
-	cli, err := LoginClient("12345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli, err := LoginClient(clAccess, clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli)
 	defer cli.Logout()
@@ -390,7 +396,7 @@ func TestSSStore(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(payload, p)
 
-	cli2, err := LoginClient("87654321", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli2, err := LoginClient("87654321", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli2)
 	defer cli2.Logout()
@@ -399,7 +405,7 @@ func TestSSStore(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(payload, p)
 
-	cli3, err := LoginClient("345678", "e7d767cd1432145820669be6a60a912e", "https://127.0.0.1:9543")
+	cli3, err := LoginClient("345678", clSecret, localURL)
 	ast.Nil(err)
 	ast.NotNil(cli3)
 	defer cli3.Logout()

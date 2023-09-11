@@ -26,7 +26,15 @@ import (
 	"golang.org/x/net/context"
 )
 
-const tokenHeader = "Authorization"
+const (
+	tokenHeader            = "Authorization"
+	errMsgKeyFailed        = "key request failed: %v"
+	errMsgKeyBadRes        = "key bad response: %d"
+	errMsgHexConvertFailed = "hex convert failed: %v"
+	errMsgReqFailed        = "msg request failed: %v"
+	errMsgMsgBadRes        = "msg bad response: %d"
+	errMsgJSONFailed       = "json convert failed: %v"
+)
 
 // Client the main client for the service calls
 type Client struct {
@@ -206,17 +214,17 @@ func (c *Client) CreateCertificate(template x509.CertificateRequest) (*x509.Cert
 	}
 	res, err := c.Post("vault/clients/certificate", "application/x-pem-file", strings.NewReader(caPEM.String()))
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return nil, err
 	}
 
@@ -229,7 +237,7 @@ func (c *Client) CreateCertificate(template x509.CertificateRequest) (*x509.Cert
 	}
 	xc, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return nil, err
 	}
 	return xc, nil
@@ -248,7 +256,7 @@ func (c *Client) Encrypt4Group(g, dt string) (string, string, error) {
 	}
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return "", "", err
 	}
 	cs, err := cry.Encrypt(b, dt)
@@ -271,7 +279,7 @@ func (c *Client) Decrypt4Group(id, dt string) (string, error) {
 	}
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return "", err
 	}
 	cs, err := cry.Decrypt(b, dt)
@@ -297,11 +305,11 @@ func (c *Client) StoreDataSS(n string, p string) (string, error) {
 	}
 	res, err := c.PostJSON("vault/msg", m)
 	if err != nil {
-		logging.Logger.Errorf("msg request failed: %v", err)
+		logging.Logger.Errorf(errMsgReqFailed, err)
 		return "", err
 	}
 	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgMsgBadRes, res.StatusCode)
 		return "", ReadErr(res)
 	}
 	var id struct {
@@ -309,7 +317,7 @@ func (c *Client) StoreDataSS(n string, p string) (string, error) {
 	}
 	err = ReadJSON(res, &id)
 	if err != nil {
-		logging.Logger.Errorf("json convert failed: %v", err)
+		logging.Logger.Errorf(errMsgJSONFailed, err)
 		return "", err
 	}
 	return id.ID, nil
@@ -323,17 +331,17 @@ func (c *Client) GetDataSS(id string) (string, error) {
 	}
 	res, err := c.Get(fmt.Sprintf("vault/msg/%s", id))
 	if err != nil {
-		logging.Logger.Errorf("msg request failed: %v", err)
+		logging.Logger.Errorf(errMsgReqFailed, err)
 		return "", err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgMsgBadRes, res.StatusCode)
 		return "", ReadErr(res)
 	}
 	var m pmodel.Message
 	err = ReadJSON(res, &m)
 	if err != nil {
-		logging.Logger.Errorf("json convert failed: %v", err)
+		logging.Logger.Errorf(errMsgJSONFailed, err)
 		return "", err
 	}
 	return m.Message, nil
@@ -347,11 +355,11 @@ func (c *Client) DeleteDataSS(id string) (bool, error) {
 	}
 	res, err := c.Delete(fmt.Sprintf("vault/msg/%s", id))
 	if err != nil {
-		logging.Logger.Errorf("msg request failed: %v", err)
+		logging.Logger.Errorf(errMsgReqFailed, err)
 		return false, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("msg bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgMsgBadRes, res.StatusCode)
 		return false, ReadErr(res)
 	}
 	return true, nil
@@ -400,7 +408,7 @@ func (c *Client) HMAC256(g, dt string) (*pmodel.SignMessage, error) {
 	}
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return nil, err
 	}
 	h := hmac.New(sha256.New, b)
@@ -408,7 +416,7 @@ func (c *Client) HMAC256(g, dt string) (*pmodel.SignMessage, error) {
 	// Write Data to it
 	_, err = h.Write([]byte(dt))
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return nil, err
 	}
 
@@ -441,7 +449,7 @@ func (c *Client) HMAC256Verify(msg pmodel.SignMessage) (bool, error) {
 	}
 	b, err := hex.DecodeString(jr.Key)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return false, err
 	}
 	h := hmac.New(sha256.New, b)
@@ -449,7 +457,7 @@ func (c *Client) HMAC256Verify(msg pmodel.SignMessage) (bool, error) {
 	// Write Data to it
 	_, err = h.Write([]byte(msg.Message))
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return false, err
 	}
 
@@ -469,11 +477,11 @@ func (c *Client) Sign(dt string) (*pmodel.SignMessage, error) {
 	}
 	res, err := c.PostJSON("vault/signature/sign", sm)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	err = ReadJSON(res, &sm)
@@ -501,11 +509,11 @@ func (c *Client) SignCheckSS(smsg pmodel.SignMessage) (bool, error) {
 	}
 	res, err := c.PostJSON("vault/signature/check", smsg)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return false, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return false, ReadErr(res)
 	}
 	var sm pmodel.SignMessage
@@ -526,16 +534,16 @@ func (c *Client) getPrivateKey() error {
 
 	res, err := c.Get("login/privatekey")
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return ReadErr(res)
 	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return err
 	}
 
@@ -555,16 +563,16 @@ func (c *Client) GetPublicKey(n string) (string, error) {
 
 	res, err := c.Get(fmt.Sprintf("vault/clients/certificate/%s", n))
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return "", err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return "", ReadErr(res)
 	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		logging.Logger.Errorf("hex convert failed: %v", err)
+		logging.Logger.Errorf(errMsgHexConvertFailed, err)
 		return "", err
 	}
 	return string(b), nil
@@ -579,16 +587,16 @@ func (c *Client) CryptSS(m pmodel.Message) (*pmodel.Message, error) {
 
 	res, err := c.PostJSON("vault/groups/crypt", m)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	err = ReadJSON(res, &m)
 	if err != nil {
-		logging.Logger.Errorf("json convert failed: %v", err)
+		logging.Logger.Errorf(errMsgJSONFailed, err)
 		return nil, err
 	}
 	return &m, nil
@@ -602,17 +610,17 @@ func (c *Client) createKey4Group(g string) (*pmodel.EncryptKey, error) {
 	}
 	res, err := c.PostJSON("vault/groups/keys", jd)
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	var jr pmodel.EncryptKey
 	err = ReadJSON(res, &jr)
 	if err != nil {
-		logging.Logger.Errorf("json convert failed: %v", err)
+		logging.Logger.Errorf(errMsgJSONFailed, err)
 		return nil, err
 	}
 	return &jr, nil
@@ -621,16 +629,16 @@ func (c *Client) createKey4Group(g string) (*pmodel.EncryptKey, error) {
 func (c *Client) getKey4ID(id string) (*pmodel.EncryptKey, error) {
 	res, err := c.Get(fmt.Sprintf("vault/groups/keys/%s", id))
 	if err != nil {
-		logging.Logger.Errorf("key request failed: %v", err)
+		logging.Logger.Errorf(errMsgKeyFailed, err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("key bad response: %d", res.StatusCode)
+		logging.Logger.Errorf(errMsgKeyBadRes, res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	var jr pmodel.EncryptKey
 	err = ReadJSON(res, &jr)
-	return &jr, nil
+	return &jr, err
 }
 
 // Get getting something from the endpoint

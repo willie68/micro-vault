@@ -130,7 +130,6 @@ func (a *AdminCl) Login() error {
 
 // Refresh refresh the tokens
 func (a *AdminCl) Refresh() error {
-	//tk := a.token
 	a.token = a.refreshToken
 	res, err := a.Get("login/refresh")
 	if err != nil {

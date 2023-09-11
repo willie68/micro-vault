@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	srvStarted bool
-	sh         *shttp.SHttp
-	cfg        config.Config
+	sh  *shttp.SHttp
+	cfg config.Config
 )
 
 func StartServer() {

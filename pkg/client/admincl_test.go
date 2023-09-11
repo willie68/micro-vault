@@ -143,6 +143,7 @@ func TestAdmCRUDGroup(t *testing.T) {
 			"en": "Group 5",
 		},
 	})
+	ast.Nil(err)
 
 	g, err := adm.Group("group5")
 	ast.Nil(err)
