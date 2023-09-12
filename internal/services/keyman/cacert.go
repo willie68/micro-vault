@@ -28,10 +28,10 @@ type Cert struct {
 
 // CAService the CA cert service
 type CAService struct {
-	cfg       config.CACert
-	kmn       Keyman
-	caX509    x509.Certificate
-	certBytes []byte
+	cfg          config.CACert
+	caPrivateKey *rsa.PrivateKey
+	caX509       x509.Certificate
+	certBytes    []byte
 }
 
 // DoCAService dependency injection service name
@@ -54,9 +54,19 @@ func NewCAService() (*CAService, error) {
 }
 
 func (c *CAService) init() error {
-	c.kmn = do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	var err error
+	kmn := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	if c.cfg.PrivateKey == "" {
+		c.caPrivateKey = kmn.PrivateKey()
+	} else {
+		c.caPrivateKey, err = c.getCaPrivateKey()
+		if err != nil {
+			return err
+		}
+	}
 
 	if !fileExists(c.cfg.Certificate) {
+		logging.Logger.Alert("create a new public ca root certificate")
 		err := c.createCert()
 		if err != nil {
 			logging.Logger.Errorf("error creating certificate: %v", err)
@@ -75,6 +85,35 @@ func (c *CAService) init() error {
 		}
 	}
 	return nil
+}
+
+// getCaPrivateKey returning a private key. First try to load it from the file name given.
+// if not possible, it creates a new one and try to save it to the given location. In this
+// case it automatically invalids the public certificate of the CA service
+func (c *CAService) getCaPrivateKey() (*rsa.PrivateKey, error) {
+	rsk, err := loadFromFile(c.cfg.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	if rsk == nil {
+		logging.Logger.Alert("create a new private ca key")
+		rsk, err = rsa.GenerateKey(rand.Reader, 4096)
+		if err != nil {
+			logging.Logger.Errorf("failed to generate private ca key: %v", err)
+			return nil, err
+		}
+		if c.cfg.Certificate != "" {
+			err = os.Remove(c.cfg.Certificate)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err = saveToFile(c.cfg.PrivateKey, rsk)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return rsk, nil
 }
 
 // X509Cert getting the X509 certificate
@@ -150,7 +189,6 @@ func (c *CAService) saveCertificate() error {
 
 func (c *CAService) createCert() error {
 	// create a private key
-	caPrivKey := c.kmn.PrivateKey()
 	ser, err := randBigint()
 	if err != nil {
 		return err
@@ -175,12 +213,12 @@ func (c *CAService) createCert() error {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          hashKeyID(caPrivKey.N),
-		AuthorityKeyId:        hashKeyID(caPrivKey.N),
+		SubjectKeyId:          hashKeyID(c.caPrivateKey.N),
+		AuthorityKeyId:        hashKeyID(c.caPrivateKey.N),
 	}
 
 	// generate the certificate
-	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &c.caPrivateKey.PublicKey, c.caPrivateKey)
 	if err != nil {
 		return err
 	}
@@ -212,11 +250,11 @@ func (c *CAService) CertSignRequest(template x509.CertificateRequest, pub any, v
 		Subject:            template.Subject,
 		NotBefore:          time.Now(),
 		NotAfter:           time.Now().Add(validTo),
-		AuthorityKeyId:     hashKeyID(c.kmn.PrivateKey().N),
+		AuthorityKeyId:     hashKeyID(c.caPrivateKey.N),
 		KeyUsage:           x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	}
-	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &c.caX509, pub, c.kmn.PrivateKey())
+	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, &c.caX509, pub, c.caPrivateKey)
 }
 
 // CreateCertificate create a usual simple certificate
@@ -239,7 +277,7 @@ func (c *CAService) CreateCertificate() (*Cert, error) {
 			OrganizationalUnit: []string{c.cfg.Subject["OrganizationalUnit"]},
 		},
 		SubjectKeyId:   hashKeyID(certPrivKey.N),
-		AuthorityKeyId: hashKeyID(c.kmn.PrivateKey().N),
+		AuthorityKeyId: hashKeyID(c.caPrivateKey.N),
 		IPAddresses:    []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
 		NotBefore:      time.Now(),
 		NotAfter:       time.Now().AddDate(10, 0, 0),
@@ -247,7 +285,7 @@ func (c *CAService) CreateCertificate() (*Cert, error) {
 		KeyUsage:       x509.KeyUsageDigitalSignature,
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, &c.caX509, &certPrivKey.PublicKey, c.kmn.PrivateKey())
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, &c.caX509, &certPrivKey.PublicKey, c.caPrivateKey)
 	if err != nil {
 		return nil, err
 	}

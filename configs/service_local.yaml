@@ -21,6 +21,7 @@ service:
   rootpwd: yxcvb
   privatekey: ./configs/private.pem
   cacert:
+    privatekey: 
     certificate:  ./configs/cert/certificate.pem
     subject:
       Country: de
