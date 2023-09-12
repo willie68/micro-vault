@@ -3,6 +3,8 @@ package crypt
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -123,13 +125,58 @@ func TestPEM(t *testing.T) {
 	rsk, err := generateKey()
 	ast.Nil(err)
 
-	pem, err := Prv2Pem(rsk)
+	pm, err := Prv2Pem(rsk)
 	ast.Nil(err)
-	ast.NotEmpty(string(pem))
+	ast.NotEmpty(string(pm))
 
-	rs, err := Pem2Prv(string(pem))
+	rs, err := Pem2Prv(string(pm))
 	ast.Nil(err)
 	ast.True(rs.Equal(rsk))
+
+	pm, err = PrvRSA2Pem(rsk)
+	ast.Nil(err)
+	ast.NotEmpty(string(pm))
+
+	rs, err = Pem2Prv(string(pm))
+	ast.Nil(err)
+	ast.True(rs.Equal(rsk))
+
+}
+
+// Prv2Pem converts a private key to a PEM
+func PrvRSA2Pem(rsk *rsa.PrivateKey) ([]byte, error) {
+	pubbuf := x509.MarshalPKCS1PrivateKey(rsk)
+
+	pemblock := &pem.Block{
+		Type:  pemBlockRSAPrivateKey,
+		Bytes: pubbuf,
+	}
+
+	return pem.EncodeToMemory(pemblock), nil
+}
+func TestHashSecret(t *testing.T) {
+	ast := assert.New(t)
+
+	secret := []byte("this is a secret")
+	s1, err := GenerateSalt()
+	ast.Nil(err)
+	ast.NotNil(s1)
+	ast.Equal(64, len(s1))
+
+	h1 := HashSecret(secret, s1)
+	ast.NotNil(h1)
+
+	s2, err := GenerateSalt()
+	ast.Nil(err)
+	ast.NotNil(s2)
+	ast.NotEqual(s1, s2)
+
+	h2 := HashSecret(secret, s2)
+	ast.NotNil(h1)
+	ast.NotEqual(h1, h2)
+
+	h3 := HashSecret(secret, s1)
+	ast.Equal(h1, h3)
 }
 
 func generateKey() (*rsa.PrivateKey, error) {

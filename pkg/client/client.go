@@ -525,7 +525,7 @@ func (c *Client) SignCheckSS(smsg pmodel.SignMessage) (bool, error) {
 	return sm.Valid, nil
 }
 
-// getPrivateKey getting the public key of another client by name
+// getPrivateKey getting the private key of this client
 func (c *Client) getPrivateKey() error {
 	err := c.checkToken()
 	if err != nil {

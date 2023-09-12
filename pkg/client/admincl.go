@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -81,7 +80,7 @@ func (a *AdminCl) GetCACert() (string, error) {
 		logging.Logger.Errorf("get cacert bad response: %d", res.StatusCode)
 		return "", ReadErr(res)
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		logging.Logger.Errorf("get cacert request body: %v", err)
 		return "", err
@@ -126,6 +125,12 @@ func (a *AdminCl) Login() error {
 	a.refreshToken = ds.RefreshToken
 	a.expired = time.Now().Add(time.Second * time.Duration(ds.ExpiresIn))
 	return nil
+}
+
+// Logout logging out this client
+func (a *AdminCl) Logout() {
+	a.token = ""
+	a.refreshToken = ""
 }
 
 // Refresh refresh the tokens

@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"slices"
@@ -154,10 +155,29 @@ func TestAdmCRUDGroup(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(len(gs)+1, len(gs2))
 
+	g.Label["ge"] = "labelge"
+	err = adm.UpdateGroup(*g)
+	ast.Nil(err)
+
+	g, err = adm.Group("group5")
+	ast.Nil(err)
+	ast.Equal("group5", g.Name)
+	ast.Equal("labelge", g.Label["ge"])
+
 	err = adm.DeleteGroup("group5")
 	ast.Nil(err)
 
 	gs2, err = adm.Groups()
 	ast.Nil(err)
 	ast.Equal(len(gs), len(gs2))
+}
+
+func TestAdminGetCACert(t *testing.T) {
+	initAdm()
+	ast := assert.New(t)
+	ast.NotNil(adm)
+	cert, err := adm.GetCACert()
+	ast.Nil(err)
+	ast.NotNil(cert)
+	ast.True(strings.HasPrefix(cert, "-----BEGIN CERTIFICATE-----"))
 }
