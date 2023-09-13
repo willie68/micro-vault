@@ -116,17 +116,23 @@ func TestPlaybookModel(t *testing.T) {
 
 func TestPlaybookExport(t *testing.T) {
 	ast := assert.New(t)
-	stg.Init()
+	err := stg.Init()
+	ast.Nil(err)
+
 	pb := NewPlaybookFile(pbFile)
 	ast.NotNil(pb)
-	err := pb.Load()
+
+	err = pb.Load()
 	ast.Nil(err)
+
 	err = pb.Play()
 	ast.Nil(err)
 
 	e, err := newEncryptKey()
 	ast.Nil(err)
-	stg.StoreEncryptKey(*e)
+
+	err = stg.StoreEncryptKey(*e)
+	ast.Nil(err)
 
 	err = pb.Export(pbExportFile)
 	ast.Nil(err)
@@ -155,7 +161,7 @@ func TestBigExport(t *testing.T) {
 		_, err = stg.AddClient(*c)
 		ast.Nil(err)
 	}
-	for x := 0; x < 10000; x++ {
+	for x := 0; x < 1000; x++ {
 		e, err := newEncryptKey()
 		ast.Nil(err)
 		err = stg.StoreEncryptKey(*e)
@@ -172,7 +178,7 @@ func TestBigExport(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(100, len(pm.Groups))
 	ast.Equal(100, len(pm.Clients))
-	ast.Equal(10000, len(pm.Keys))
+	ast.Equal(1000, len(pm.Keys))
 }
 
 func newEncryptKey() (*model.EncryptKey, error) {

@@ -100,7 +100,7 @@ func TestAdmPlaybook(t *testing.T) {
 	}))
 }
 
-func TestAdmNewClient(t *testing.T) {
+func TestAdmCRUDClient(t *testing.T) {
 	initAdm()
 	ast := assert.New(t)
 	ast.NotNil(adm)
@@ -110,6 +110,7 @@ func TestAdmNewClient(t *testing.T) {
 		t.Logf("prepare: error delete client: %v", err)
 	}
 
+	// Creating the client
 	cl, err := adm.NewClient("tester5", []string{"group1", "group3"})
 
 	ast.Nil(err)
@@ -118,8 +119,29 @@ func TestAdmNewClient(t *testing.T) {
 	ast.NotEmpty(cl.Secret)
 	ast.Equal("tester5", cl.Name)
 
+	cl, err = adm.Client("tester5")
+	ast.Nil(err)
+	ast.NotNil(cl)
+	ast.Equal(2, len(cl.Groups))
+	ast.Contains(cl.Groups, "group1")
+	ast.Contains(cl.Groups, "group3")
+
+	// Updating the groups of a client
+	cl, err = adm.UpdateClient(cl.Name, []string{"group2"})
+	ast.Nil(err)
+	ast.Equal(1, len(cl.Groups))
+	ast.Equal("group2", cl.Groups[0])
+
+	// testing to create a client, which is already present
 	cl, err = adm.NewClient("tester5", []string{"group1", "group3"})
 
+	ast.NotNil(err)
+	ast.Nil(cl)
+
+	err = adm.DeleteClient("tester5")
+	ast.Nil(err)
+
+	cl, err = adm.Client("tester5")
 	ast.NotNil(err)
 	ast.Nil(cl)
 }
@@ -180,4 +202,10 @@ func TestAdminGetCACert(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(cert)
 	ast.True(strings.HasPrefix(cert, "-----BEGIN CERTIFICATE-----"))
+
+	m, err := adm.DecodeCertificate(cert)
+	ast.Nil(err)
+	ast.NotNil(m)
+	t.Logf("cert: %v", m)
+	ast.Equal("Hattingen", m["subject"].(map[string]any)["locality"])
 }

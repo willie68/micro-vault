@@ -17,9 +17,14 @@ import (
 	"github.com/willie68/micro-vault/internal/services/storage"
 )
 
+const (
+	rootuser = "root"
+)
+
 var (
-	stg interfaces.Storage
-	adm Admin
+	stg     interfaces.Storage
+	adm     Admin
+	rootpwd []byte = []byte("yxcvb")
 )
 
 func init() {
@@ -30,7 +35,7 @@ func init() {
 	}
 	c := config.Config{
 		Service: config.Service{
-			Rootuser:   "root",
+			Rootuser:   rootuser,
 			Rootpwd:    "yxcvb",
 			PrivateKey: "../../../testdata/private.pem",
 			CACert: config.CACert{
@@ -77,7 +82,7 @@ func init() {
 
 func TestNewPlaybook(t *testing.T) {
 	ast := assert.New(t)
-	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, rt, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 	ast.NotEmpty(rt)
@@ -107,7 +112,7 @@ func installPlaybook() {
 
 func TestLoginAdmin(t *testing.T) {
 	ast := assert.New(t)
-	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, rt, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 	ast.NotEmpty(rt)
@@ -123,7 +128,7 @@ func TestLoginAdmin(t *testing.T) {
 
 func TestRefresh(t *testing.T) {
 	ast := assert.New(t)
-	tk, rt, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, rt, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 	ast.NotEmpty(rt)
@@ -159,7 +164,7 @@ func TestRefresh(t *testing.T) {
 
 func TestWrongLogin(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := adm.LoginUP("root1", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP("root1", rootpwd)
 	ast.NotNil(err)
 	ast.Empty(tk)
 }
@@ -217,7 +222,7 @@ func TestPlaybook(t *testing.T) {
 	ast := assert.New(t)
 	err := stg.Init()
 	ast.Nil(err)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -257,7 +262,7 @@ func TestGroup(t *testing.T) {
 	ast := assert.New(t)
 	installPlaybook()
 
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -288,6 +293,16 @@ func TestGroup(t *testing.T) {
 	ast.Nil(err)
 	ast.Equal(len(gs)+1, len(gs2))
 
+	g.Label["ge"] = "geldern"
+	id, err = adm.UpdateGroup(tk, g)
+	ast.Nil(err)
+	ast.NotNil(id)
+	g, err = adm.Group(tk, id)
+	ast.Nil(err)
+	ast.NotNil(g)
+	ast.Contains(g.Label, "ge")
+	ast.Equal("geldern", g.Label["ge"])
+
 	ok, err := adm.DeleteGroup(tk, "group5")
 	ast.Nil(err)
 	ast.True(ok)
@@ -301,7 +316,7 @@ func TestGroup(t *testing.T) {
 
 func TestClientCRUD(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -345,7 +360,7 @@ func TestClientCRUD(t *testing.T) {
 
 func TestClientGroups(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -372,7 +387,7 @@ func TestClientGroups(t *testing.T) {
 }
 func TestClient4Group(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -384,9 +399,38 @@ func TestClient4Group(t *testing.T) {
 	ast.Equal("group1", cs[0].Groups[0])
 }
 
+func TestClientCrt(t *testing.T) {
+	ast := assert.New(t)
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	cl, err := adm.NewClient(tk, "clientcrt", []string{"group1"})
+	ast.Nil(err)
+	ast.NotNil(cl)
+
+	ast.Nil(cl.Crt)
+	crt := make(map[string]any)
+	ems := make([]string, 0)
+	ems = append(ems, "w.klaas@gmx.de")
+	crt["uem"] = ems
+
+	cl.Crt = crt
+	_, err = adm.ChangeCertificateTemplateClient(tk, "clientcrt", crt)
+	ast.Nil(err)
+
+	c, err := adm.Client(tk, "clientcrt")
+	ast.Nil(err)
+	ast.Contains(c.Crt["uem"], "w.klaas@gmx.de")
+
+	ok, err := adm.DeleteClient(tk, "clientcrt")
+	ast.Nil(err)
+	ast.True(ok)
+}
+
 func TestKeys(t *testing.T) {
 	ast := assert.New(t)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -402,7 +446,7 @@ func TestKeys4Group(t *testing.T) {
 	ast := assert.New(t)
 	err := stg.Init()
 	ast.Nil(err)
-	tk, _, err := adm.LoginUP("root", []byte("yxcvb"))
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
 	ast.Nil(err)
 	ast.NotEmpty(tk)
 
@@ -426,4 +470,20 @@ func TestKeys4Group(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(cs)
 	ast.Equal(cnt, len(cs))
+}
+
+func TestGetInfo(t *testing.T) {
+	ast := assert.New(t)
+	err := stg.Init()
+	ast.Nil(err)
+	tk, _, err := adm.LoginUP(rootuser, rootpwd)
+	ast.Nil(err)
+	ast.NotEmpty(tk)
+
+	info, err := adm.GetInfo(tk)
+	ast.Nil(err)
+	ast.NotEmpty(info)
+
+	ast.True(len(info) > 0)
+
 }

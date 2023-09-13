@@ -27,7 +27,7 @@ service:
       Country: de
       Organization: MCS
       OrganizationalUnit: dev
-      Locality: Hattigen
+      Locality: Hattingen
       Province: NRW
       StreetAddress: Welperstraße 65
       PostalCode: 45525

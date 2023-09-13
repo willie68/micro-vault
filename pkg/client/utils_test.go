@@ -54,7 +54,7 @@ func StartServer() {
 		healthRouter := apiv1.HealthRoutes(cfg, nil)
 		sh.StartServers(router, healthRouter)
 	}
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 }
 
 func TestStartServer(t *testing.T) {

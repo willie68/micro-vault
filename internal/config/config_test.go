@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,21 @@ func TestLoadFromYaml(t *testing.T) {
 	err := Load()
 	ast.Nil(err)
 
-	ast.Equal(8000, Get().Service.HTTP.Port)
-	ast.Equal(8443, Get().Service.HTTP.Sslport)
+	c := Get()
 
-	ast.Equal(60, Get().HealthCheck.Period)
-	ast.Equal("", Get().SecretFile)
-	ast.Equal("https://localhost:8443", Get().Service.HTTP.ServiceURL)
+	ast.Equal(8000, c.Service.HTTP.Port)
+	ast.Equal(8443, c.Service.HTTP.Sslport)
+
+	ast.Equal(60, c.HealthCheck.Period)
+	ast.Equal("", c.SecretFile)
+	ast.Equal("https://localhost:8443", c.Service.HTTP.ServiceURL)
+
+	c.Provide()
+
+	cfg := do.MustInvokeNamed[Config](nil, DoServiceConfig)
+	ast.Nil(err)
+	ast.NotNil(cfg)
+	do.MustShutdownNamed(nil, DoServiceConfig)
 }
 
 func TestDefaultConfig(t *testing.T) {

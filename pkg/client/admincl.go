@@ -428,7 +428,7 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 	return &cs, nil
 }
 
-// UpdateClient getting a list of groups
+// UpdateClient updating the hroups a client belongs to.
 func (a *AdminCl) UpdateClient(n string, g []string) (*pmodel.Client, error) {
 	err := a.checkToken()
 	if err != nil {

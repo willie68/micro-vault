@@ -91,7 +91,7 @@ func (p *Playbook) addClients() error {
 
 func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 	if c.Key == "" {
-		log.Logger.Infof("creating new Pem for %s: \r\n%s", c.Name, c.Key)
+		log.Logger.Infof("creating new Pem for %s", c.Name)
 		c.Key, err = p.generateNewKeyPem()
 		if err != nil {
 			return err

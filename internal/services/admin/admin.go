@@ -397,6 +397,7 @@ func (a *Admin) Client(tk, n string) (*model.Client, error) {
 		AccessKey: cl.AccessKey,
 		Secret:    "",
 		Groups:    cl.Groups,
+		Crt:       cl.Crt,
 	}
 	return &c, nil
 }
