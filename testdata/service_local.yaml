@@ -40,6 +40,10 @@ service:
       username: microvault
       password: yxcvb
       database: microvault
+  healthcheck:
+    # period in seconds to start the healtcheck
+    period: 60
+    startdelay: 3
     
 logging:
     gelf-url: 127.0.0.1

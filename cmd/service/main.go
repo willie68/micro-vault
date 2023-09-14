@@ -9,7 +9,6 @@ import (
 
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/apiv1"
-	"github.com/willie68/micro-vault/internal/health"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services"
@@ -99,10 +98,6 @@ func main() {
 	var closer io.Closer
 	tracer, closer = initJaeger(config.Servicename, serviceConfig.OpenTracing)
 	defer closer.Close()
-
-	healthCheckConfig := health.CheckConfig(serviceConfig.HealthCheck)
-
-	health.InitHealthSystem(healthCheckConfig, tracer)
 
 	log.Logger.Infof("ssl: %t", serviceConfig.Service.HTTP.Sslport > 0)
 	log.Logger.Infof("serviceURL: %s", serviceConfig.Service.HTTP.ServiceURL)

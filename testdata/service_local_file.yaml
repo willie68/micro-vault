@@ -3,9 +3,13 @@ service:
   http:
     port: 8000 
     sslport: 8443
-    serviceURL: https://localhost:8443
-healthcheck:
-  period: 60
+    serviceURL: https://127.0.0.1:8443
+  #configure the healthcheck system
+  healthcheck:
+    # period in seconds to start the healtcheck
+    period: 60
+    startdelay: 3
+    
 # enable/disable metrics 
 metrics:
   enable: true

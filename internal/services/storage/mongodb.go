@@ -22,7 +22,6 @@ import (
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -31,7 +30,9 @@ import (
 // checking interface compatibility
 var _ interfaces.Storage = &MongoStorage{}
 
-const smpErrLog = "error: %v"
+const (
+	smpErrLog = "error: %v"
+)
 
 // MongoDBConfig configuration for a mongodb
 type MongoDBConfig struct {
@@ -70,7 +71,8 @@ type tkrevoke struct {
 
 const (
 	colObjects = "objects"
-	colTTL     = "ttlobjects"
+	colBlue    = "_blue"
+	colGreen   = "_green"
 	cCTkRevoke = "tkrevoke"
 	cCGroup    = "group"
 	cCClient   = "client"
@@ -105,7 +107,7 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 
 func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
 	rb := bson.NewRegistry()
-	rb.RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
+	rb.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, reflect.TypeOf(bson.M{}))
 
 	uri := fmt.Sprintf("mongodb://%s", mcnfg.Hosts[0])
 	opts := options.Client().SetRegistry(rb)
@@ -137,7 +139,19 @@ func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
 
 // Init initialize the connection to the mongo db. cerate collections with index as needed
 func (m *MongoStorage) Init() error {
-	m.colObj = m.database.Collection(colObjects)
+	err := m.initCollection(colBlue)
+	if err != nil {
+		err = m.initCollection(colGreen)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MongoStorage) initCollection(n string) error {
+	colName := colObjects + n
+	m.colObj = m.database.Collection(colName)
 	ok, err := checkForIndex(m.colObj)
 	if err != nil {
 		return err

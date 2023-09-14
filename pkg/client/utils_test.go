@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/config"
-	"github.com/willie68/micro-vault/internal/health"
 	"github.com/willie68/micro-vault/internal/services"
 	"github.com/willie68/micro-vault/internal/services/shttp"
 )
@@ -37,9 +36,6 @@ func StartServer() {
 		if err := services.InitServices(cfg); err != nil {
 			panic("error creating services")
 		}
-
-		healthCheckConfig := health.CheckConfig(cfg.HealthCheck)
-		health.InitHealthSystem(healthCheckConfig, nil)
 
 		s := do.MustInvokeNamed[shttp.SHttp](nil, shttp.DoSHTTP)
 		sh = &s
