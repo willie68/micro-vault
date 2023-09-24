@@ -165,18 +165,18 @@ func AdminClient() (*client.AdminCl, error) {
 func writeCLConf(d Conf) error {
 	js, err := json.Marshal(d)
 	if err != nil {
-		logging.Logger.Errorf("error serialize token object: %v", err)
+		logging.Root.Errorf("error serialize token object: %v", err)
 		return err
 	}
 	cfg, err := config.GetDefaultConfigFolder()
 	if err != nil {
-		logging.Logger.Errorf("error getting user config dir: %v", err)
+		logging.Root.Errorf("error getting user config dir: %v", err)
 		return err
 	}
 	cfg = filepath.Join(cfg, "mv_client.json")
 	err = os.WriteFile(cfg, js, os.ModePerm)
 	if err != nil {
-		logging.Logger.Errorf("error writing token object: %v", err)
+		logging.Root.Errorf("error writing token object: %v", err)
 		return err
 	}
 	return nil
@@ -186,19 +186,19 @@ func writeCLConf(d Conf) error {
 func ReadCLConf() (*Conf, bool) {
 	cfg, err := config.GetDefaultConfigFolder()
 	if err != nil {
-		logging.Logger.Errorf("error getting user config dir: %v", err)
+		logging.Root.Errorf("error getting user config dir: %v", err)
 		return nil, false
 	}
 	cfg = filepath.Join(cfg, "mv_client.json")
 	b, err := os.ReadFile(cfg)
 	if err != nil {
-		logging.Logger.Errorf("error reading config: %v", err)
+		logging.Root.Errorf("error reading config: %v", err)
 		return nil, false
 	}
 	var d Conf
 	err = json.Unmarshal(b, &d)
 	if err != nil {
-		logging.Logger.Errorf("error deserialize json: %v", err)
+		logging.Root.Errorf("error deserialize json: %v", err)
 		return nil, false
 	}
 	return &d, true
@@ -207,17 +207,17 @@ func ReadCLConf() (*Conf, bool) {
 func expires(t string) int64 {
 	at, err := auth.DecodeJWT(t)
 	if err != nil {
-		logging.Logger.Errorf("error decoding token: %v", err)
+		logging.Root.Errorf("error decoding token: %v", err)
 		return 0
 	}
 	expd, ok := at.Payload["exp"]
 	if !ok {
-		logging.Logger.Errorf("can't find expiration date")
+		logging.Root.Errorf("can't find expiration date")
 		return 0
 	}
 	expf, ok := expd.(float64)
 	if !ok {
-		logging.Logger.Errorf("expiration date wrong format")
+		logging.Root.Errorf("expiration date wrong format")
 		return 0
 	}
 	return int64(expf)

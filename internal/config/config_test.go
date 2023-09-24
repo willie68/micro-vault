@@ -22,6 +22,7 @@ func TestLoadFromYaml(t *testing.T) {
 	err := Load()
 	ast.Nil(err)
 	c := Get()
+
 	ast.Equal(8000, Get().Service.HTTP.Port)
 	ast.Equal(8443, Get().Service.HTTP.Sslport)
 

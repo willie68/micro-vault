@@ -9,7 +9,7 @@ import (
 
 // LoginAdminUP login an admin via username password
 func LoginAdminUP(u string, p []byte, url string) (*AdminCl, error) {
-	logging.Logger.Infof("login as admin with user with password: %s %v", u, len(p) > 0)
+	logging.Root.Infof("login as admin with user with password: %s %v", u, len(p) > 0)
 	acl := &AdminCl{
 		username: u,
 		password: p,
@@ -27,7 +27,7 @@ func LoginAdminUP(u string, p []byte, url string) (*AdminCl, error) {
 
 // LoginAdminCli login an admin via token/refreshtoken
 func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error) {
-	logging.Logger.Info("login as admin with token")
+	logging.Root.Info("login as admin with token")
 	exp := expires(t)
 	acl := &AdminCl{
 		token:           t,
@@ -45,7 +45,7 @@ func LoginAdminCli(t, rt string, url string, f Refreshcallback) (*AdminCl, error
 
 // LoginClientCli login a client via  token/refreshtoken
 func LoginClientCli(t, rt string, url string, f Refreshcallback) (*Client, error) {
-	logging.Logger.Info("login as a client with token")
+	logging.Root.Info("login as a client with token")
 	exp := expires(t)
 	cl := &Client{
 		token:           t,
@@ -63,7 +63,7 @@ func LoginClientCli(t, rt string, url string, f Refreshcallback) (*Client, error
 
 // LoginClient logging in as a client service
 func LoginClient(accesskey, secret, url string) (*Client, error) {
-	logging.Logger.Infof("login as service with access key with secret: %s %v", accesskey, len(secret) > 0)
+	logging.Root.Infof("login as service with access key with secret: %s %v", accesskey, len(secret) > 0)
 
 	cl := Client{
 		accessKey: accesskey,

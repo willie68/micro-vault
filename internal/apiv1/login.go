@@ -13,7 +13,6 @@ import (
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/auth"
 	"github.com/willie68/micro-vault/internal/config"
-	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
@@ -217,7 +216,7 @@ func (l *LoginHandler) GetPrivateKey(response http.ResponseWriter, request *http
 	response.Header().Add("Content-Type", "application/x-pem-file")
 	_, err = response.Write([]byte(ct))
 	if err != nil {
-		logging.Logger.Errorf("error writing PEM: %v", err)
+		logger.Errorf("error writing PEM: %v", err)
 	}
 }
 

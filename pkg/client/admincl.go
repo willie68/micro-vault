@@ -72,17 +72,17 @@ func (a *AdminCl) init(u string) error {
 func (a *AdminCl) GetCACert() (string, error) {
 	res, err := a.clt.Get(fmt.Sprintf("%s/%s", a.base, "ca/cacert"))
 	if err != nil {
-		logging.Logger.Errorf("get cacert request failed: %v", err)
+		logging.Root.Errorf("get cacert request failed: %v", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("get cacert bad response: %d", res.StatusCode)
+		logging.Root.Errorf("get cacert bad response: %d", res.StatusCode)
 		return "", ReadErr(res)
 	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		logging.Logger.Errorf("get cacert request body: %v", err)
+		logging.Root.Errorf("get cacert request body: %v", err)
 		return "", err
 	}
 	return string(b), nil
@@ -99,12 +99,12 @@ func (a *AdminCl) Login() error {
 	}
 	res, err := a.PostJSON("login", up)
 	if err != nil {
-		logging.Logger.Errorf("login request failed: %v", err)
+		logging.Root.Errorf("login request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
+		logging.Root.Errorf("login bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	ds := struct {
@@ -115,7 +115,7 @@ func (a *AdminCl) Login() error {
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return err
 	}
 	if ds.Token == "" {
@@ -138,12 +138,12 @@ func (a *AdminCl) Refresh() error {
 	a.token = a.refreshToken
 	res, err := a.Get("login/refresh")
 	if err != nil {
-		logging.Logger.Errorf("refresh request failed: %v", err)
+		logging.Root.Errorf("refresh request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("login bad response: %d", res.StatusCode)
+		logging.Root.Errorf("login bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	ds := struct {
@@ -154,7 +154,7 @@ func (a *AdminCl) Refresh() error {
 	}{}
 	err = ReadJSON(res, &ds)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return err
 	}
 	if ds.Token == "" {
@@ -188,12 +188,12 @@ func (a *AdminCl) SendPlaybook(pb string) error {
 
 	res, err := a.Post("admin/playbook", "application/json", strings.NewReader(pb))
 	if err != nil {
-		logging.Logger.Errorf("playbook request failed: %v", err)
+		logging.Root.Errorf("playbook request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusNoContent {
-		logging.Logger.Errorf("playbook bad response: %d", res.StatusCode)
+		logging.Root.Errorf("playbook bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil
@@ -208,18 +208,18 @@ func (a *AdminCl) Groups() ([]pmodel.Group, error) {
 
 	res, err := a.Get("admin/groups")
 	if err != nil {
-		logging.Logger.Errorf("groups request failed: %v", err)
+		logging.Root.Errorf("groups request failed: %v", err)
 		return []pmodel.Group{}, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("groups bad response: %d", res.StatusCode)
+		logging.Root.Errorf("groups bad response: %d", res.StatusCode)
 		return []pmodel.Group{}, ReadErr(res)
 	}
 	defer res.Body.Close()
 	gs := make([]pmodel.Group, 0)
 	err = ReadJSON(res, &gs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return []pmodel.Group{}, err
 	}
 
@@ -235,18 +235,18 @@ func (a *AdminCl) Group(n string) (*pmodel.Group, error) {
 
 	res, err := a.Get(fmt.Sprintf("admin/groups/%s", n))
 	if err != nil {
-		logging.Logger.Errorf("group request failed: %v", err)
+		logging.Root.Errorf("group request failed: %v", err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("group bad response: %d", res.StatusCode)
+		logging.Root.Errorf("group bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	defer res.Body.Close()
 	var gs pmodel.Group
 	err = ReadJSON(res, &gs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -262,12 +262,12 @@ func (a *AdminCl) AddGroup(g pmodel.Group) error {
 
 	res, err := a.PostJSON("admin/groups", g)
 	if err != nil {
-		logging.Logger.Errorf("add group request failed: %v", err)
+		logging.Root.Errorf("add group request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("add group bad response: %d", res.StatusCode)
+		logging.Root.Errorf("add group bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil
@@ -282,12 +282,12 @@ func (a *AdminCl) UpdateGroup(g pmodel.Group) error {
 
 	res, err := a.PostJSON("admin/groups/"+g.Name, g)
 	if err != nil {
-		logging.Logger.Errorf("update group request failed: %v", err)
+		logging.Root.Errorf("update group request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("update group bad response: %d", res.StatusCode)
+		logging.Root.Errorf("update group bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil
@@ -302,12 +302,12 @@ func (a *AdminCl) DeleteGroup(n string) error {
 
 	res, err := a.Delete(fmt.Sprintf("admin/groups/%s", n))
 	if err != nil {
-		logging.Logger.Errorf("delete group request failed: %v", err)
+		logging.Root.Errorf("delete group request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("delete group bad response: %d", res.StatusCode)
+		logging.Root.Errorf("delete group bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil
@@ -350,18 +350,18 @@ func (a *AdminCl) Clients(opts ...ClientsOption) ([]pmodel.Client, error) {
 	}
 	res, err := a.Get(page)
 	if err != nil {
-		logging.Logger.Errorf("clients request failed: %v", err)
+		logging.Root.Errorf("clients request failed: %v", err)
 		return []pmodel.Client{}, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("clients bad response: %d", res.StatusCode)
+		logging.Root.Errorf("clients bad response: %d", res.StatusCode)
 		return []pmodel.Client{}, ReadErr(res)
 	}
 	cs := make([]pmodel.Client, 0)
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return []pmodel.Client{}, err
 	}
 
@@ -377,18 +377,18 @@ func (a *AdminCl) Client(n string) (*pmodel.Client, error) {
 	page := "admin/clients/" + n
 	res, err := a.Get(page)
 	if err != nil {
-		logging.Logger.Errorf("client request failed: %v", err)
+		logging.Root.Errorf("client request failed: %v", err)
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("client bad response: %d", res.StatusCode)
+		logging.Root.Errorf("client bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -410,18 +410,18 @@ func (a *AdminCl) NewClient(n string, g []string) (*pmodel.Client, error) {
 	}
 	res, err := a.PostJSON("admin/clients", du)
 	if err != nil {
-		logging.Logger.Errorf("add client request failed: %v", err)
+		logging.Root.Errorf("add client request failed: %v", err)
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
-		logging.Logger.Errorf("add client bad response: %d", res.StatusCode)
+		logging.Root.Errorf("add client bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -443,18 +443,18 @@ func (a *AdminCl) UpdateClient(n string, g []string) (*pmodel.Client, error) {
 	}
 	res, err := a.PostJSON("admin/clients/"+du.Name, du)
 	if err != nil {
-		logging.Logger.Errorf("update client request failed: %v", err)
+		logging.Root.Errorf("update client request failed: %v", err)
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("update client bad response: %d", res.StatusCode)
+		logging.Root.Errorf("update client bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	var cs pmodel.Client
 	err = ReadJSON(res, &cs)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 
@@ -470,12 +470,12 @@ func (a *AdminCl) DeleteClient(n string) error {
 
 	res, err := a.Delete(fmt.Sprintf("admin/clients/%s", n))
 	if err != nil {
-		logging.Logger.Errorf("delete client request failed: %v", err)
+		logging.Root.Errorf("delete client request failed: %v", err)
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("delete client bad response: %d", res.StatusCode)
+		logging.Root.Errorf("delete client bad response: %d", res.StatusCode)
 		return ReadErr(res)
 	}
 	return nil
@@ -489,18 +489,18 @@ func (a *AdminCl) DecodeCertificate(pem string) (map[string]any, error) {
 	}
 	res, err := a.Post("admin/utils/decodecert", "text/plain", strings.NewReader(pem))
 	if err != nil {
-		logging.Logger.Errorf("update client request failed: %v", err)
+		logging.Root.Errorf("update client request failed: %v", err)
 		return nil, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		logging.Logger.Errorf("update client bad response: %d", res.StatusCode)
+		logging.Root.Errorf("update client bad response: %d", res.StatusCode)
 		return nil, ReadErr(res)
 	}
 	cj := make(map[string]any)
 	err = ReadJSON(res, &cj)
 	if err != nil {
-		logging.Logger.Errorf(errParsingResponse, err)
+		logging.Root.Errorf(errParsingResponse, err)
 		return nil, err
 	}
 	return cj, nil
@@ -548,25 +548,25 @@ func (a *AdminCl) do(req *http.Request) (*http.Response, error) {
 	ul := req.URL.RequestURI()
 	res, err := a.clt.Do(req)
 	if err != nil {
-		logging.Logger.Errorf("request %s %s error: %v", req.Method, ul, err)
+		logging.Root.Errorf("request %s %s error: %v", req.Method, ul, err)
 	} else {
-		logging.Logger.Infof("request %s %s returned %s", req.Method, ul, res.Status)
+		logging.Root.Infof("request %s %s returned %s", req.Method, ul, res.Status)
 	}
 	return res, err
 }
 
 func (a *AdminCl) newRequest(method, endpoint string, body io.Reader) (*http.Request, error) {
 	ul := fmt.Sprintf("%s/%s", a.url, endpoint)
-	logging.Logger.Debugf("creating request %s %s", method, ul)
+	logging.Root.Debugf("creating request %s %s", method, ul)
 	req, err := http.NewRequestWithContext(a.ctx, method, ul, body)
 	if err != nil {
-		logging.Logger.Errorf("cannot create request %s %s", method, ul)
+		logging.Root.Errorf("cannot create request %s %s", method, ul)
 		return nil, err
 	}
 	if a.token != "" {
 		req.Header.Set(tokenHeader, fmt.Sprintf("Bearer %s", a.token))
 	}
-	logging.Logger.Debugf("request %s %s", method, ul)
+	logging.Root.Debugf("request %s %s", method, ul)
 	return req, nil
 }
 

@@ -12,12 +12,14 @@ import (
 	"strings"
 
 	"github.com/samber/do"
-	log "github.com/willie68/micro-vault/internal/logging"
 
 	"github.com/willie68/micro-vault/internal/interfaces"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	cry "github.com/willie68/micro-vault/pkg/crypt"
 )
+
+var logger = logging.New().WithName("svcPlaybook")
 
 // Playbook is a class which can play a playbook file for automated creation of groups and clients
 type Playbook struct {
@@ -78,7 +80,7 @@ func (p *Playbook) Play() error {
 func (p *Playbook) addClients() error {
 	for _, c := range p.pm.Clients {
 		if p.stg.HasGroup(c.Name) || p.stg.HasClient(c.Name) {
-			log.Logger.Errorf("can't import client \"%s\", client or group already exists.", c.Name)
+			logger.Errorf("can't import client \"%s\", client or group already exists.", c.Name)
 			continue
 		}
 		err := p.ensureAddClient(c)
@@ -91,7 +93,7 @@ func (p *Playbook) addClients() error {
 
 func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 	if c.Key == "" {
-		log.Logger.Infof("creating new Pem for %s", c.Name)
+		logger.Infof("creating new Pem for %s", c.Name)
 		c.Key, err = p.generateNewKeyPem()
 		if err != nil {
 			return err
@@ -126,7 +128,7 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 	}
 	_, err = p.stg.AddClient(cl)
 	if err != nil {
-		log.Logger.Errorf("error adding client %s: %v", c.Name, err)
+		logger.Errorf("error adding client %s: %v", c.Name, err)
 		return err
 	}
 	g := model.Group{
@@ -135,10 +137,10 @@ func (p *Playbook) ensureAddClient(c model.Client) (err error) {
 	}
 	_, err = p.stg.AddGroup(g)
 	if err != nil {
-		log.Logger.Errorf("error adding group for client %s: %v", c.Name, err)
+		logger.Errorf("error adding group for client %s: %v", c.Name, err)
 		return err
 	}
-	log.Logger.Infof("adding client %s", c.Name)
+	logger.Infof("adding client %s", c.Name)
 	return nil
 }
 
@@ -159,10 +161,10 @@ func (p *Playbook) addGroups() error {
 		if !p.stg.HasGroup(g.Name) {
 			_, err := p.stg.AddGroup(g)
 			if err != nil {
-				log.Logger.Errorf("error adding group %s: %v", g.Name, err)
+				logger.Errorf("error adding group %s: %v", g.Name, err)
 				return err
 			}
-			log.Logger.Infof("adding group %s", g.Name)
+			logger.Infof("adding group %s", g.Name)
 		}
 	}
 	return nil
@@ -173,10 +175,10 @@ func (p *Playbook) addKeys() error {
 		if !p.stg.HasEncryptKey(k.ID) {
 			err := p.stg.StoreEncryptKey(k)
 			if err != nil {
-				log.Logger.Errorf("error adding key %s: %v", k.ID, err)
+				logger.Errorf("error adding key %s: %v", k.ID, err)
 				return err
 			}
-			log.Logger.Infof("adding key %s", k.ID)
+			logger.Infof("adding key %s", k.ID)
 		}
 	}
 	return nil

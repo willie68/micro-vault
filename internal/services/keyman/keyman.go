@@ -18,6 +18,8 @@ import (
 // DoKeyman the key for dependency injection
 const DoKeyman = "keyman"
 
+var logger = logging.New().WithName("svcKeyman")
+
 // Keyman the key manager service
 type Keyman struct {
 	cfg     config.Config
@@ -54,7 +56,7 @@ func (k *Keyman) init() error {
 	if rsk == nil {
 		rsk, err = rsa.GenerateKey(rand.Reader, 4096)
 		if err != nil {
-			logging.Logger.Errorf("failed to generate private key: %v", err)
+			logger.Errorf("failed to generate private key: %v", err)
 			return err
 		}
 		err = saveToFile(k.cfg.Service.PrivateKey, rsk)

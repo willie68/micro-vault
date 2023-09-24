@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -38,6 +37,8 @@ const (
 	rtUsageRefresh = "mv-refresh"
 	JKAudience     = "microvault-admins"
 )
+
+var logger = logging.New().WithName("svcAdmin")
 
 // Admin admin service business logic
 type Admin struct {
@@ -86,13 +87,13 @@ func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := a.generateRefreshToken(no)
 	if err != nil {
-		log.Printf("failed to generate refresh token: %s", err)
+		logger.Errorf("failed to generate refresh token: %s", err)
 		return "", "", err
 	}
 
 	tsig, err := a.generateToken(no)
 	if err != nil {
-		log.Printf("failed to generate token: %s", err)
+		logger.Errorf("failed to generate token: %s", err)
 		return "", "", err
 	}
 
@@ -110,13 +111,13 @@ func (a *Admin) Refresh(rt string) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := a.generateRefreshToken(no)
 	if err != nil {
-		log.Printf("failed to generate refresh token: %s", err)
+		logger.Errorf("failed to generate refresh token: %s", err)
 		return "", "", err
 	}
 
 	tsig, err := a.generateToken(no)
 	if err != nil {
-		log.Printf("failed to generate token: %s", err)
+		logger.Errorf("failed to generate token: %s", err)
 		return "", "", err
 	}
 
@@ -124,7 +125,7 @@ func (a *Admin) Refresh(rt string) (string, string, error) {
 	exp := tk.Expiration()
 	err = a.stg.RevokeToken(tk.JwtID(), exp)
 	if err != nil {
-		log.Printf("failed to revoke token: %s", err)
+		logger.Errorf("failed to revoke token: %s", err)
 	}
 
 	return tsig, rtsig, nil
@@ -142,7 +143,7 @@ func (a *Admin) generateToken(no time.Time) (string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	tsig, err := jwt.Sign(t, jwt.WithKey(jwa.RS256, a.kmn.SignPrivateKey()))
 	if err != nil {
-		log.Printf("failed to sign token: %s", err)
+		logger.Errorf("failed to sign token: %s", err)
 		return "", err
 	}
 	return string(tsig), nil
@@ -160,7 +161,7 @@ func (a *Admin) generateRefreshToken(no time.Time) (string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	tsig, err := jwt.Sign(t, jwt.WithKey(jwa.RS256, a.kmn.SignPrivateKey()))
 	if err != nil {
-		log.Printf("failed to sign token: %s", err)
+		logger.Errorf("failed to sign token: %s", err)
 		return "", err
 	}
 	return string(tsig), nil
@@ -581,7 +582,7 @@ func (a *Admin) createClient(n string, g []string) (*pmodel.Client, error) {
 		if ok {
 			_, err = a.stg.DeleteClient(ak)
 			if err != nil {
-				logging.Logger.Errorf("error deleting client after failure of adding client group: %v", err)
+				logger.Errorf("error deleting client after failure of adding client group: %v", err)
 			}
 		}
 		return nil, err

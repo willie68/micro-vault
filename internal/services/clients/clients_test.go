@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
-	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/playbook"
 	"github.com/willie68/micro-vault/internal/services/storage"
@@ -407,7 +406,7 @@ func publicPem(privatekey *rsa.PrivateKey) (string, error) {
 	publickey := &privatekey.PublicKey
 	pubbuf, err := x509.MarshalPKIXPublicKey(publickey)
 	if err != nil {
-		logging.Logger.Errorf("create public key failed: %v", err)
+		logger.Errorf("create public key failed: %v", err)
 		return "", err
 	}
 

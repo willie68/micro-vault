@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
-	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
@@ -79,7 +78,7 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 	response.WriteHeader(http.StatusCreated)
 	_, err = response.Write([]byte(ct))
 	if err != nil {
-		logging.Logger.Errorf("error writing PEM: %v", err)
+		logger.Errorf("error writing PEM: %v", err)
 	}
 }
 
@@ -116,7 +115,7 @@ func (v *VaultHandler) GetCertByName(response http.ResponseWriter, request *http
 	response.Header().Add("Content-Type", "application/x-pem-file")
 	_, err = response.Write([]byte(ct))
 	if err != nil {
-		logging.Logger.Errorf("error writing PEM: %v", err)
+		logger.Errorf("error writing PEM: %v", err)
 	}
 }
 

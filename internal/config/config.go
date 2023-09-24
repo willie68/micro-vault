@@ -10,6 +10,7 @@ import (
 	"github.com/drone/envsubst"
 	"github.com/pkg/errors"
 	"github.com/samber/do"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/health"
 	"gopkg.in/yaml.v3"
 )
@@ -28,7 +29,7 @@ type Config struct {
 	// all configuration of internal services can be stored here
 	Service Service `yaml:"service"`
 	// configure logging to gelf logging system
-	Logging LoggingConfig `yaml:"logging"`
+	Logging logging.LoggingConfig `yaml:"logging"`
 	// use authentication via jwt
 	Auth Authentication `yaml:"auth"`
 	// opentelemtrie tracer can be configured here
@@ -83,15 +84,6 @@ type Authentication struct {
 	Properties map[string]any `yaml:"properties"`
 }
 
-// LoggingConfig configuration for the gelf logging
-type LoggingConfig struct {
-	Level    string `yaml:"level"`
-	Filename string `yaml:"filename"`
-
-	Gelfurl  string `yaml:"gelf-url"`
-	Gelfport int    `yaml:"gelf-port"`
-}
-
 // OpenTracing configuration
 type OpenTracing struct {
 	Host     string `yaml:"host"`
@@ -117,7 +109,7 @@ var DefaultConfig = Config{
 		},
 	},
 	SecretFile: "",
-	Logging: LoggingConfig{
+	Logging: logging.LoggingConfig{
 		Level:    "INFO",
 		Filename: "${configdir}/logging.log",
 	},

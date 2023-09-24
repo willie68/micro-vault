@@ -11,7 +11,6 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
-	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 )
@@ -187,7 +186,7 @@ func (f *FileStorage) HasClient(name string) bool {
 		return true
 	})
 	if err != nil {
-		log.Logger.Errorf("error has client: %v", err)
+		logger.Errorf("error has client: %v", err)
 	}
 	return found
 }
@@ -307,7 +306,7 @@ func (f *FileStorage) AccessKey(name string) (string, bool) {
 		return true
 	})
 	if err != nil {
-		log.Logger.Errorf("error has client: %v", err)
+		logger.Errorf("error has client: %v", err)
 	}
 	if !found {
 		return "", false
@@ -480,7 +479,7 @@ func (f *FileStorage) has(tenant, key string) (found bool) {
 		return nil
 	})
 	if err != nil {
-		log.Logger.Errorf("error checking entry: %v", err)
+		logger.Errorf("error checking entry: %v", err)
 		return false
 	}
 	return
@@ -501,7 +500,7 @@ func (f *FileStorage) get(tenant, key string, value any) bool {
 		return err
 	})
 	if err != nil {
-		log.Logger.Errorf("error getting entry: %v", err)
+		logger.Errorf("error getting entry: %v", err)
 		return false
 	}
 	return true
@@ -513,7 +512,7 @@ func (f *FileStorage) delete(tenant, key string) error {
 		return txn.Delete(tkey)
 	})
 	if err != nil {
-		log.Logger.Errorf("error deleting entry: %v", err)
+		logger.Errorf("error deleting entry: %v", err)
 		return err
 	}
 	return nil

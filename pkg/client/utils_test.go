@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	sh  *shttp.SHttp
-	cfg config.Config
+	srvStarted bool
+	sh         *shttp.SHttp
+	cfg        config.Config
 )
 
 func StartServer() {
@@ -49,8 +50,9 @@ func StartServer() {
 
 		healthRouter := apiv1.HealthRoutes(cfg, nil)
 		sh.StartServers(router, healthRouter)
+
+		time.Sleep(1 * time.Second)
 	}
-	time.Sleep(1 * time.Second)
 }
 
 func TestStartServer(t *testing.T) {

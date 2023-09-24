@@ -16,7 +16,6 @@ import (
 	"github.com/rs/xid"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/interfaces"
-	log "github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
 	"github.com/willie68/micro-vault/internal/services/keyman"
@@ -92,14 +91,14 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 	}
 	stg, err := prepareMongoClient(mcnfg)
 	if err != nil {
-		log.Logger.Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return nil, err
 	}
 
 	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, stg)
 	err = stg.Init()
 	if err != nil {
-		log.Logger.Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return nil, err
 	}
 	return stg, nil
@@ -121,7 +120,7 @@ func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
 	ctx := context.TODO()
 	client, err := driver.Connect(ctx, opts)
 	if err != nil {
-		log.Logger.Errorf("%v", err)
+		logger.Errorf("%v", err)
 		return nil, err
 	}
 
@@ -157,7 +156,7 @@ func (m *MongoStorage) initCollection(n string) error {
 		return err
 	}
 	if !ok {
-		log.Logger.Alert("There is no additional index on mongo collection \"objects\". \r\nPlease consider to add an extra index. See readme for explanation.")
+		logger.Alert("There is no additional index on mongo collection \"objects\". \r\nPlease consider to add an extra index. See readme for explanation.")
 	}
 	_, err = m.ensureTTLIndex(m.colObj)
 	if err != nil {
@@ -393,14 +392,14 @@ func (m *MongoStorage) GetGroups() ([]model.Group, error) {
 		var result bson.M
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Logger.Errorf(smpErrLog, err)
+			logger.Errorf(smpErrLog, err)
 		}
 		var g model.Group
 		res, ok := result["object"].(string)
 		if ok {
 			err = m.decrypt(res, &g)
 			if err != nil {
-				log.Logger.Errorf(smpErrLog, err)
+				logger.Errorf(smpErrLog, err)
 			} else {
 				gl = append(gl, g)
 			}
@@ -417,7 +416,7 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 	var g model.Group
 	ok, err := m.one(cCGroup, n, &g)
 	if err != nil {
-		log.Logger.Errorf(smpErrLog, err)
+		logger.Errorf(smpErrLog, err)
 		return nil, false
 	}
 	if !ok {
@@ -430,13 +429,13 @@ func (m *MongoStorage) GetGroup(n string) (*model.Group, bool) {
 func (m *MongoStorage) HasClient(n string) bool {
 	found, err := m.exists(cCClient, n)
 	if err != nil {
-		log.Logger.Errorf("has client: %v", err)
+		logger.Errorf("has client: %v", err)
 		return false
 	}
 	if !found {
 		found, err = m.exists(cCClientA, n)
 		if err != nil {
-			log.Logger.Errorf("has client: %v", err)
+			logger.Errorf("has client: %v", err)
 			return false
 		}
 	}
@@ -562,7 +561,7 @@ func (m *MongoStorage) GetClient(a string) (*model.Client, bool) {
 	var c model.Client
 	ok, err := m.one(cCClientA, a, &c)
 	if err != nil {
-		log.Logger.Errorf(smpErrLog, err)
+		logger.Errorf(smpErrLog, err)
 		return nil, false
 	}
 	if !ok {
@@ -589,7 +588,7 @@ func (m *MongoStorage) AccessKey(n string) (string, bool) {
 	var c model.Client
 	ok, err := m.one(cCClient, n, &c)
 	if err != nil {
-		log.Logger.Errorf(smpErrLog, err)
+		logger.Errorf(smpErrLog, err)
 		return "", false
 	}
 	if !ok {
@@ -647,7 +646,7 @@ func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bo
 		var result bson.M
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Logger.Errorf("lkeys:"+smpErrLog, err)
+			logger.Errorf("lkeys:"+smpErrLog, err)
 			continue
 		}
 		var g model.EncryptKey
@@ -655,7 +654,7 @@ func (m *MongoStorage) ListEncryptKeys(s, l int64, c func(c model.EncryptKey) bo
 		if ok {
 			err = m.decrypt(res, &g)
 			if err != nil {
-				log.Logger.Errorf("lkeys:"+smpErrLog, err)
+				logger.Errorf("lkeys:"+smpErrLog, err)
 				continue
 			}
 			ok := c(g)
@@ -724,7 +723,7 @@ func (m *MongoStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 		var result bson.D
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Logger.Errorf("lkeys: error: %v", err)
+			logger.Errorf("lkeys: error: %v", err)
 			continue
 		}
 		var g model.Data
@@ -732,7 +731,7 @@ func (m *MongoStorage) ListData(s, l int64, c func(c model.Data) bool) error {
 		if ok {
 			err = m.decrypt(res, &g)
 			if err != nil {
-				log.Logger.Errorf("lkeys: error: %v", err)
+				logger.Errorf("lkeys: error: %v", err)
 				continue
 			}
 			ok := c(g)

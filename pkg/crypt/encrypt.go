@@ -187,7 +187,7 @@ func Pem2Pub(key string) (*rsa.PublicKey, error) {
 func Pub2Pem(k *rsa.PublicKey) ([]byte, error) {
 	pubbuf, err := x509.MarshalPKIXPublicKey(k)
 	if err != nil {
-		logging.Logger.Errorf("create public key failed: %v", err)
+		logging.Root.Errorf("create public key failed: %v", err)
 		return []byte{}, err
 	}
 

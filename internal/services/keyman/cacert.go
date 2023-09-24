@@ -17,7 +17,6 @@ import (
 
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/config"
-	"github.com/willie68/micro-vault/internal/logging"
 )
 
 // Cert the certificate
@@ -66,21 +65,21 @@ func (c *CAService) init() error {
 	}
 
 	if !fileExists(c.cfg.Certificate) {
-		logging.Logger.Alert("create a new public ca root certificate")
+		logger.Alert("create a new public ca root certificate")
 		err := c.createCert()
 		if err != nil {
-			logging.Logger.Errorf("error creating certificate: %v", err)
+			logger.Errorf("error creating certificate: %v", err)
 			return err
 		}
 		err = c.saveCertificate()
 		if err != nil {
-			logging.Logger.Errorf("error saving certificate: %v", err)
+			logger.Errorf("error saving certificate: %v", err)
 			return err
 		}
 	} else {
 		err := c.loadCertificate()
 		if err != nil {
-			logging.Logger.Errorf("error loading certificate: %v", err)
+			logger.Errorf("error loading certificate: %v", err)
 			return err
 		}
 	}
@@ -96,10 +95,10 @@ func (c *CAService) getCaPrivateKey() (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 	if rsk == nil {
-		logging.Logger.Alert("create a new private ca key")
+		logger.Alert("create a new private ca key")
 		rsk, err = rsa.GenerateKey(rand.Reader, 4096)
 		if err != nil {
-			logging.Logger.Errorf("failed to generate private ca key: %v", err)
+			logger.Errorf("failed to generate private ca key: %v", err)
 			return nil, err
 		}
 		if c.cfg.Certificate != "" {

@@ -44,6 +44,8 @@ const (
 	errAccKeyPermit     = "access to key permitted"
 )
 
+var logger = logging.New().WithName("svcClients")
+
 // Clients business logic for client management
 type Clients struct {
 	stg  interfaces.Storage
@@ -135,18 +137,18 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 
 	n, ok := tk.PrivateClaims()["name"].(string)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid, no name given")
+		logger.Error("failed to refresh, token not valid, no name given")
 		return "", "", serror.ErrTokenNotValid
 	}
 
 	a, ok := c.stg.AccessKey(n)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid, no access key")
+		logger.Error("failed to refresh, token not valid, no access key")
 		return "", "", serror.ErrTokenNotValid
 	}
 	cl, ok := c.stg.GetClient(a)
 	if !ok {
-		logging.Logger.Error("failed to refresh, token not valid, no client defined")
+		logger.Error("failed to refresh, token not valid, no client defined")
 		return "", "", serror.ErrTokenNotValid
 	}
 
@@ -154,13 +156,13 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 	// Signing a token (using raw rsa.PrivateKey)
 	rtsig, err := c.generateRefreshToken(no, cl.Name)
 	if err != nil {
-		logging.Logger.Errorf("sign token: failed to generate refesh token: %s", err)
+		logger.Errorf("sign token: failed to generate refesh token: %s", err)
 		return "", "", err
 	}
 
 	tsig, err := c.generateToken(no, cl.Name, cl.Groups)
 	if err != nil {
-		logging.Logger.Errorf("sign token: failed to generate token: %s", err)
+		logger.Errorf("sign token: failed to generate token: %s", err)
 		return "", "", err
 	}
 
@@ -168,7 +170,7 @@ func (c *Clients) Refresh(rt string) (string, string, error) {
 	exp := tk.Expiration()
 	err = c.stg.RevokeToken(tk.JwtID(), exp)
 	if err != nil {
-		logging.Logger.Errorf("sign token: failed to revoke token: %s", err)
+		logger.Errorf("sign token: failed to revoke token: %s", err)
 	}
 
 	return tsig, rtsig, nil
@@ -205,7 +207,7 @@ func (c *Clients) generateRefreshToken(no time.Time, n string) (string, error) {
 
 	tsig, err := jwt.Sign(t, jwt.WithKey(jwa.RS256, c.kmn.SignPrivateKey()))
 	if err != nil {
-		logging.Logger.Errorf("failed to sign token: %s", err)
+		logger.Errorf("failed to sign token: %s", err)
 		return "", err
 	}
 	return string(tsig), nil
@@ -387,7 +389,7 @@ func (c *Clients) SignSS(tk string, msg *pmodel.SignMessage) (*pmodel.SignMessag
 
 	kid, err := cry.GetKID(pk)
 	if err != nil {
-		logging.Logger.Infof("failed to generate kid: %s", err)
+		logger.Infof("failed to generate kid: %s", err)
 		return nil, err
 	}
 

@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/willie68/micro-vault/internal/config"
+	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/admin"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
@@ -13,6 +14,7 @@ import (
 )
 
 var (
+	logger        = logging.New().WithName("services")
 	healthService *health.SHealth
 )
 
