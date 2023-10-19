@@ -15,9 +15,6 @@ import (
 
 // manage the server side main key, used for encryption/signature
 
-// DoKeyman the key for dependency injection
-const DoKeyman = "keyman"
-
 var logger = logging.New().WithName("svcKeyman")
 
 // Keyman the key manager service
@@ -32,14 +29,14 @@ type Keyman struct {
 // NewKeyman creates a new Keyman service
 func NewKeyman() (*Keyman, error) {
 	k := Keyman{
-		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
+		cfg: do.MustInvoke[config.Config](nil),
 	}
 
 	err := k.init()
 	if err != nil {
 		return nil, err
 	}
-	do.ProvideNamedValue[Keyman](nil, DoKeyman, k)
+	do.ProvideValue[Keyman](nil, k)
 	return &k, nil
 }
 

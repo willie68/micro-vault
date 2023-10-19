@@ -25,7 +25,7 @@ type VaultHandler struct {
 // NewVaultHandler returning a new REST API Handler for vault endpoints
 func NewVaultHandler() api.Handler {
 	return &VaultHandler{
-		cl: do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
+		cl: do.MustInvoke[clients.Clients](nil),
 	}
 }
 

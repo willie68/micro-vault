@@ -60,7 +60,7 @@ func TestNewCaCert(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(k)
 
-	k1 := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
 	ca, err := NewCAService()
@@ -78,7 +78,7 @@ func TestNewCaCert(t *testing.T) {
 
 	ast.Equal("CERTIFICATE", p.Type)
 
-	shutDownNamed(ast)
+	shutDown(ast)
 }
 
 func TestCR(t *testing.T) {
@@ -99,7 +99,7 @@ func TestCR(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(k)
 
-	k1 := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
 	ca, err := NewCAService()
@@ -113,7 +113,7 @@ func TestCR(t *testing.T) {
 	p, _ := pem.Decode(cert.caX509)
 	ast.Equal("CERTIFICATE", p.Type)
 
-	shutDownNamed(ast)
+	shutDown(ast)
 }
 
 func TestCSR(t *testing.T) {
@@ -134,7 +134,7 @@ func TestCSR(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(k)
 
-	k1 := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
 	ca, err := NewCAService()
@@ -168,7 +168,7 @@ func TestCSR(t *testing.T) {
 	ast.Nil(err)
 	ast.True(len(b) > 0)
 
-	shutDownNamed(ast)
+	shutDown(ast)
 }
 
 func TestNewPrivateKey(t *testing.T) {
@@ -194,7 +194,7 @@ func TestNewPrivateKey(t *testing.T) {
 	ast.Nil(err)
 	ast.NotNil(k)
 
-	k1 := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
 	ca, err := NewCAService()
@@ -216,7 +216,7 @@ func TestNewPrivateKey(t *testing.T) {
 
 	ast.Equal("CERTIFICATE", p.Type)
 
-	shutDownNamed(ast)
+	shutDown(ast)
 }
 
 func writeCaCert(n string) (string, error) {
@@ -261,12 +261,12 @@ func writeCaCert(n string) (string, error) {
 	return hash(n)
 }
 
-func shutDownNamed(ast *assert.Assertions) {
-	err := do.ShutdownNamed(nil, config.DoServiceConfig)
+func shutDown(ast *assert.Assertions) {
+	err := do.Shutdown[config.Config](nil)
 	ast.Nil(err)
-	err = do.ShutdownNamed(nil, DoKeyman)
+	err = do.Shutdown[Keyman](nil)
 	ast.Nil(err)
-	err = do.ShutdownNamed(nil, DoCAService)
+	err = do.Shutdown[CAService](nil)
 	ast.Nil(err)
 }
 

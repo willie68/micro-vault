@@ -31,7 +31,7 @@ type Playbook struct {
 // NewPlaybookFile creating a new playbook
 func NewPlaybookFile(pf string) Playbook {
 	return Playbook{
-		stg:  do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+		stg:  do.MustInvoke[interfaces.Storage](nil),
 		file: pf,
 	}
 }
@@ -39,7 +39,7 @@ func NewPlaybookFile(pf string) Playbook {
 // NewPlaybook creating a new playbook
 func NewPlaybook(pm model.Playbook) Playbook {
 	return Playbook{
-		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+		stg: do.MustInvoke[interfaces.Storage](nil),
 		pm:  &pm,
 	}
 }

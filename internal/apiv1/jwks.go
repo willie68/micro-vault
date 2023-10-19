@@ -18,7 +18,7 @@ type JWKSHandler struct {
 // NewJWKSHandler returning a new REST API Handler for jwks
 func NewJWKSHandler() api.Handler {
 	return &JWKSHandler{
-		kmn: do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
+		kmn: do.MustInvoke[keyman.Keyman](nil),
 	}
 }
 

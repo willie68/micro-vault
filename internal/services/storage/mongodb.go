@@ -95,7 +95,7 @@ func NewMongoStorage(mcnfg MongoDBConfig) (interfaces.Storage, error) {
 		return nil, err
 	}
 
-	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, stg)
+	do.ProvideValue[interfaces.Storage](nil, stg)
 	err = stg.Init()
 	if err != nil {
 		logger.Errorf("%v", err)
@@ -131,7 +131,7 @@ func prepareMongoClient(mcnfg MongoDBConfig) (*MongoStorage, error) {
 		client:   client,
 		database: database,
 		ctx:      ctx,
-		knm:      do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
+		knm:      do.MustInvoke[keyman.Keyman](nil),
 	}
 	return &stg, nil
 }

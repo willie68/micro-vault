@@ -30,8 +30,8 @@ type AdminHandler struct {
 // NewAdminHandler returning a new REST API Handler for admin endpoints
 func NewAdminHandler() api.Handler {
 	return &AdminHandler{
-		cl:  do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
-		adm: do.MustInvokeNamed[admin.Admin](nil, admin.DoAdmin),
+		cl:  do.MustInvoke[clients.Clients](nil),
+		adm: do.MustInvoke[admin.Admin](nil),
 	}
 }
 

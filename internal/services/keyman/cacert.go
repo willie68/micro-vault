@@ -33,12 +33,9 @@ type CAService struct {
 	certBytes    []byte
 }
 
-// DoCAService dependency injection service name
-const DoCAService = "cacert"
-
 // NewCAService creating a new CA service
 func NewCAService() (*CAService, error) {
-	cfg := do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig)
+	cfg := do.MustInvoke[config.Config](nil)
 	cnf := cfg.Service.CACert
 	c := CAService{
 		cfg: cnf,
@@ -48,13 +45,13 @@ func NewCAService() (*CAService, error) {
 	if err != nil {
 		return nil, err
 	}
-	do.ProvideNamedValue[CAService](nil, DoCAService, c)
+	do.ProvideValue[CAService](nil, c)
 	return &c, nil
 }
 
 func (c *CAService) init() error {
 	var err error
-	kmn := do.MustInvokeNamed[Keyman](nil, DoKeyman)
+	kmn := do.MustInvoke[Keyman](nil)
 	if c.cfg.PrivateKey == "" {
 		c.caPrivateKey = kmn.PrivateKey()
 	} else {

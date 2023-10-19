@@ -38,7 +38,7 @@ func StartServer() {
 			panic("error creating services")
 		}
 
-		s := do.MustInvokeNamed[shttp.SHttp](nil, shttp.DoSHTTP)
+		s := do.MustInvoke[shttp.SHttp](nil)
 		sh = &s
 	}
 	if !sh.Started {

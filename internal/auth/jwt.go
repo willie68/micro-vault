@@ -48,7 +48,7 @@ func InitJWT(cnfg JWTAuthConfig) JWTAuth {
 	JWTConfig = cnfg
 	return JWTAuth{
 		Config: cnfg,
-		kmn:    do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
+		kmn:    do.MustInvoke[keyman.Keyman](nil),
 	}
 }
 

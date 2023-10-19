@@ -43,7 +43,7 @@ func NewFileStorage(path string) (interfaces.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, &stg)
+	do.ProvideValue[interfaces.Storage](nil, &stg)
 	return &stg, nil
 }
 
@@ -81,7 +81,7 @@ func (f *FileStorage) Init() error {
 // Close closes the database, freeing all needed resources
 func (f *FileStorage) Close() error {
 	f.db.Close()
-	err := do.ShutdownNamed(nil, interfaces.DoStorage)
+	err := do.Shutdown[interfaces.Storage](nil)
 	f.ticker.Stop()
 	f.tckDone <- true
 	return err

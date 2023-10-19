@@ -28,7 +28,7 @@ func TestNewFilestorage(t *testing.T) {
 
 	ast.NotNil(stg)
 
-	stg = do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage)
+	stg = do.MustInvoke[interfaces.Storage](nil)
 	ast.NotNil(stg)
 	defer stg.Close()
 }

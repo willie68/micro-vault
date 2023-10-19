@@ -1,0 +1,1 @@
+.\mvcli.exe decode certificate -p cert.pem

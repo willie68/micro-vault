@@ -19,7 +19,7 @@ type CACert struct {
 // NewCACertHandler returning a new REST API Handler for jwks
 func NewCACertHandler() api.Handler {
 	return &CACert{
-		cas: do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService),
+		cas: do.MustInvoke[keyman.CAService](nil),
 	}
 }
 

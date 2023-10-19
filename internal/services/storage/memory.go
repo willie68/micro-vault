@@ -31,7 +31,7 @@ func NewMemory() (interfaces.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	do.ProvideNamedValue[interfaces.Storage](nil, interfaces.DoStorage, &stg)
+	do.ProvideValue[interfaces.Storage](nil, &stg)
 	return &stg, nil
 }
 
@@ -65,7 +65,7 @@ func (m *Memory) Close() error {
 	m.clients = sync.Map{}
 	m.keys = sync.Map{}
 	m.revokes = sync.Map{}
-	err := do.ShutdownNamed(nil, interfaces.DoStorage)
+	err := do.Shutdown[interfaces.Storage](nil)
 	m.ticker.Stop()
 	m.tckDone <- true
 	return err

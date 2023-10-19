@@ -7,9 +7,6 @@ import (
 	"github.com/willie68/micro-vault/internal/serror"
 )
 
-// DoGroups dependency injection key name for groups
-const DoGroups = "groups"
-
 // Groups group management
 type Groups struct {
 	stg interfaces.Storage
@@ -18,9 +15,9 @@ type Groups struct {
 // NewGroups creating a new groups business object
 func NewGroups() (Groups, error) {
 	gs := Groups{
-		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
+		stg: do.MustInvoke[interfaces.Storage](nil),
 	}
-	do.ProvideNamedValue[Groups](nil, DoGroups, gs)
+	do.ProvideValue[Groups](nil, gs)
 	return gs, nil
 }
 

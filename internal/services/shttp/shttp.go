@@ -25,11 +25,6 @@ import (
 	"github.com/willie68/micro-vault/internal/services/keyman"
 )
 
-const (
-	// DoSHTTP naming constant for dependency injection
-	DoSHTTP = "shttp"
-)
-
 var logger = logging.New().WithName("svcShttp")
 
 // SHttp a service encapsulating http and https server
@@ -49,7 +44,7 @@ func NewSHttp(cfn config.HTTP) (*SHttp, error) {
 	}
 	sh.init()
 
-	do.ProvideNamedValue[SHttp](nil, DoSHTTP, sh)
+	do.ProvideValue[SHttp](nil, sh)
 
 	return &sh, nil
 }
@@ -225,7 +220,7 @@ func (gc *generateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		}
 	}
 
-	ca := do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService)
+	ca := do.MustInvoke[keyman.CAService](nil)
 
 	// TODO get the validto from the configuration
 	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv), time.Hour*24*365)

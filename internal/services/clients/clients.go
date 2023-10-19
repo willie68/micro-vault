@@ -33,9 +33,7 @@ import (
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
-// DoClients constant for dependency injection
 const (
-	DoClients           = "clients"
 	JKAudience          = "microvault-client"
 	rtUsageKey          = "usage"
 	rtUsageRefresh      = "mv-refresh"
@@ -58,16 +56,16 @@ type Clients struct {
 // NewClients creates a new clients service
 func NewClients() (Clients, error) {
 	c := Clients{
-		stg: do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
-		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
-		kmn: do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
-		crt: do.MustInvokeNamed[keyman.CAService](nil, keyman.DoCAService),
+		stg: do.MustInvoke[interfaces.Storage](nil),
+		cfg: do.MustInvoke[config.Config](nil),
+		kmn: do.MustInvoke[keyman.Keyman](nil),
+		crt: do.MustInvoke[keyman.CAService](nil),
 	}
 	err := c.Init()
 	if err != nil {
 		return Clients{}, err
 	}
-	do.ProvideNamedValue[Clients](nil, DoClients, c)
+	do.ProvideValue[Clients](nil, c)
 	return c, err
 }
 

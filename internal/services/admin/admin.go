@@ -28,9 +28,7 @@ import (
 	"github.com/willie68/micro-vault/pkg/pmodel"
 )
 
-// DoAdmin injection name
 const (
-	DoAdmin        = "admin"
 	tkRolesKey     = "roles"
 	tkRoleAdmin    = "mv-admin"
 	rtUsageKey     = "usage"
@@ -53,21 +51,21 @@ type Admin struct {
 
 // NewAdmin creates a new admin service
 func NewAdmin() (Admin, error) {
-	cfg := do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig)
+	cfg := do.MustInvoke[config.Config](nil)
 	a := Admin{
 		rootusr: cfg.Service.Rootuser,
 		pwdhash: hash([]byte(cfg.Service.Rootpwd)),
-		stg:     do.MustInvokeNamed[interfaces.Storage](nil, interfaces.DoStorage),
-		kmn:     do.MustInvokeNamed[keyman.Keyman](nil, keyman.DoKeyman),
-		cls:     do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
-		grs:     do.MustInvokeNamed[groups.Groups](nil, groups.DoGroups),
+		stg:     do.MustInvoke[interfaces.Storage](nil),
+		kmn:     do.MustInvoke[keyman.Keyman](nil),
+		cls:     do.MustInvoke[clients.Clients](nil),
+		grs:     do.MustInvoke[groups.Groups](nil),
 		cfg:     cfg,
 	}
 	err := a.Init()
 	if err != nil {
 		return Admin{}, err
 	}
-	do.ProvideNamedValue[Admin](nil, DoAdmin, a)
+	do.ProvideValue[Admin](nil, a)
 	return a, err
 }
 

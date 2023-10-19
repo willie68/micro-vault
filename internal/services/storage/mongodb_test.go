@@ -20,8 +20,8 @@ const (
 var mgo *MongoStorage
 
 func mongoInit() {
-	_ = do.ShutdownNamed(nil, config.DoServiceConfig)
-	_ = do.ShutdownNamed(nil, keyman.DoKeyman)
+	_ = do.Shutdown[config.Config](nil)
+	_ = do.Shutdown[keyman.Keyman](nil)
 
 	cfg := config.Config{
 		Service: config.Service{

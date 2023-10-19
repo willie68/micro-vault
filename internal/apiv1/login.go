@@ -29,9 +29,9 @@ type LoginHandler struct {
 // NewLoginHandler returning a new REST API Handler for admin endpoints
 func NewLoginHandler() api.Handler {
 	return &LoginHandler{
-		cl:  do.MustInvokeNamed[clients.Clients](nil, clients.DoClients),
-		adm: do.MustInvokeNamed[admin.Admin](nil, admin.DoAdmin),
-		cfg: do.MustInvokeNamed[config.Config](nil, config.DoServiceConfig),
+		cl:  do.MustInvoke[clients.Clients](nil),
+		adm: do.MustInvoke[admin.Admin](nil),
+		cfg: do.MustInvoke[config.Config](nil),
 	}
 }
 
