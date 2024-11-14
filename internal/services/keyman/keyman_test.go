@@ -9,7 +9,6 @@ import (
 
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
-	"github.com/willie68/micro-vault/internal/config"
 )
 
 const (
@@ -25,14 +24,7 @@ func TestNewKeyman(t *testing.T) {
 		panic(err)
 	}
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile1,
-		},
-	}
-	cfg.Provide()
-
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile1)
 	ast.Nil(err)
 	ast.NotNil(k)
 
@@ -44,8 +36,7 @@ func TestNewKeyman(t *testing.T) {
 
 	pb := k.PrivateKey()
 	ast.NotNil(pb)
-	err = do.Shutdown[config.Config](nil)
-	ast.Nil(err)
+
 	err = do.Shutdown[Keyman](nil)
 	ast.Nil(err)
 }
@@ -62,22 +53,13 @@ func TestKeymanPEM(t *testing.T) {
 	err = saveToFile(keyfile2, rsk)
 	ast.Nil(err)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile2,
-		},
-	}
-	cfg.Provide()
-
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile2)
 	ast.Nil(err)
 	ast.NotNil(k)
 
 	pr := k.PrivateKey()
 	ast.NotNil(pr)
 
-	err = do.Shutdown[config.Config](nil)
-	ast.Nil(err)
 	err = do.Shutdown[Keyman](nil)
 	ast.Nil(err)
 }

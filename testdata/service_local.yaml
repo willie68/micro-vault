@@ -1,49 +1,48 @@
 #sercret file for storing usernames and passwords
 secretfile:
 
-service:
-  http:
-    # port of the http server
-    port: 9580 
-    # port of the https server
-    sslport: 9543
-    # this is the servicURL from outside
-    serviceURL: https://localhost:9543
-    # other dns names (used for certificate)
-    dnss: 
-      - host.docker.internal
-      - localhost
-    # other ips (used for certificate)
-    ips: 
-      - 127.0.0.1
-      - 192.168.178.10
-  rootuser: root
-  rootpwd: yxcvb
-  privatekey: ./configs/private.pem
-  cacert:
-    certificate:  ./configs/cert/certificate.pem
-    subject:
-      Country: de
-      Organization: MCS
-      OrganizationalUnit: dev
-      Locality: Hattingen
-      Province: NRW
-      StreetAddress: Welperstraße 65
-      PostalCode: 45525
-      CommonName: mcs
-  storage:
-    type: memory
-    properties:
-      hosts:
-        - 127.0.0.1:27017
-      authdatabase: microvault
-      username: microvault
-      password: yxcvb
-      database: microvault
-  healthcheck:
-    # period in seconds to start the healtcheck
-    period: 60
-    startdelay: 3
+http:
+  # port of the http server
+  port: 9580 
+  # port of the https server
+  sslport: 9543
+  # this is the servicURL from outside
+  serviceURL: https://localhost:9543
+  # other dns names (used for certificate)
+  dnss: 
+    - host.docker.internal
+    - localhost
+  # other ips (used for certificate)
+  ips: 
+    - 127.0.0.1
+    - 192.168.178.10
+rootuser: root
+rootpwd: yxcvb
+privatekey: ./configs/private.pem
+cacert:
+  certificate:  ./configs/cert/certificate.pem
+  subject:
+    Country: de
+    Organization: MCS
+    OrganizationalUnit: dev
+    Locality: Hattingen
+    Province: NRW
+    StreetAddress: Welperstraße 65
+    PostalCode: 45525
+    CommonName: mcs
+storage:
+  type: memory
+  properties:
+    hosts:
+      - 127.0.0.1:27017
+    authdatabase: microvault
+    username: microvault
+    password: yxcvb
+    database: microvault
+healthcheck:
+  # period in seconds to start the healtcheck
+  period: 60
+  startdelay: 3
     
 logging:
     gelf-url: 127.0.0.1

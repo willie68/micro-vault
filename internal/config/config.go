@@ -12,6 +12,8 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/health"
+	"github.com/willie68/micro-vault/internal/services/keyman"
+	"github.com/willie68/micro-vault/internal/services/shttp"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,50 +25,26 @@ type Config struct {
 	// all secrets will be stored in this file, same structure as the main config file
 	SecretFile string `yaml:"secretfile"`
 
-	// all configuration of internal services can be stored here
-	Service Service `yaml:"service"`
 	// configure logging to gelf logging system
-	Logging logging.LoggingConfig `yaml:"logging"`
+	Logging logging.Config `yaml:"logging"`
 	// use authentication via jwt
 	Auth Authentication `yaml:"auth"`
 	// opentelemtrie tracer can be configured here
 	OpenTracing OpenTracing `yaml:"opentracing"`
 	// and some metrics
 	Metrics Metrics `yaml:"metrics"`
-}
+	// Enable Profiling option
+	Profiling Profiling `yaml:"profiling"`
 
-// Service the configuration of services inside this ms
-type Service struct {
-	HTTP HTTP `yaml:"http"`
+	HTTP shttp.Config `yaml:"http"`
 	// special config for health checks
-	HealthSystem health.Config `yaml:"healthcheck"`
-	Playbook     string        `yaml:"playbook"`
-	Rootuser     string        `yaml:"rootuser"`
-	Rootpwd      string        `yaml:"rootpwd"`
-	PrivateKey   string        `yaml:"privatekey"`
-	CACert       CACert        `yaml:"cacert"`
-	Storage      Storage       `yaml:"storage"`
-}
-
-// HTTP configuration of the http service
-type HTTP struct {
-	// port of the http server
-	Port int `yaml:"port"`
-	// port of the https server
-	Sslport int `yaml:"sslport"`
-	// this is the url how to connect to this service from outside
-	ServiceURL string `yaml:"serviceURL"`
-	// other dns names (used for certificate)
-	DNSNames []string `yaml:"dnss"`
-	// other ips (used for certificate)
-	IPAddresses []string `yaml:"ips"`
-}
-
-// CACert configuration of the ca cert service
-type CACert struct {
-	PrivateKey  string            `yaml:"privatekey"`
-	Certificate string            `yaml:"certificate"`
-	Subject     map[string]string `yaml:"subject"`
+	HealthSystem health.Config   `yaml:"healthcheck"`
+	Playbook     string          `yaml:"playbook"`
+	Rootuser     string          `yaml:"rootuser"`
+	Rootpwd      string          `yaml:"rootpwd"`
+	PrivateKey   string          `yaml:"privatekey"`
+	CACert       keyman.CAConfig `yaml:"cacert"`
+	Storage      Storage         `yaml:"storage"`
 }
 
 // Storage the type and properties of the storage
@@ -92,21 +70,25 @@ type Metrics struct {
 	Enable bool `yaml:"enable"`
 }
 
+// Profiling configuration
+type Profiling struct {
+	Enable bool `yaml:"enable"`
+}
+
 // DefaultConfig default configuration
 var DefaultConfig = Config{
-	Service: Service{
-		HTTP: HTTP{
-			Port:       8000,
-			Sslport:    8443,
-			ServiceURL: "https://127.0.0.1:8443",
-		},
-		HealthSystem: health.Config{
-			Period:     30,
-			StartDelay: 3,
-		},
+	HTTP: shttp.Config{
+		Servicename: "microvault",
+		Port:        8000,
+		Sslport:     8443,
+		ServiceURL:  "https://127.0.0.1:8443",
+	},
+	HealthSystem: health.Config{
+		Period:     30,
+		StartDelay: 3,
 	},
 	SecretFile: "",
-	Logging: logging.LoggingConfig{
+	Logging: logging.Config{
 		Level:    "INFO",
 		Filename: "${configdir}/logging.log",
 	},

@@ -7,7 +7,6 @@ import (
 	"github.com/rs/xid"
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
-	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/utils"
@@ -20,17 +19,9 @@ const (
 var mgo *MongoStorage
 
 func mongoInit() {
-	_ = do.Shutdown[config.Config](nil)
 	_ = do.Shutdown[keyman.Keyman](nil)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile1,
-		},
-	}
-	cfg.Provide()
-
-	_, err := keyman.NewKeyman()
+	_, err := keyman.NewKeyman(keyfile1)
 	if err != nil {
 		panic(err)
 	}

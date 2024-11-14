@@ -1,10 +1,16 @@
 package client
 
 import (
+	"bufio"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 	"testing"
 
@@ -421,4 +427,71 @@ func TestSSStore(t *testing.T) {
 	p, err = cli2.GetDataSS(id)
 	ast.NotNil(err)
 	ast.Empty(p)
+}
+
+func TestEncryptStream(t *testing.T) {
+	_ = os.Chdir("../../")
+
+	ast := assert.New(t)
+
+	testfile := "./testdata/files/test.txt"
+	cryptfile := "./testdata/files/test.cry"
+	destfile := "./testdata/files/test.dst"
+	fin, err := os.OpenFile(testfile, os.O_RDONLY, os.ModePerm)
+	ast.Nil(err)
+	ast.NotNil(fin)
+
+	key, _ := hex.DecodeString("6368616e676520746869732070617373")
+	block, err := aes.NewCipher(key)
+	ast.Nil(err)
+
+	// If the key is unique for each ciphertext, then it's ok to use a zero
+	// IV.
+	var iv [aes.BlockSize]byte
+	stream := cipher.NewOFB(block, iv[:])
+
+	fout, err := os.Create(cryptfile)
+	ast.Nil(err)
+	out := bufio.NewWriter(fout)
+
+	writer := &cipher.StreamWriter{S: stream, W: out}
+	// Copy the input to the output buffer, encrypting as we go.
+	n, err := io.Copy(writer, fin)
+	ast.Nil(err)
+	err = out.Flush()
+	ast.Nil(err)
+
+	err = writer.Close()
+	ast.Nil(err)
+
+	err = fin.Close()
+	ast.Nil(err)
+
+	err = fout.Close()
+	ast.Nil(err)
+	ast.Greater(n, int64(0))
+	fmt.Printf("%d bytes encrypted\r\n", n)
+
+	stream = cipher.NewOFB(block, iv[:])
+
+	fin, err = os.OpenFile(cryptfile, os.O_RDONLY, os.ModePerm)
+	ast.Nil(err)
+	ast.NotNil(fin)
+
+	reader := &cipher.StreamReader{S: stream, R: fin}
+
+	fout, err = os.Create(destfile)
+	ast.Nil(err)
+	out = bufio.NewWriter(fout)
+
+	n, err = io.Copy(out, reader)
+	ast.Nil(err)
+	ast.Greater(n, int64(0))
+	fmt.Printf("%d bytes decrypted\r\n", n)
+
+	dts, err := os.ReadFile(testfile)
+	ast.Nil(err)
+	dtd, err := os.ReadFile(destfile)
+	ast.Nil(err)
+	ast.Equal(dts, dtd)
 }

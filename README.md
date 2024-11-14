@@ -15,7 +15,7 @@ Beispiel: Innerhalb eines Kubernetes Clusters kommunizieren  die Services untere
 - Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden. Bei Änderungen der DNS, IP muss dann der Build neu gestartet werden. 
 - Erzeugung offline und kopieren aus einem ext. Speicher (build oder Startzeit), diese Variante könnte sicherheitstechnisch problematisch sein, denn der Zertifikatsspeicher muss gut abgesichert werden. 
 
-Abhilfe schafft da eine zentrale Zertifikatsstelle im Cluster (Certificate authority, CA), die direkt den CSR ausführen kann. Somit müssen die Clients zur Zertifikatskontrolle nur das Root Zertifikat der CA importiert haben.
+Abhilfe schafft da eine zentrale Zertifikatsstelle im Cluster (Certificate authority, CA), die direkt den CSR ausführen kann. Somit müssen die Clients zur Zertifikatskontrolle nur das Root/Intermediate Zertifikat der CA importiert haben.
 
 ### Verschlüsselte Übertragung
 

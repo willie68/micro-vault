@@ -32,7 +32,7 @@ func StartServer() {
 		}
 
 		cfg = config.Get()
-		cfg.Service.Playbook = "./testdata/playbook.json"
+		cfg.Playbook = "./testdata/playbook.json"
 		cfg.Provide()
 		if err := services.InitServices(cfg); err != nil {
 			panic("error creating services")

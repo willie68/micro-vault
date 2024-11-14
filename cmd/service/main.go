@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"github.com/samber/do"
+	_ "github.com/willie68/micro-vault/docs"
 	"github.com/willie68/micro-vault/internal/apiv1"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
@@ -27,9 +28,6 @@ import (
 )
 
 var (
-	port          int
-	sslport       int
-	serviceURL    string
 	configFile    string
 	serviceConfig config.Config
 	tracer        opentracing.Tracer
@@ -40,19 +38,16 @@ var (
 func init() {
 	// variables for parameter override
 	log.Root.Info("init service")
-	flag.IntVarP(&port, "port", "p", 0, "port of the http server.")
-	flag.IntVarP(&sslport, "sslport", "t", 0, "port of the https server.")
 	flag.StringVarP(&configFile, "config", "c", config.File, "this is the path and filename to the config file")
-	flag.StringVarP(&serviceURL, "serviceURL", "u", "", "service url from outside")
 	flag.StringVarP(&pbf, "playbook", "b", "", "playbook file for automated init")
 	flag.StringVarP(&pbexport, "export", "e", "", "export playbook file for backup")
 }
 
-// @title GoMicro service API
-// @version 1.0
-// @description The GoMicro service is a template for microservices written in go.
-// @BasePath /api/v1
-// @in header
+//	@title			micro-vault service
+//	@version		1.0
+//	@description	Micro-Vault microservice dead simple key management service without any golden rings, just simple and secure.
+//	@BasePath		/api/v1
+//	@in				header
 func main() {
 	flag.Parse()
 	defer log.Root.Close()
@@ -99,8 +94,8 @@ func main() {
 	tracer, closer = initJaeger(config.Servicename, serviceConfig.OpenTracing)
 	defer closer.Close()
 
-	log.Root.Infof("ssl: %t", serviceConfig.Service.HTTP.Sslport > 0)
-	log.Root.Infof("serviceURL: %s", serviceConfig.Service.HTTP.ServiceURL)
+	log.Root.Infof("ssl: %t", serviceConfig.HTTP.Sslport > 0)
+	log.Root.Infof("serviceURL: %s", serviceConfig.HTTP.ServiceURL)
 	router, err := apiv1.APIRoutes(serviceConfig, tracer)
 	if err != nil {
 		errstr := fmt.Sprintf("could not create api routes. %s", err.Error())
@@ -136,18 +131,8 @@ func initLogging() {
 
 // initConfig override the configuration from the service.yaml with the given commandline parameters
 func initConfig() {
-	if port > 0 {
-		serviceConfig.Service.HTTP.Port = port
-	}
-	if sslport > 0 {
-		serviceConfig.Service.HTTP.Sslport = sslport
-	}
-	if serviceURL != "" {
-		serviceConfig.Service.HTTP.ServiceURL = serviceURL
-	}
-
 	if pbf != "" {
-		serviceConfig.Service.Playbook = pbf
+		serviceConfig.Playbook = pbf
 	}
 	serviceConfig.Provide()
 }

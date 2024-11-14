@@ -53,8 +53,8 @@ type Admin struct {
 func NewAdmin() (Admin, error) {
 	cfg := do.MustInvoke[config.Config](nil)
 	a := Admin{
-		rootusr: cfg.Service.Rootuser,
-		pwdhash: hash([]byte(cfg.Service.Rootpwd)),
+		rootusr: cfg.Rootuser,
+		pwdhash: hash([]byte(cfg.Rootpwd)),
 		stg:     do.MustInvoke[interfaces.Storage](nil),
 		kmn:     do.MustInvoke[keyman.Keyman](nil),
 		cls:     do.MustInvoke[clients.Clients](nil),
@@ -479,16 +479,16 @@ func (a *Admin) GetInfo(tk string) ([]string, error) {
 	infos = append(infos, "service: "+config.Servicename)
 	infos = append(infos, "auth type: "+a.cfg.Auth.Type)
 	infos = append(infos, fmt.Sprintf("metrics: %v", a.cfg.Metrics.Enable))
-	infos = append(infos, fmt.Sprintf("http port: %d", a.cfg.Service.HTTP.Port))
-	infos = append(infos, fmt.Sprintf("https port: %d", a.cfg.Service.HTTP.Sslport))
-	infos = append(infos, fmt.Sprintf("service url: %s", a.cfg.Service.HTTP.ServiceURL))
-	for _, n := range a.cfg.Service.HTTP.DNSNames {
+	infos = append(infos, fmt.Sprintf("http port: %d", a.cfg.HTTP.Port))
+	infos = append(infos, fmt.Sprintf("https port: %d", a.cfg.HTTP.Sslport))
+	infos = append(infos, fmt.Sprintf("service url: %s", a.cfg.HTTP.ServiceURL))
+	for _, n := range a.cfg.HTTP.DNSNames {
 		infos = append(infos, fmt.Sprintf("DNS name: %s", n))
 	}
-	for _, n := range a.cfg.Service.HTTP.IPAddresses {
+	for _, n := range a.cfg.HTTP.IPAddresses {
 		infos = append(infos, fmt.Sprintf("IPAddresses: %s", n))
 	}
-	infos = append(infos, "storage type: "+a.cfg.Service.Storage.Type)
+	infos = append(infos, "storage type: "+a.cfg.Storage.Type)
 
 	return infos, nil
 }

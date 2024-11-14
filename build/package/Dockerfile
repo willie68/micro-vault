@@ -1,6 +1,5 @@
 ##### BUILDER #####
-
-FROM golang:1.21-alpine3.18 as builder
+FROM golang:1.23-alpine3.20 AS builder
 
 ## Task: Install build deps
 
@@ -12,22 +11,22 @@ RUN set -eux; \
         musl-dev
 
 ## Task: copy source files
-
 COPY . /src
 WORKDIR /src
 
 ## Task: fetch project deps
+RUN go mod download ; go mod tidy
 
-RUN go mod download
-RUN go mod tidy
+## Task: build rest api definition
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 ## Task: build project
-
 ENV GOOS="linux"
 ENV GOARCH="amd64"
 ENV CGO_ENABLED="0"
 
-RUN go build -ldflags="-s -w" -o microvault-service cmd/service/main.go 
+RUN swag init -g ./cmd/service/main.go; \ 
+  go build -ldflags="-s -w" -o microvault-service cmd/service/main.go 
 
 ## Task: set permissions
 
@@ -60,7 +59,7 @@ RUN set -eu +x; \
 
 ##### TARGET #####
 
-FROM alpine:3.18
+FROM alpine:3.20
 
 ARG RELEASE
 ENV IMG_VERSION="${RELEASE}"

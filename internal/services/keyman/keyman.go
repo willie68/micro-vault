@@ -8,7 +8,6 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/samber/do"
-	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/pkg/crypt"
 )
@@ -19,17 +18,17 @@ var logger = logging.New().WithName("svcKeyman")
 
 // Keyman the key manager service
 type Keyman struct {
-	cfg     config.Config
-	rsk     *rsa.PrivateKey
-	kid     string
-	jwks    jwk.Set
-	signKey jwk.Key
+	privKeyFile string
+	rsk         *rsa.PrivateKey
+	kid         string
+	jwks        jwk.Set
+	signKey     jwk.Key
 }
 
 // NewKeyman creates a new Keyman service
-func NewKeyman() (*Keyman, error) {
+func NewKeyman(privKeyFile string) (*Keyman, error) {
 	k := Keyman{
-		cfg: do.MustInvoke[config.Config](nil),
+		privKeyFile: privKeyFile,
 	}
 
 	err := k.init()
@@ -44,8 +43,8 @@ func NewKeyman() (*Keyman, error) {
 func (k *Keyman) init() error {
 	var rsk *rsa.PrivateKey
 	var err error
-	if k.cfg.Service.PrivateKey != "" {
-		rsk, err = loadFromFile(k.cfg.Service.PrivateKey)
+	if k.privKeyFile != "" {
+		rsk, err = loadFromFile(k.privKeyFile)
 		if err != nil {
 			return err
 		}
@@ -56,7 +55,7 @@ func (k *Keyman) init() error {
 			logger.Errorf("failed to generate private key: %v", err)
 			return err
 		}
-		err = saveToFile(k.cfg.Service.PrivateKey, rsk)
+		err = saveToFile(k.privKeyFile, rsk)
 		if err != nil {
 			return err
 		}

@@ -16,7 +16,6 @@ import (
 
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
-	"github.com/willie68/micro-vault/internal/config"
 )
 
 const (
@@ -45,25 +44,19 @@ func TestNewCaCert(t *testing.T) {
 
 	_ = os.Remove(certfile)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile,
-			CACert: config.CACert{
-				Certificate: certfile,
-				Subject:     subjectMap,
-			},
-		},
+	cacnf := CAConfig{
+		Certificate: certfile,
+		Subject:     subjectMap,
 	}
-	cfg.Provide()
 
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile)
 	ast.Nil(err)
 	ast.NotNil(k)
 
 	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
-	ca, err := NewCAService()
+	ca, err := NewCAService(cacnf)
 	ast.Nil(err)
 	ast.NotNil(ca)
 	ast.True(fileExists(certfile))
@@ -84,25 +77,19 @@ func TestNewCaCert(t *testing.T) {
 func TestCR(t *testing.T) {
 	ast := assert.New(t)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile,
-			CACert: config.CACert{
-				Certificate: certfile,
-				Subject:     subjectMap,
-			},
-		},
+	cacnf := CAConfig{
+		Certificate: certfile,
+		Subject:     subjectMap,
 	}
-	cfg.Provide()
 
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile)
 	ast.Nil(err)
 	ast.NotNil(k)
 
 	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
-	ca, err := NewCAService()
+	ca, err := NewCAService(cacnf)
 	ast.Nil(err)
 	ast.NotNil(ca)
 
@@ -119,25 +106,19 @@ func TestCR(t *testing.T) {
 func TestCSR(t *testing.T) {
 	ast := assert.New(t)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile,
-			CACert: config.CACert{
-				Certificate: certfile,
-				Subject:     subjectMap,
-			},
-		},
+	cacnf := CAConfig{
+		Certificate: certfile,
+		Subject:     subjectMap,
 	}
-	cfg.Provide()
 
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile)
 	ast.Nil(err)
 	ast.NotNil(k)
 
 	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
-	ca, err := NewCAService()
+	ca, err := NewCAService(cacnf)
 	ast.Nil(err)
 	ast.NotNil(ca)
 
@@ -178,26 +159,20 @@ func TestNewPrivateKey(t *testing.T) {
 	ast.Nil(err)
 	_ = os.Remove(caKeyfile)
 
-	cfg := config.Config{
-		Service: config.Service{
-			PrivateKey: keyfile,
-			CACert: config.CACert{
-				PrivateKey:  caKeyfile,
-				Certificate: certfile,
-				Subject:     subjectMap,
-			},
-		},
+	cacnf := CAConfig{
+		PrivateKey:  caKeyfile,
+		Certificate: certfile,
+		Subject:     subjectMap,
 	}
-	cfg.Provide()
 
-	k, err := NewKeyman()
+	k, err := NewKeyman(keyfile)
 	ast.Nil(err)
 	ast.NotNil(k)
 
 	k1 := do.MustInvoke[Keyman](nil)
 	ast.NotNil(k1)
 
-	ca, err := NewCAService()
+	ca, err := NewCAService(cacnf)
 	ast.Nil(err)
 	ast.NotNil(ca)
 	ast.True(fileExists(certfile))
@@ -262,9 +237,7 @@ func writeCaCert(n string) (string, error) {
 }
 
 func shutDown(ast *assert.Assertions) {
-	err := do.Shutdown[config.Config](nil)
-	ast.Nil(err)
-	err = do.Shutdown[Keyman](nil)
+	err := do.Shutdown[Keyman](nil)
 	ast.Nil(err)
 	err = do.Shutdown[CAService](nil)
 	ast.Nil(err)

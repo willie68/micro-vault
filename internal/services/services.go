@@ -14,27 +14,25 @@ import (
 )
 
 var (
-	logger        = logging.New().WithName("services")
-	healthService *health.SHealth
+	logger = logging.New().WithName("services")
 )
 
 // InitServices initialise the service system
 func InitServices(cfg config.Config) error {
+	logger.Debug("initialise services")
 	err := InitHelperServices(cfg)
 
-	c := cfg.Service
-
-	_, err = keyman.NewKeyman()
+	_, err = keyman.NewKeyman(cfg.PrivateKey)
 	if err != nil {
 		return err
 	}
 
-	_, err = keyman.NewCAService()
+	_, err = keyman.NewCAService(cfg.CACert)
 	if err != nil {
 		return err
 	}
 
-	_, err = storage.NewStorage(c.Storage)
+	_, err = storage.NewStorage(cfg.Storage)
 	if err != nil {
 		return err
 	}
@@ -54,8 +52,8 @@ func InitServices(cfg config.Config) error {
 		return err
 	}
 
-	if c.Playbook != "" {
-		pb := playbook.NewPlaybookFile(c.Playbook)
+	if cfg.Playbook != "" {
+		pb := playbook.NewPlaybookFile(cfg.Playbook)
 		err := pb.Load()
 		if err != nil {
 			return err
@@ -72,18 +70,12 @@ func InitServices(cfg config.Config) error {
 // InitHelperServices initialise the helper services like Healthsystem
 func InitHelperServices(cfg config.Config) error {
 	var err error
-	healthService, err = health.NewHealthSystem(cfg.Service.HealthSystem)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err = health.NewHealthSystem(cfg.HealthSystem)
+	return err
 }
 
 // InitRESTService initialise REST Services
 func InitRESTService(cfg config.Config) error {
-	_, err := shttp.NewSHttp(cfg.Service.HTTP)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := shttp.NewSHttp(cfg.HTTP)
+	return err
 }

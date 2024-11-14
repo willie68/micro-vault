@@ -46,16 +46,16 @@ func (v *VaultHandler) Routes() (string, *chi.Mux) {
 }
 
 // PostCert posting a certificate request to this mv service, returning a signed certificate
-// @Summary posting a certificate request to this mv service, returning a signed certificate
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate/{name} [post]
+//	@Summary	posting a certificate request to this mv service, returning a signed certificate
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/certificate/{name} [post]
 func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -83,16 +83,16 @@ func (v *VaultHandler) PostCert(response http.ResponseWriter, request *http.Requ
 }
 
 // GetCertByName getting the public key of a client certificate for the named client
-// @Summary getting the public key of a client certificate for the named client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate/{name} [post]
+//	@Summary	getting the public key of a client certificate for the named client
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/certificate/{name} [post]
 func (v *VaultHandler) GetCertByName(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -120,16 +120,16 @@ func (v *VaultHandler) GetCertByName(response http.ResponseWriter, request *http
 }
 
 // PostKeys posting data to generate a new key for group
-// @Summary posting data to generate a new key for group
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/keys [post]
+//	@Summary	posting data to generate a new key for group
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/keys [post]
 func (v *VaultHandler) PostKeys(response http.ResponseWriter, request *http.Request) {
 	tk, err := token(request)
 	if err != nil {
@@ -164,15 +164,15 @@ func (v *VaultHandler) PostKeys(response http.ResponseWriter, request *http.Requ
 }
 
 // GetKey getting a single key
-// @Summary getting a single key
-// @Tags configs
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param id id of key
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/keys/{id} [post]
+//	@Summary	getting a single key
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		id		id			of				key
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/keys/{id} [post]
 func (v *VaultHandler) GetKey(response http.ResponseWriter, request *http.Request) {
 	tk, err := token(request)
 	if err != nil {
@@ -199,16 +199,16 @@ func (v *VaultHandler) GetKey(response http.ResponseWriter, request *http.Reques
 }
 
 // PostCrypt posting a crypt message, getting back the result, server side en/decryption
-// @Summary  posting a crypt message, getting back the result, server side en/decryption
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
+//	@Summary	posting a crypt message, getting back the result, server side en/decryption
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/certificate [post]
 func (v *VaultHandler) PostCrypt(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -234,16 +234,16 @@ func (v *VaultHandler) PostCrypt(response http.ResponseWriter, request *http.Req
 }
 
 // PostSign posting a message to sign, getting back the result, server side signing
-// @Summary posting a message to sign, getting back the result, server side signing
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
+//	@Summary	posting a message to sign, getting back the result, server side signing
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/certificate [post]
 func (v *VaultHandler) PostSign(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -269,16 +269,16 @@ func (v *VaultHandler) PostSign(response http.ResponseWriter, request *http.Requ
 }
 
 // PostCheck posting a message to check the signature, getting back the result, server side sing checking
-// @Summary posting a message to check the signature, getting back the result, server side sing checking
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
+//	@Summary	posting a message to check the signature, getting back the result, server side sing checking
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/certificate [post]
 func (v *VaultHandler) PostCheck(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -305,16 +305,16 @@ func (v *VaultHandler) PostCheck(response http.ResponseWriter, request *http.Req
 }
 
 // PostMsg posting message to be stored securly for group/client
-// @Summary posting message to be stored securly for group/client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/keys [post]
+//	@Summary	posting message to be stored securly for group/client
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		payload	body		pem				file
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/keys [post]
 func (v *VaultHandler) PostMsg(response http.ResponseWriter, request *http.Request) {
 	tk, err := token(request)
 	if err != nil {
@@ -343,15 +343,15 @@ func (v *VaultHandler) PostMsg(response http.ResponseWriter, request *http.Reque
 }
 
 // GetMsg getting a single message, if allowed
-// @Summary getting a single message, if allowed
-// @Tags configs
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param id id of key
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/keys/{id} [post]
+//	@Summary	getting a single message, if allowed
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		id		id			of				key
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/keys/{id} [post]
 func (v *VaultHandler) GetMsg(response http.ResponseWriter, request *http.Request) {
 	tk, err := token(request)
 	if err != nil {
@@ -369,15 +369,15 @@ func (v *VaultHandler) GetMsg(response http.ResponseWriter, request *http.Reques
 }
 
 // DeleteMsg deleting a single message, if allowed
-// @Summary deleting a single message, if allowed
-// @Tags configs
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param id id of key
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/keys/{id} [post]
+//	@Summary	deleting a single message, if allowed
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	as			authentication	header
+//	@Param		id		id			of				key
+//	@Success	200		{object}	nothing
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/vault/keys/{id} [post]
 func (v *VaultHandler) DeleteMsg(response http.ResponseWriter, request *http.Request) {
 	tk, err := token(request)
 	if err != nil {

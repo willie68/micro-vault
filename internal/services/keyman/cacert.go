@@ -16,8 +16,14 @@ import (
 	"time"
 
 	"github.com/samber/do"
-	"github.com/willie68/micro-vault/internal/config"
 )
+
+// CACert configuration of the ca cert service
+type CAConfig struct {
+	PrivateKey  string            `yaml:"privatekey"`
+	Certificate string            `yaml:"certificate"`
+	Subject     map[string]string `yaml:"subject"`
+}
 
 // Cert the certificate
 type Cert struct {
@@ -27,16 +33,14 @@ type Cert struct {
 
 // CAService the CA cert service
 type CAService struct {
-	cfg          config.CACert
+	cfg          CAConfig
 	caPrivateKey *rsa.PrivateKey
 	caX509       x509.Certificate
 	certBytes    []byte
 }
 
 // NewCAService creating a new CA service
-func NewCAService() (*CAService, error) {
-	cfg := do.MustInvoke[config.Config](nil)
-	cnf := cfg.Service.CACert
+func NewCAService(cnf CAConfig) (*CAService, error) {
 	c := CAService{
 		cfg: cnf,
 	}

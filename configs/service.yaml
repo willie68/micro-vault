@@ -1,43 +1,42 @@
 # secret file contains secrets like credentials, access key ... it has the same structure as this config and will be merged on start
 secretfile: ""
 
-service:
-  http:
-    # port of the http server
-    port: 8080
-    # port of the https server for payload only
-    sslport: 8443
-    # this is the servicURL from outside
-    serviceURL: https://localhost:8443
-    # other dns names (used for certificate)
-    dnss: 
-      - host.docker.internal
-      - localhost
-    # other ips (used for certificate)
-    ips: 
-      - 127.0.0.1
-  rootuser: root
-  rootpwd: yxcvb
-  privatekey: ./private.pem
-  cacert:
-    certificate:  ./certificate.pem
-    subject:
-      Country: de
-      Organization: mcs
-      OrganizationalUnit: dev
-      Locality: 
-      Province: 
-      StreetAddress: 
-      PostalCode: 
-      CommonName: micro-vault
-  storage:
-    type: memory
-    properties:
-  #configure the healthcheck system
-  healthcheck:
-    # period in seconds to start the healtcheck
-    period: 30
-    startdelay: 3
+http:
+  # port of the http server
+  port: 8080
+  # port of the https server for payload only
+  sslport: 8443
+  # this is the servicURL from outside
+  serviceURL: https://localhost:8443
+  # other dns names (used for certificate)
+  dnss: 
+    - host.docker.internal
+    - localhost
+  # other ips (used for certificate)
+  ips: 
+    - 127.0.0.1
+rootuser: root
+rootpwd: yxcvb
+privatekey: ./private.pem
+cacert:
+  certificate:  ./certificate.pem
+  subject:
+    Country: de
+    Organization: mcs
+    OrganizationalUnit: dev
+    Locality: 
+    Province: 
+    StreetAddress: 
+    PostalCode: 
+    CommonName: micro-vault
+storage:
+  type: memory
+  properties:
+#configure the healthcheck system
+healthcheck:
+  # period in seconds to start the healtcheck
+  period: 30
+  startdelay: 3
 # enable/disable metrics 
 metrics:
   enable: false

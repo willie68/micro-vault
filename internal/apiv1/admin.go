@@ -61,16 +61,17 @@ func (a *AdminHandler) Routes() (string, *chi.Mux) {
 }
 
 // PostPlaybook posting the public key of a client certificate for the client
-// @Summary posting the public key of a client certificate for the client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
+//
+//	@Summary	posting the public key of a client certificate for the client
+//	@Tags		configs
+//	@Accept		json
+//	@Produce	json
+//	@Param		token	header		string			true	"authentication	header"
+//	@Param		payload	body		model.Playbook	true	"playbook file"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/playbook [post]
 func (a *AdminHandler) PostPlaybook(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -99,16 +100,16 @@ func (a *AdminHandler) PostPlaybook(response http.ResponseWriter, request *http.
 }
 
 // GetGroups getting a list of groups
-// @Summary getting a list of groups
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /vault/certificate [post]
+//
+//	@Summary	getting a list of groups
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groups [get]
 func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -136,16 +137,16 @@ func (a *AdminHandler) GetGroups(response http.ResponseWriter, request *http.Req
 }
 
 // GetGroup delete a group
-// @Summary gets a group
-// @Tags configs
-// @Accept  name string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	gets a group
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		name	path		string	true	"group name"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groups/{name} [get]
 func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -179,16 +180,18 @@ func (a *AdminHandler) GetGroup(response http.ResponseWriter, request *http.Requ
 }
 
 // PostGroup updates a group
-// @Summary updates a group
-// @Tags configs
-// @Accept  name string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	updates a group
+//	@Tags		configs
+//	@Accept		json
+//	@Produce	json
+//	@Param		token	header		string			true	"authentication	header"
+//	@Param		name	path		string			true	"name of the group"
+//	@Param		payload	body		pmodel.Group	true	"group definition"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groups/{name} [post]
 func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -237,16 +240,17 @@ func (a *AdminHandler) PostGroup(response http.ResponseWriter, request *http.Req
 }
 
 // PostGroups creating a new group
-// @Summary creating a new group
-// @Tags configs
-// @Accept  pmodel.Group
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	creating a new group
+//	@Tags		configs
+//	@Accept		json
+//	@Produce	json
+//	@Param		token	header		string			true	"authentication	header"
+//	@Param		payload	body		pmodel.Group	true	"group definition"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groups [post]
 func (a *AdminHandler) PostGroups(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -288,16 +292,16 @@ func (a *AdminHandler) PostGroups(response http.ResponseWriter, request *http.Re
 }
 
 // DeleteGroup delete a group
-// @Summary delete a  group
-// @Tags configs
-// @Accept  name string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	delete a  group
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		name	path		string	true	"name of the group to delete"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groups/{name} [delete]
 func (a *AdminHandler) DeleteGroup(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -325,16 +329,17 @@ func (a *AdminHandler) DeleteGroup(response http.ResponseWriter, request *http.R
 }
 
 // GetClients getting a list of clients
-// @Summary getting a list of clients
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/clients [post]
+//
+//	@Summary	getting a list of clients
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		group	query		string	false	"the clients for this group"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/clients [get]
 func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -369,16 +374,16 @@ func (a *AdminHandler) GetClients(response http.ResponseWriter, request *http.Re
 }
 
 // GetClient get a client
-// @Summary gets a client
-// @Tags configs
-// @Accept  name string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/client/{name} [post]
+//
+//	@Summary	gets a client
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		name	path		string	true	"client name"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/clients/{name} [get]
 func (a *AdminHandler) GetClient(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -411,16 +416,17 @@ func (a *AdminHandler) GetClient(response http.ResponseWriter, request *http.Req
 }
 
 // PostNewClient creating a new client
-// @Summary creating a new client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/clients [post]
+//
+//	@Summary	creating a new client
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		payload	body		string	true	"json file for the client"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/clients [post]
 func (a *AdminHandler) PostNewClient(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -460,16 +466,16 @@ func (a *AdminHandler) PostNewClient(response http.ResponseWriter, request *http
 }
 
 // DeleteClient delete a client by name
-// @Summary delete a client by name
-// @Tags configs
-// @Accept  name string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	delete a client by name
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		name	path		string	true	"name of the client to delete"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/clients/{name} [delete]
 func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -491,16 +497,17 @@ func (a *AdminHandler) DeleteClient(response http.ResponseWriter, request *http.
 }
 
 // PostClient posting changes to a client
-// @Summary posting changes to a client
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/clients [post]
+//
+//	@Summary	posting changes to a client
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		payload	body		string	true	"json of client"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/clients [post]
 func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -547,16 +554,17 @@ func (a *AdminHandler) PostClient(response http.ResponseWriter, request *http.Re
 }
 
 // GetKeys getting a list of groupkeys
-// @Summary getting a list of groupkeys
-// @Tags configs
-// @Accept  pem file
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groupkeys [post]
+//
+//	@Summary	getting a list of groupkeys
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		group	query		string	false	"group the get all keys for"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groupkeys [get]
 func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
@@ -590,16 +598,17 @@ func (a *AdminHandler) GetKeys(response http.ResponseWriter, request *http.Reque
 }
 
 // PostKey creating a new group key
-// @Summary creating a new group key
-// @Tags configs
-// @Accept  string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	creating a new group key
+//	@Tags		configs
+//	@Accept		json
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		payload	body		string	true	"pem file"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/groupkeys [post]
 func (a *AdminHandler) PostKey(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -639,16 +648,17 @@ func (a *AdminHandler) PostKey(response http.ResponseWriter, request *http.Reque
 }
 
 // PostDecodeCertificate decoding a certificate
-// @Summary decoding a certificate
-// @Tags configs
-// @Accept  string
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload body pem file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groups [post]
+//
+//	@Summary	decoding a certificate
+//	@Tags		configs
+//	@Accept		octet-stream
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Param		payload	body		string	true	"pem file"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/utils/decodecert [post]
 func (a *AdminHandler) PostDecodeCertificate(response http.ResponseWriter, request *http.Request) {
 	var b []byte
 	var err error
@@ -680,15 +690,15 @@ func (a *AdminHandler) PostDecodeCertificate(response http.ResponseWriter, reque
 }
 
 // GetInfo getting service information
-// @Summary getting service informations
-// @Tags configs
-// @Produce  n.n.
-// @Param token as authentication header
-// @Param payload info file
-// @Success 200 {object} nothing
-// @Failure 400 {object} serror.Serr "client error information as json"
-// @Failure 500 {object} serror.Serr "server error information as json"
-// @Router /admin/groupkeys [post]
+//
+//	@Summary	getting service informations
+//	@Tags		configs
+//	@Produce	json
+//	@Param		token	header		string	true	"authentication	header"
+//	@Success	200		{object}	string
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/admin/info [get]
 func (a *AdminHandler) GetInfo(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)
