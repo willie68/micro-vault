@@ -36,10 +36,10 @@ storage:
   properties:
     hosts:
       - 127.0.0.1:27017
-    authdatabase: microvault
-    username: microvault
-    password: yxcvb
-    database: microvault
+    authdatabase: microvault_test
+    database: microvault_test
+    username: 
+    password: 
 #configure the healthcheck system
 healthcheck:
   # period in seconds to start the healtcheck
@@ -49,9 +49,6 @@ healthcheck:
 logging:
     gelf-url: 127.0.0.1
     gelf-port: 12201
-
-healthcheck:
-    period: 30
 
 opentracing:
 #    host: "127.0.0.1:5776"

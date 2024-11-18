@@ -10,6 +10,7 @@ import (
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/interfaces"
 	"github.com/willie68/micro-vault/internal/model"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/keyman"
@@ -37,7 +38,7 @@ func init() {
 		Rootuser:   rootuser,
 		Rootpwd:    "yxcvb",
 		PrivateKey: "../../../testdata/private.pem",
-		CACert: keyman.CAConfig{
+		CACert: certauth.CAConfig{
 			Certificate: "../../../testdata/crt.pem",
 			Subject: map[string]string{
 				"Country":            "de",
@@ -56,7 +57,7 @@ func init() {
 	if err != nil {
 		panic(1)
 	}
-	_, err = keyman.NewCAService(c.CACert)
+	_, err = certauth.NewCAService(c.CACert)
 	if err != nil {
 		panic(1)
 	}

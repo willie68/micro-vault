@@ -4,6 +4,7 @@ import (
 	"github.com/willie68/micro-vault/internal/config"
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/services/admin"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 	"github.com/willie68/micro-vault/internal/services/clients"
 	"github.com/willie68/micro-vault/internal/services/groups"
 	"github.com/willie68/micro-vault/internal/services/health"
@@ -27,7 +28,7 @@ func InitServices(cfg config.Config) error {
 		return err
 	}
 
-	_, err = keyman.NewCAService(cfg.CACert)
+	_, err = certauth.NewCAService(cfg.CACert)
 	if err != nil {
 		return err
 	}

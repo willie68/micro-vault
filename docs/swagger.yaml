@@ -1,0 +1,1009 @@
+basePath: /api/v1
+definitions:
+  model.Client:
+    properties:
+      accesskey:
+        type: string
+      crt:
+        additionalProperties: {}
+        type: object
+      groups:
+        items:
+          type: string
+        type: array
+      hash:
+        type: string
+      key:
+        type: string
+      kid:
+        type: string
+      name:
+        type: string
+      salt:
+        type: string
+      secret:
+        description: 'BEWARE: Only for usage in playbook'
+        type: string
+    type: object
+  model.EncryptKey:
+    properties:
+      alg:
+        type: string
+      created:
+        type: string
+      group:
+        type: string
+      id:
+        type: string
+      key:
+        type: string
+    type: object
+  model.Group:
+    properties:
+      isclient:
+        type: boolean
+      key:
+        type: string
+      kid:
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+    type: object
+  model.Playbook:
+    properties:
+      clients:
+        items:
+          $ref: '#/definitions/model.Client'
+        type: array
+      groups:
+        items:
+          $ref: '#/definitions/model.Group'
+        type: array
+      keys:
+        items:
+          $ref: '#/definitions/model.EncryptKey'
+        type: array
+    type: object
+  pmodel.Group:
+    properties:
+      isclient:
+        type: boolean
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+    type: object
+  pmodel.KeyInfo:
+    properties:
+      alg:
+        type: string
+      kid:
+        type: string
+    type: object
+  pmodel.Message:
+    properties:
+      decrypt:
+        description: True for message decryption and false for message encryption
+        type: boolean
+      id:
+        description: only set when the AES key is already created
+        type: string
+      message:
+        description: the message to en/decrypt
+        type: string
+      origin:
+        description: who sends this message, group name or client name
+        type: string
+      recipient:
+        description: who should receive this message, group name or client name
+        type: string
+      type:
+        description: The type of message means group for group messages or private
+          for a private message
+        type: string
+    type: object
+  pmodel.SignMessage:
+    properties:
+      keyInfo:
+        $ref: '#/definitions/pmodel.KeyInfo'
+      message:
+        description: the message to sign
+        type: string
+      signature:
+        description: the signature
+        type: string
+      valid:
+        type: boolean
+    type: object
+  serror.Serr:
+    properties:
+      code:
+        type: integer
+      key:
+        type: string
+      message:
+        type: string
+      origin:
+        type: string
+      service:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Micro-Vault microservice dead simple key management service without
+    any golden rings, just simple and secure.
+  title: micro-vault service
+  version: "1.0"
+paths:
+  /admin/clients:
+    get:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: the clients for this group
+        in: query
+        name: group
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting a list of clients
+      tags:
+      - configs
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: json of client
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting changes to a client
+      tags:
+      - configs
+  /admin/clients/{name}:
+    delete:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: name of the client to delete
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: delete a client by name
+      tags:
+      - configs
+    get:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: client name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: gets a client
+      tags:
+      - configs
+  /admin/groupkeys:
+    get:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: group the get all keys for
+        in: query
+        name: group
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting a list of groupkeys
+      tags:
+      - configs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: pem file
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: creating a new group key
+      tags:
+      - configs
+  /admin/groups:
+    get:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting a list of groups
+      tags:
+      - configs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: group definition
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pmodel.Group'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: creating a new group
+      tags:
+      - configs
+  /admin/groups/{name}:
+    delete:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: name of the group to delete
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: delete a  group
+      tags:
+      - configs
+    get:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: group name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: gets a group
+      tags:
+      - configs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: name of the group
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: group definition
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pmodel.Group'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: updates a group
+      tags:
+      - configs
+  /admin/info:
+    get:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting service informations
+      tags:
+      - configs
+  /admin/playbook:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: playbook file
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/model.Playbook'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting the public key of a client certificate for the client
+      tags:
+      - configs
+  /admin/utils/decodecert:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: pem file
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: decoding a certificate
+      tags:
+      - configs
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: json login
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token for further processing
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: login a client to the vault service
+      tags:
+      - configs
+  /login/privatekey/:
+    get:
+      parameters:
+      - description: authentication header
+        in: header
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting the personal private key of a client certificate
+      tags:
+      - configs
+  /login/refresh:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: refreshtoken
+        required: true
+        type: string
+      - description: new token, refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token for further processing
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: refresh a client to the vault service
+      tags:
+      - configs
+  /vault/certificate:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: pem file
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting a certificate request to this mv service, returning a signed
+        certificate
+      tags:
+      - configs
+  /vault/certificate/{name}:
+    get:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: name of the client
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting the public key of a client certificate for the named client
+      tags:
+      - configs
+  /vault/groups/crypt:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: pem file
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting a crypt message, getting back the result, server side en/decryption
+      tags:
+      - configs
+  /vault/groups/keys:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: data for creating a new key
+        in: body
+        name: payload
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting data to generate a new key for group
+      tags:
+      - configs
+  /vault/groups/keys/{id}:
+    post:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: id of the key
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: json object of key
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting a single key
+      tags:
+      - configs
+  /vault/msg:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: the message to store
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pmodel.Message'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: id of the message
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting message to be stored securly for group/client
+      tags:
+      - configs
+  /vault/msg/{id}:
+    delete:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: id of the message to read
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: nothing
+          schema:
+            type: string
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: deleting a single message, if allowed
+      tags:
+      - configs
+    get:
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: id of the message to read
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pmodel.Message'
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: getting a single message, if allowed
+      tags:
+      - configs
+  /vault/signature/check:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: message to check
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pmodel.SignMessage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pmodel.SignMessage'
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting a message to check the signature, getting back the result,
+        server side sing checking
+      tags:
+      - configs
+  /vault/signature/sign:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: "authentication\theader"
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: message to sign
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pmodel.SignMessage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pmodel.SignMessage'
+        "400":
+          description: client error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+        "500":
+          description: server error information as json
+          schema:
+            $ref: '#/definitions/serror.Serr'
+      summary: posting a message to sign, getting back the result, server side signing
+      tags:
+      - configs
+swagger: "2.0"

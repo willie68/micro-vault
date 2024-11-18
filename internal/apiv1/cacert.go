@@ -7,19 +7,19 @@ import (
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/api"
 	"github.com/willie68/micro-vault/internal/serror"
-	"github.com/willie68/micro-vault/internal/services/keyman"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 	"github.com/willie68/micro-vault/internal/utils/httputils"
 )
 
 // CACert handler for handling REST calls for jwks
 type CACert struct {
-	cas keyman.CAService
+	cas certauth.CAService
 }
 
 // NewCACertHandler returning a new REST API Handler for jwks
 func NewCACertHandler() api.Handler {
 	return &CACert{
-		cas: do.MustInvoke[keyman.CAService](nil),
+		cas: do.MustInvoke[certauth.CAService](nil),
 	}
 }
 

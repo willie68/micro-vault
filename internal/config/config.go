@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/logging"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 	"github.com/willie68/micro-vault/internal/services/health"
-	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/services/shttp"
 	"gopkg.in/yaml.v3"
 )
@@ -38,13 +38,13 @@ type Config struct {
 
 	HTTP shttp.Config `yaml:"http"`
 	// special config for health checks
-	HealthSystem health.Config   `yaml:"healthcheck"`
-	Playbook     string          `yaml:"playbook"`
-	Rootuser     string          `yaml:"rootuser"`
-	Rootpwd      string          `yaml:"rootpwd"`
-	PrivateKey   string          `yaml:"privatekey"`
-	CACert       keyman.CAConfig `yaml:"cacert"`
-	Storage      Storage         `yaml:"storage"`
+	HealthSystem health.Config     `yaml:"healthcheck"`
+	Playbook     string            `yaml:"playbook"`
+	Rootuser     string            `yaml:"rootuser"`
+	Rootpwd      string            `yaml:"rootpwd"`
+	PrivateKey   string            `yaml:"privatekey"`
+	CACert       certauth.CAConfig `yaml:"cacert"`
+	Storage      Storage           `yaml:"storage"`
 }
 
 // Storage the type and properties of the storage

@@ -4,12 +4,11 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"log"
-	"os"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/logging"
-	"github.com/willie68/micro-vault/pkg/crypt"
+	"github.com/willie68/micro-vault/internal/services/keyutils"
 )
 
 // manage the server side main key, used for encryption/signature
@@ -44,7 +43,7 @@ func (k *Keyman) init() error {
 	var rsk *rsa.PrivateKey
 	var err error
 	if k.privKeyFile != "" {
-		rsk, err = loadFromFile(k.privKeyFile)
+		rsk, err = keyutils.LoadPrivateKeyFromFile(k.privKeyFile)
 		if err != nil {
 			return err
 		}
@@ -55,7 +54,7 @@ func (k *Keyman) init() error {
 			logger.Errorf("failed to generate private key: %v", err)
 			return err
 		}
-		err = saveToFile(k.privKeyFile, rsk)
+		err = keyutils.SavePrivateKeyToFile(k.privKeyFile, rsk)
 		if err != nil {
 			return err
 		}
@@ -107,36 +106,6 @@ func (k *Keyman) PublicKey() rsa.PublicKey {
 // KID getting the kid
 func (k *Keyman) KID() string {
 	return k.kid
-}
-
-func loadFromFile(f string) (*rsa.PrivateKey, error) {
-	if _, err := os.Stat(f); err == nil {
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, err
-		}
-		rsk, err := crypt.Pem2Prv(string(b))
-		if err != nil {
-			return nil, err
-		}
-		return rsk, nil
-	}
-	return nil, nil
-}
-
-func saveToFile(f string, rsk *rsa.PrivateKey) error {
-	if f != "" {
-		b, err := crypt.Prv2Pem(rsk)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(f, b, os.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // JWKS returning then JWKS a collection of Jwk keys

@@ -9,6 +9,7 @@ import (
 
 	"github.com/samber/do"
 	"github.com/stretchr/testify/assert"
+	"github.com/willie68/micro-vault/internal/services/keyutils"
 )
 
 const (
@@ -50,7 +51,7 @@ func TestKeymanPEM(t *testing.T) {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		panic(err)
 	}
-	err = saveToFile(keyfile2, rsk)
+	err = keyutils.SavePrivateKeyToFile(keyfile2, rsk)
 	ast.Nil(err)
 
 	k, err := NewKeyman(keyfile2)

@@ -26,6 +26,7 @@ import (
 	"github.com/willie68/micro-vault/internal/logging"
 	"github.com/willie68/micro-vault/internal/model"
 	"github.com/willie68/micro-vault/internal/serror"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 	"github.com/willie68/micro-vault/internal/services/keyman"
 	"github.com/willie68/micro-vault/internal/utils"
 	"github.com/willie68/micro-vault/internal/utils/str2duration"
@@ -49,7 +50,7 @@ type Clients struct {
 	stg  interfaces.Storage
 	cfg  config.Config
 	kmn  keyman.Keyman
-	crt  keyman.CAService
+	crt  certauth.CAService
 	kids map[string]string // map key is the kid, value is the access key of the client
 }
 
@@ -59,7 +60,7 @@ func NewClients() (Clients, error) {
 		stg: do.MustInvoke[interfaces.Storage](nil),
 		cfg: do.MustInvoke[config.Config](nil),
 		kmn: do.MustInvoke[keyman.Keyman](nil),
-		crt: do.MustInvoke[keyman.CAService](nil),
+		crt: do.MustInvoke[certauth.CAService](nil),
 	}
 	err := c.Init()
 	if err != nil {

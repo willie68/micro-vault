@@ -45,16 +45,16 @@ func (l *LoginHandler) Routes() (string, *chi.Mux) {
 }
 
 // PostLogin login a client to the vault service
+//
 //	@Summary	login a client to the vault service
 //	@Tags		configs
 //	@Accept		json
 //	@Produce	json
-//	@Param		Accesskey,	Secret		as			strings	for	login
-//	@Param		payload		body		string		true	"Add store"
-//	@Success	200			{object}	token		for		further	processing
-//	@Failure	400			{object}	serror.Serr	"client error information as json"
-//	@Failure	500			{object}	serror.Serr	"server error information as json"
-//	@Router		/vault/login [post]
+//	@Param		payload	body		string		true	"json login"
+//	@Success	200		{object}	string		"token for further processing"
+//	@Failure	400		{object}	serror.Serr	"client error information as json"
+//	@Failure	500		{object}	serror.Serr	"server error information as json"
+//	@Router		/login [post]
 func (l *LoginHandler) PostLogin(response http.ResponseWriter, request *http.Request) {
 	up := struct {
 		Username  string `json:"user"`
@@ -116,16 +116,17 @@ func (l *LoginHandler) PostLogin(response http.ResponseWriter, request *http.Req
 }
 
 // GetRefresh refresh a client to the vault service
+//
 //	@Summary	refresh a client to the vault service
 //	@Tags		configs
 //	@Accept		json
 //	@Produce	json
-//	@Param		Accesskey,	Secret		as			strings	for	login
-//	@Param		payload		body		string		true	"Add store"
-//	@Success	200			{object}	token		for		further	processing
-//	@Failure	400			{object}	serror.Serr	"client error information as json"
-//	@Failure	500			{object}	serror.Serr	"server error information as json"
-//	@Router		/vault/login [post]
+//	@Param		refreshtoken	header		string		true	"authentication	header"
+//	@Param		payload			body		string		true	"new token, refresh token"
+//	@Success	200				{object}	string 	"token for further processing"
+//	@Failure	400				{object}	serror.Serr	"client error information as json"
+//	@Failure	500				{object}	serror.Serr	"server error information as json"
+//	@Router		/login/refresh [get]
 func (l *LoginHandler) GetRefresh(response http.ResponseWriter, request *http.Request) {
 	rt, err := token(request)
 	if err != nil {
@@ -189,16 +190,15 @@ func (l *LoginHandler) GetRefresh(response http.ResponseWriter, request *http.Re
 }
 
 // GetPrivateKey getting the personal private key of a client certificate
+//
 //	@Summary	getting the personal private key of a client certificate
 //	@Tags		configs
-//	@Accept		pem file
 //	@Produce	json
-//	@Param		token	as			authentication	header
-//	@Param		payload	body		pem				file
-//	@Success	200		{object}	nothing
+//	@Param		token	header		string	true	"authentication header"
+//	@Success	200		{object}	string
 //	@Failure	400		{object}	serror.Serr	"client error information as json"
 //	@Failure	500		{object}	serror.Serr	"server error information as json"
-//	@Router		/vault/certificate/{name} [post]
+//	@Router		/login/privatekey/ [get]
 func (l *LoginHandler) GetPrivateKey(response http.ResponseWriter, request *http.Request) {
 	var err error
 	tk, err := token(request)

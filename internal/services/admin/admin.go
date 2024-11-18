@@ -1,5 +1,6 @@
 package admin
 
+// This service includes the business logic for all admin tasks.
 import (
 	"crypto/rand"
 	"crypto/rsa"
@@ -74,7 +75,7 @@ func (a *Admin) Init() error {
 	return nil
 }
 
-// LoginUP logging in an admin account
+// LoginUP logging in an admin account with username and password
 func (a *Admin) LoginUP(u string, p []byte) (string, string, error) {
 	if !strings.EqualFold(u, a.rootusr) || hash(p) != a.pwdhash {
 		return "", "", serror.ErrLoginFailed
@@ -417,6 +418,9 @@ func (a *Admin) DeleteClient(tk, n string) (bool, error) {
 	ok, err = a.stg.DeleteClient(ak)
 	if err != nil {
 		return false, err
+	}
+	if !ok {
+		return false, fmt.Errorf("can't delete client with name: %s", n)
 	}
 	ok, err = a.stg.DeleteGroup(n)
 	if err != nil {

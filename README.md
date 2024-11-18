@@ -9,13 +9,22 @@ Die Idee zu diesen Service entstand bei einem privaten Mikroservice Projekt. Dab
 
 ### Zertifikate, Zertifikatsstelle, Certificate authority
 
+#### Problem
+
 Beispiel: Innerhalb eines Kubernetes Clusters kommunizieren  die Services untereinander über REST. Alle Services verwenden HTTPS mit selbst signierten Zertifikaten. Das macht bei der Anbindung an Fremdsysteme jedoch Probleme. Diese verlangen in den meisten Fällen ordnungsgemäß signierte Zertifikate. Es gibt dazu verschiedene Lösungsansätze. Natürlich kann man generell im Container ein öffentliches Zertifikat hinterlegen. So können ext. Services nun auf diesen Container zugreifen. Leider kann man die DNS Aliase nicht selber bestimmen. D.h. bei jeder Änderung z.B. des Service-Namens im Namespace muss ein neues Zertifikat erstellt werden. Das ist einfach aufwendig. Zum Automatisieren kommen mehrere Wege in Betracht. 
 
 - Erzeugung des Zertifikates beim Hochfahren des Containers. Leider verzögert dieser Schritt den Start des Containers doch erheblich, so dass eine automatische Skalierung beim Loadbalancing dabei nachteilig beeinflusst wird. Nebenbei haben dann alle Instanzen eines Service unterschiedliche Zertifikate, was evtl. auf der Clientseite zu Problemen führen kann. Bei Änderungen der DNS, IP muss dann der Service neu gestartet werden. 
 - Erzeugung zur Buildzeit, somit haben alle Nodes das gleiche Zertifikat, zur Erneuerung muss dann aber ein neuer Build (mit evtl. Nebenwirkungen) gemacht werden. Bei Änderungen der DNS, IP muss dann der Build neu gestartet werden. 
 - Erzeugung offline und kopieren aus einem ext. Speicher (build oder Startzeit), diese Variante könnte sicherheitstechnisch problematisch sein, denn der Zertifikatsspeicher muss gut abgesichert werden. 
 
+#### Lösung
+
 Abhilfe schafft da eine zentrale Zertifikatsstelle im Cluster (Certificate authority, CA), die direkt den CSR ausführen kann. Somit müssen die Clients zur Zertifikatskontrolle nur das Root/Intermediate Zertifikat der CA importiert haben.
+
+Micro-Vault ist **keine** vollständige öffentliche CA. MV bildet nur 2 spezielle Bereiche einer CA ab.
+
+- es gibt den /.well-known/jwks.json Endpunkt, wo alle öffentlichen Zertifikate (CA und Intermediate) abgerufen werden können.
+- nur angemeldete Clients können für sich einen CSR (Certificat Signing Request) stellen. Das Zertifikat ist bestimmten Voreinstellungen unterworfen.
 
 ### Verschlüsselte Übertragung
 

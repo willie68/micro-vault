@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/do"
 	"github.com/willie68/micro-vault/internal/logging"
-	"github.com/willie68/micro-vault/internal/services/keyman"
+	"github.com/willie68/micro-vault/internal/services/certauth"
 )
 
 var logger = logging.New().WithName("svcShttp")
@@ -222,9 +222,8 @@ func (gc *generateCertificate) GenerateTLSConfig() (*tls.Config, error) {
 		}
 	}
 
-	ca := do.MustInvoke[keyman.CAService](nil)
+	ca := do.MustInvoke[certauth.CAService](nil)
 
-	// TODO get the validation from the configuration
 	derBytes, err := ca.CertSignRequest(template, gc.publicKey(priv), time.Hour*24*365)
 	if err != nil {
 		logger.Fatalf("Failed to create certificate: %v", err)

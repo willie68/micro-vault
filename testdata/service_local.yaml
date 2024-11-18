@@ -41,15 +41,12 @@ storage:
     database: microvault
 healthcheck:
   # period in seconds to start the healtcheck
-  period: 60
+  period: 30
   startdelay: 3
     
 logging:
     gelf-url: 127.0.0.1
     gelf-port: 12201
-
-healthcheck:
-    period: 30
 
 opentracing:
 #    host: "127.0.0.1:5776"
