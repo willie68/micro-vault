@@ -282,6 +282,10 @@ func (a *AdminHandler) PostGroups(response http.ResponseWriter, request *http.Re
 		return
 	}
 	g, err = a.adm.Group(tk, n)
+	if err != nil {
+		httputils.Err(response, request, serror.Wrapc(err, http.StatusBadRequest))
+		return
+	}
 	gs := pmodel.Group{
 		Name:     g.Name,
 		Label:    g.Label,

@@ -80,38 +80,38 @@ func LoginClient(accesskey, secret, url string) (*Client, error) {
 	return &cl, nil
 }
 
-// ClientBuilder creating a new Client with a fluid builder pattern
-type ClientBuilder struct {
+// Builder creating a new Client with a fluid builder pattern
+type Builder struct {
 	acc  string
 	sec  string
 	burl string
 }
 
 // NewClient fluid starting point creating a new client
-func NewClient() *ClientBuilder {
-	return &ClientBuilder{}
+func NewClient() *Builder {
+	return &Builder{}
 }
 
 // WithAccessKey adding the access key
-func (c *ClientBuilder) WithAccessKey(accessKey string) *ClientBuilder {
+func (c *Builder) WithAccessKey(accessKey string) *Builder {
 	c.acc = accessKey
 	return c
 }
 
 // WithSecret ading the secret
-func (c *ClientBuilder) WithSecret(secret string) *ClientBuilder {
+func (c *Builder) WithSecret(secret string) *Builder {
 	c.sec = secret
 	return c
 }
 
 // WithBaseURL adding the base URL to the mv service
-func (c *ClientBuilder) WithBaseURL(baseURL string) *ClientBuilder {
+func (c *Builder) WithBaseURL(baseURL string) *Builder {
 	c.burl = baseURL
 	return c
 }
 
 // Login loggin the client in
-func (c *ClientBuilder) Login() (*Client, error) {
+func (c *Builder) Login() (*Client, error) {
 	return LoginClient(c.acc, c.sec, c.burl)
 }
 
